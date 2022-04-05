@@ -154,13 +154,17 @@ void Run_OnMixTeamStart()
  */
 void CancelMixTeam()
 {
-	Run_OnMixTeamEnd();
-
-	if (g_hNextStepTimer != INVALID_HANDLE) {
+	if (g_hNextStepTimer != INVALID_HANDLE) 
+	{
 		KillTimer(g_hNextStepTimer);
+		g_hNextStepTimer = INVALID_HANDLE;
 	}
 
+	Run_OnMixTeamEnd();
+
 	g_iMixState = STATE_NONE;
+
+	g_hMenu.Cancel();
 }
 
 /**
@@ -283,10 +287,8 @@ public void OnLibraryAdded(const char[] sName)
   */
 public void OnRoundIsLive() 
 {
-	if (IsMixTeam()) 
-	{
+	if (IsMixTeam()) {
 		CancelMixTeam();
-		g_hMenu.Cancel();
 	}
 }
 
@@ -299,10 +301,8 @@ public Action Event_LeftStartArea(Event event, const char[] name, bool dontBroad
 	{
 		g_bRoundIsLive = true;
  
-		if (IsMixTeam()) 
-		{
+		if (IsMixTeam()) {
 			CancelMixTeam();
-			g_hMenu.Cancel();
 		}
 	}	
 }
@@ -645,7 +645,7 @@ void RunCapitanMix()
 	// set all players to spec
 	SetAllClientSpectator();
 
-	g_hNextStepTimer = CreateTimer(1.0, NextStepTimer, _, TIMER_FLAG_NO_MAPCHANGE); 
+	g_hNextStepTimer = CreateTimer(1.0, NextStepTimer); 
 }
 
 /**
@@ -788,7 +788,7 @@ public Action NextStepTimer(Handle timer)
 			}
 
 			// go next step (wait 11 sec)!
-			g_hNextStepTimer = CreateTimer(11.0, NextStepTimer, _, TIMER_FLAG_NO_MAPCHANGE); 
+			g_hNextStepTimer = CreateTimer(11.0, NextStepTimer); 
 		}
 
 		case STATE_FIRST_CAPITAN: 
@@ -812,7 +812,7 @@ public Action NextStepTimer(Handle timer)
 			}
 
 			// go next step (wait 11 sec)!
-			g_hNextStepTimer = CreateTimer(11.0, NextStepTimer, _, TIMER_FLAG_NO_MAPCHANGE); 
+			g_hNextStepTimer = CreateTimer(11.0, NextStepTimer); 
 		}
 
 		case STATE_SECOND_CAPITAN: 
@@ -826,7 +826,7 @@ public Action NextStepTimer(Handle timer)
 			g_iMixState = (GetURandomInt() & 1) ? STATE_PICK_TEAM_FIRST : STATE_PICK_TEAM_SECOND;
 
 			// go next step (wait 1 sec)!
-			g_hNextStepTimer = CreateTimer(1.0, NextStepTimer, _, TIMER_FLAG_NO_MAPCHANGE); 
+			g_hNextStepTimer = CreateTimer(1.0, NextStepTimer); 
 		}
 
 		case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 
@@ -845,7 +845,7 @@ public Action NextStepTimer(Handle timer)
 			}
 
 			// rebuild menu (every second)
-			g_hNextStepTimer = CreateTimer(1.0, NextStepTimer, _, TIMER_FLAG_NO_MAPCHANGE);
+			g_hNextStepTimer = CreateTimer(1.0, NextStepTimer);
 		}
 
 		case STATE_NONE: {

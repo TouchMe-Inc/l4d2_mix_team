@@ -157,8 +157,24 @@ void Run_OnMixTeamStart()
  * Fragment
  * 
  * @noreturn
+ */
+void CancelMixTeam()
+{
+	Run_OnMixTeamEnd();
+
+	if (g_hNextStepTimer != INVALID_HANDLE) {
+		KillTimer(g_hNextStepTimer);
+	}
+
+	g_iMixState = STATE_NONE;
+}
+
+/**
+ * Fragment
+ * 
+ * @noreturn
 */
-void Run_OnMixTeamEnd() 
+void Run_OnMixTeamEnd()
 {
 	if (g_bReadyUpAvailable) {
 		ToggleReadyPanelAll(true);
@@ -271,8 +287,13 @@ public void OnLibraryAdded(const char[] sName)
   *
   * @noreturn
   */
-public void OnRoundIsLive() {
-	g_hMenu.Cancel();
+public void OnRoundIsLive() 
+{
+	if (IsMixTeam()) 
+	{
+		CancelMixTeam();
+		g_hMenu.Cancel();
+	}
 }
 
 /**
@@ -283,7 +304,12 @@ public Action Event_LeftStartArea(Event event, const char[] name, bool dontBroad
 	if (!g_bReadyUpAvailable) 
 	{
 		g_bRoundIsLive = true;
-		g_hMenu.Cancel();
+ 
+		if (IsMixTeam()) 
+		{
+			CancelMixTeam();
+			g_hMenu.Cancel();
+		}
 	}	
 }
 
@@ -501,6 +527,7 @@ public void HandleVoteResult(Handle hVote, int iVotes, int num_clients, const in
 void RunRandomMix()
 {
 	g_iMixState = STATE_RUNNING;
+
 	Run_OnMixTeamStart();
 
 	// save current player / team setup
@@ -586,8 +613,9 @@ void RunRandomMix()
 		}
 	}
 
-	g_iMixState = STATE_NONE;
 	Run_OnMixTeamEnd();
+
+	g_iMixState = STATE_NONE;
 }
 
 /**
@@ -732,7 +760,7 @@ public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iInd
 				}
 
 				case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: {
-					SetClientTeam(GetClientBySteamId(sSelectedSteamId), g_iMixState == STATE_PICK_TEAM_FIRST ? TEAM_SPECTATOR : TEAM_INFECTED);
+					SetClientTeam(GetClientBySteamId(sSelectedSteamId), g_iMixState == STATE_PICK_TEAM_FIRST ? TEAM_SURVIVOR : TEAM_INFECTED);
 				}
 			}
 		}

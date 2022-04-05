@@ -116,13 +116,7 @@ public void OnClientDisconnect(int iClient)
     {
 		CPrintToChatAll("%t", "CHAT_CLIENT_LEAVE", iClient);
 
-		Run_OnMixTeamEnd();
-
-		if (g_hNextStepTimer != INVALID_HANDLE) {
-			KillTimer(g_hNextStepTimer);
-		}
-
-		g_iMixState = STATE_NONE;
+		CancelMixTeam();
     }
 }
 

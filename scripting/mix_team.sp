@@ -542,6 +542,11 @@ void RunRandomMix()
 	int iTotal = g_iPreviousCount[TEAM_SURVIVOR] + g_iPreviousCount[TEAM_INFECTED];
 	int iTeamSize = GetConVarInt(g_hSurvivorLimit);
 
+	if (iTotal <= 3) {
+		Run_OnMixTeamEnd();
+		g_iMixState = STATE_NONE;
+	}
+
 	if (iTotal < (2 * iTeamSize))
 	{
 		int tmpDif = g_iPreviousCount[TEAM_SURVIVOR] - g_iPreviousCount[TEAM_INFECTED];

@@ -1,0 +1,101 @@
+"Phrases"
+{
+	"CHAT_ALREADY_MIX_TEAM"
+	{
+		"en"			"{olive}Mix already running"
+		"ru"			"{olive}Микс уже запущен"
+	}
+
+	"CHAT_BAD_ARGUMENT"
+	{
+		"#format"		"{1:s}"
+		"en"			"{olive}Bad argument {1} for mix. Use: {default}!mix [random|capitan]"
+		"ru"			"{olive}Плохой аргумент {1} для микса. Используйте: {default}!mix [random|capitan]"
+	}
+	
+	"CHAT_NO_ARGUMENT"
+	{
+		"en"			"{olive}No arguments for mix. Use: {default}!mix [random|capitan]"
+		"ru"			"{olive}Не выбран тип микса. Используйте: {default}!mix [random|capitan]"
+	}
+
+	"CHAT_CANT_CHAGNE_TEAM"
+	{
+		"en"			"{olive}You cannot change the team during the mix"
+		"ru"			"{olive}Нельзя менять команду во время микса"
+	}
+
+	"CHAT_BAD_TEAM_SIZE"
+	{
+		"en"			"{olive}There are not enough players in the game. {default}Cancel mix"
+		"ru"			"{olive}В команде недостаточно игроков. {default}Отмена микса"
+	}
+
+	"CHAT_LEFT_READYUP"
+	{
+		"en"			"Vote didnot pass before you left ready-up"
+		"ru"			"Доступно {olive}только во время ReadyUp"
+	}
+
+	"CHAT_COULDOWN"
+	{
+		"#format"		"{1:d}"
+		"en"			"{olive}A vote cannot be called at this moment, try again in a {1} second"
+		"ru"			"{olive}Сейчас голосование недоступно. Подождите {default}{1} сек"
+	}
+
+	"CHAT_ROUND_LIVE"
+	{
+		"en"			"{olive}The round has already begun"
+		"ru"			"{olive}Раунд уже начался"
+	}
+
+	"CHAT_CLIENT_LEAVE"
+	{
+		"#format"		"{1:N}"
+		"en"			"{olive}Mix member {1} left. {default}Cancel mix"
+		"ru"			"{olive}Участник микса {1} вышел. {default}Отмена микса"
+	}
+
+	"VOTE_TITLE_RANDOM"
+	{
+		"en"			"Start command mix randomly"
+		"ru"			"Начать микс команд случайным образом"
+	}
+
+	"VOTE_TITLE_CAPITAN"
+	{
+		"en"			"Start mix with captains"
+		"ru"			"Начать микс с участием капитанов"
+	}
+
+	"VOTE_PASS_RANDOM"
+	{
+		"en"			"Random command mixing in progress"
+		"ru"			"Выполняется случайный микс команд"
+	}
+
+	"VOTE_PASS_CAPITAN"
+	{
+		"en"			"Team mixing with captains in progress"
+		"ru"			"Выполняется микс команд с участием капитанов"
+	}
+
+	"MENU_TITLE_FIRST_CAPITAN"
+	{
+		"en"			"Choose a first team captain"
+		"ru"			"Выберите первого капитана"
+	}
+
+	"MENU_TITLE_SECOND_CAPITAN"
+	{
+		"en"			"Choose a second team captain"
+		"ru"			"Выберите второго капитана"
+	}
+
+	"MENU_TITLE_PICK_TEAMS"
+	{
+		"en"			"Choose an ally"
+		"ru"			"Выберите второго капитана"
+	}
+}

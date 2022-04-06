@@ -146,7 +146,7 @@ public void OnClientPutInServer(int iClient)
 void Run_OnMixTeamStart() 
 {
 	if (g_bReadyUpAvailable) {
-		ToggleReadyPanelAll(false);
+		ToggleReadyPanel(false);
 	}
 
 	Forward_OnMixTeamStart();
@@ -180,7 +180,7 @@ void CancelMixTeam()
 void Run_OnMixTeamEnd()
 {
 	if (g_bReadyUpAvailable) {
-		ToggleReadyPanelAll(true);
+		ToggleReadyPanel(true);
 	}
 
 	Forward_OnMixTeamEnd();
@@ -964,7 +964,7 @@ void CheckGameMode()
  */
 void InitPlayers() 
 {
-	g_hPlayers.steamId = new ArrayList(MAX_PLAYER_STEAMID_LENGTH);
+	g_hPlayers.steamId = new ArrayList(ByteCountToCells(MAX_PLAYER_STEAMID_LENGTH));
 	g_hPlayers.team = new ArrayList();
 	g_hPlayers.status = new ArrayList();
 	g_hPlayers.vote = new ArrayList();
@@ -1153,22 +1153,6 @@ int GetInGameClientCount()
 	}
 
 	return iCount;
-}
-
-/**
- * Sets the panel mode to readyup for everyone.
- * 
- * @param bShow     Param description
- * @noreturn
- */
-void ToggleReadyPanelAll(bool bShow)
-{
-    for (int iClient = 1; iClient <= MaxClients; iClient++) 
-    {
-        if (IS_REAL_CLIENT(iClient) && IsClientInPlayers(iClient) >= 0) {
-            ToggleReadyPanel(bShow, iClient);
-        }  
-    }
 }
 
 /**

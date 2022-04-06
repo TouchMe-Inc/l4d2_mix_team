@@ -623,7 +623,7 @@ void RunRandomMix()
 			SetClientTeam(g_iPreviousTeams[iTeam][iClient], iTeam);
 		}
 	}
-	
+
 	g_iMixState = STATE_NONE;
 }
 
@@ -719,7 +719,7 @@ bool AddMenuItems()
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
-		if (IS_SPECTATOR(iClient) && IsClientInPlayers(iClient)) 
+		if (IS_SPECTATOR(iClient) && IsClientInPlayers(iClient) >= 0) 
 		{
 			GetClientAuthId(iClient, AuthId_SteamID64, steamId, sizeof(steamId));
 			GetClientName(iClient, name, sizeof(name));

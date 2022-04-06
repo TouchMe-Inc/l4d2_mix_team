@@ -119,9 +119,8 @@ public void OnClientDisconnect(int iClient)
 {
     if (IsMixTeam() && IsClientInPlayers(iClient) >= 0)
     {
-		CPrintToChatAll("%t", "CHAT_CLIENT_LEAVE", iClient);
-
 		CancelMixTeam();
+		CPrintToChatAll("%t", "CHAT_CLIENT_LEAVE", iClient);
     }
 }
 
@@ -159,17 +158,13 @@ void Run_OnMixTeamStart()
  */
 void CancelMixTeam()
 {
-	if (g_hNextStepTimer != INVALID_HANDLE) 
-	{
-		KillTimer(g_hNextStepTimer);
-		g_hNextStepTimer = INVALID_HANDLE;
-	}
-
 	Run_OnMixTeamEnd();
 
 	g_iMixState = STATE_NONE;
 
 	g_hMenu.Cancel();
+
+	delete g_hNextStepTimer;
 }
 
 /**
@@ -319,6 +314,14 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 {
 	if (!g_bReadyUpAvailable) {
 		g_bRoundIsLive = false;
+	}
+
+	g_iMixState = STATE_NONE;
+
+	if (g_hNextStepTimer != INVALID_HANDLE) 
+	{
+		KillTimer(g_hNextStepTimer);
+		g_hNextStepTimer = INVALID_HANDLE;
 	}
 }
 
@@ -660,7 +663,7 @@ void RunCapitanMix()
 	// set all players to spec
 	SetAllClientSpectator();
 
-	g_hNextStepTimer = CreateTimer(1.0, NextStepTimer); 
+	g_hNextStepTimer = CreateTimer(0.1, NextStepTimer); 
 }
 
 /**
@@ -849,14 +852,14 @@ public Action NextStepTimer(Handle timer)
 			// get players for capitan
 			if (InitMenu())
 			{
-				if (AddMenuItems()) 
+				if (AddMenuItems())
 				{
 					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? 
 						FindClientByStatus(STATE_PICK_TEAM_FIRST) : FindClientByStatus(STATE_PICK_TEAM_SECOND);
 					g_hMenu.Display(iCapitan, 1);
 				} else {
 					g_iMixState = STATE_NONE;
-				}	
+				}
 			}
 
 			// rebuild menu (every second)
@@ -985,6 +988,8 @@ void ClearPlayers()
 	g_hPlayers.team.Clear();
 	g_hPlayers.status.Clear();
 	g_hPlayers.vote.Clear();
+
+	g_iPlayers = 0;
 }
 
 /**
@@ -1142,7 +1147,7 @@ void ClearAllVotePlayers()
 /**
  * Returns the number of players in the game.
  * 
- * @return     Client count
+ * @return             Client count
  */
 int GetInGameClientCount() 
 {

@@ -383,19 +383,27 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 		char sArg[32];
 		GetCmdArg(1, sArg, sizeof(sArg));
 		
-		if (StrEqual(sArg, CHAT_ARG_RANDOM)) {
+		int iTotal = GetInGameClientCount();
+		int iTeamSize = GetConVarInt(g_hSurvivorLimit);
+
+		if (StrEqual(sArg, CHAT_ARG_RANDOM)) 
+		{
+			if (iTotal < iTeamSize) 
+			{
+				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE");
+				return Plugin_Continue;
+			}
+
 			g_iMixType = TYPE_RANDOM;
 		} 
 		else if (StrEqual(sArg, CHAT_ARG_CAPITAN)) 
 		{
-			int iTotal = GetInGameClientCount();
-			int iTeamSize = GetConVarInt(g_hSurvivorLimit);
-
 			if (iTotal < (2 * iTeamSize)) 
 			{
 				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE");
 				return Plugin_Continue;
 			}
+
 			g_iMixType = TYPE_CAPITAN;
 		} else {
 			CPrintToChat(iClient, "%t", "CHAT_BAD_ARGUMENT", sArg);
@@ -527,8 +535,6 @@ void RunRandomMix()
 {
 	g_iMixState = STATE_RUNNING;
 
-	Run_OnMixTeamStart();
-
 	// save current player / team setup
 	int g_iPreviousCount[4];
 	int g_iPreviousTeams[4][MAXPLAYERS + 1];
@@ -549,8 +555,7 @@ void RunRandomMix()
 
 	if (iTotal < iTeamSize) 
 	{
-		// To do nothing
-		Run_OnMixTeamEnd();
+		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
 		g_iMixState = STATE_NONE;
 	}
 
@@ -618,9 +623,7 @@ void RunRandomMix()
 			SetClientTeam(g_iPreviousTeams[iTeam][iClient], iTeam);
 		}
 	}
-
-	Run_OnMixTeamEnd();
-
+	
 	g_iMixState = STATE_NONE;
 }
 
@@ -638,8 +641,8 @@ void RunCapitanMix()
 
 	if (iTotal < (2 * iTeamSize)) 
 	{
-		g_iMixState = STATE_NONE;
 		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
+		g_iMixState = STATE_NONE;
 		return;
 	}
 
@@ -949,7 +952,7 @@ bool IsMixTeam() {
  */
 void CheckGameMode() 
 {
-	char sGameMode[32];
+	char sGameMode[16];
 	GetConVarString(g_hGameMode, sGameMode, sizeof(sGameMode));
 
 	if (StrContains(sGameMode, "coop", false) != -1 || StrContains(sGameMode, "survival", false) != -1) {

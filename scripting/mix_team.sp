@@ -22,9 +22,6 @@ public Plugin myinfo =
 
 #define TIMER_VOTE_HIDE         15
 
-#define MAX_MENU_TITLE_LENGTH   64
-#define MAX_VOTE_MESSAGE_LENGTH 128
-
 #define TEAM_SPECTATOR          1
 #define TEAM_SURVIVOR           2 
 #define TEAM_INFECTED           3
@@ -54,16 +51,24 @@ public Plugin myinfo =
 #define CHAT_ARG_RANDOM         "random"
 #define CHAT_ARG_CAPITAN        "capitan"
 
+#define MAX_MENU_TITLE_LENGTH   64
+#define MAX_VOTE_MESSAGE_LENGTH 128
+#define MAX_PLAYER_STEAMID_LENGTH 32
 
-enum struct Player
+
+enum struct Players
 {
-	char steamId[32];
-	int team;
-	int status;
-	int vote;
+	ArrayList steamId;
+	ArrayList team;
+	ArrayList status;
+	ArrayList vote;
 }
 
-ArrayList g_hPlayers = null;
+Players 
+	g_hPlayers;
+
+int 
+	g_iPlayers = 0;
 
 int
 	g_iMixState = STATE_NONE,
@@ -542,7 +547,9 @@ void RunRandomMix()
 	int iTotal = g_iPreviousCount[TEAM_SURVIVOR] + g_iPreviousCount[TEAM_INFECTED];
 	int iTeamSize = GetConVarInt(g_hSurvivorLimit);
 
-	if (iTotal <= 3) {
+	if (iTotal < iTeamSize) 
+	{
+		// To do nothing
 		Run_OnMixTeamEnd();
 		g_iMixState = STATE_NONE;
 	}
@@ -842,7 +849,7 @@ public Action NextStepTimer(Handle timer)
 				if (AddMenuItems()) 
 				{
 					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? 
-						GetClientByStatus(STATE_PICK_TEAM_FIRST) : GetClientByStatus(STATE_PICK_TEAM_SECOND);
+						FindClientByStatus(STATE_PICK_TEAM_FIRST) : FindClientByStatus(STATE_PICK_TEAM_SECOND);
 					g_hMenu.Display(iCapitan, 1);
 				} else {
 					g_iMixState = STATE_NONE;
@@ -955,8 +962,12 @@ void CheckGameMode()
  * 
  * @noreturn
  */
-void InitPlayers() {
-	g_hPlayers = new ArrayList(sizeof(Player));
+void InitPlayers() 
+{
+	g_hPlayers.steamId = new ArrayList(MAX_PLAYER_STEAMID_LENGTH);
+	g_hPlayers.team = new ArrayList();
+	g_hPlayers.status = new ArrayList();
+	g_hPlayers.vote = new ArrayList();
 }
 
 /**
@@ -965,8 +976,12 @@ void InitPlayers() {
  * @param iClient     Client index
  * @noreturn
  */
-void ClearPlayers() {
-	g_hPlayers.Clear();
+void ClearPlayers() 
+{
+	g_hPlayers.steamId.Clear();
+	g_hPlayers.team.Clear();
+	g_hPlayers.status.Clear();
+	g_hPlayers.vote.Clear();
 }
 
 /**
@@ -977,17 +992,15 @@ void ClearPlayers() {
  */
 void PushPlayer(int iClient) 
 {
-	Player player;
+	char sSteamId[MAX_PLAYER_STEAMID_LENGTH];
+	GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, MAX_PLAYER_STEAMID_LENGTH);
 
-	char sAuthId[32];
-	GetClientAuthId(iClient, AuthId_SteamID64, sAuthId, sizeof(sAuthId));
+	g_hPlayers.steamId.PushString(sSteamId);
+	g_hPlayers.team.Push(GetClientTeam(iClient));
+	g_hPlayers.status.Push(STATUS_NONE);
+	g_hPlayers.vote.Push(0);
 
-	player.steamId = sAuthId;
-	player.team = GetClientTeam(iClient);
-	player.status = STATUS_NONE;
-	player.vote = 0;
-
-	g_hPlayers.PushArray(player);
+	g_iPlayers++;
 }
 
 /**
@@ -998,20 +1011,10 @@ void PushPlayer(int iClient)
  */
 int IsClientInPlayers(int iClient)
 {
-	Player player;
-	char sSteamId[32];
-
-	for (int i = 0; i < g_hPlayers.Length; i++)
-	{
-		g_hPlayers.GetArray(i, player);
-		GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, sizeof(sSteamId));
-
-		if (StrEqual(player.steamId, sSteamId)) {
-			return i;
-		}
-	}
+	char sSteamId[MAX_PLAYER_STEAMID_LENGTH];
+	GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, MAX_PLAYER_STEAMID_LENGTH);
 	
-	return -1;
+	return IsSteamIdInPlayers(sSteamId);
 }
 
 /**
@@ -1022,14 +1025,14 @@ int IsClientInPlayers(int iClient)
  */
 int IsSteamIdInPlayers(const char[] sSteamId)
 {
-	Player player;
+	char sSteamIdTmp[MAX_PLAYER_STEAMID_LENGTH];
 
-	for (int i = 0; i < g_hPlayers.Length; i++)
+	for (int iIndex = 0; iIndex < g_iPlayers; iIndex++)
 	{
-		g_hPlayers.GetArray(i, player);
+		g_hPlayers.steamId.GetString(iIndex, sSteamIdTmp, MAX_PLAYER_STEAMID_LENGTH);
 
-		if (StrEqual(player.steamId, sSteamId)) {
-			return i;
+		if (StrEqual(sSteamIdTmp, sSteamId)) {
+			return iIndex;
 		}
 	}
 	
@@ -1044,13 +1047,8 @@ int IsSteamIdInPlayers(const char[] sSteamId)
  */
 void AddVotePlayer(int iIndex)
 {
-	Player player;
-
-	g_hPlayers.GetArray(iIndex, player);
-
-	player.vote++;
-
-	g_hPlayers.SetArray(iIndex, player);
+	int vote = g_hPlayers.vote.Get(iIndex);
+	g_hPlayers.vote.Set(iIndex, ++vote);
 }
 
 /**
@@ -1060,17 +1058,16 @@ void AddVotePlayer(int iIndex)
  */
 int GetMaxVotePlayer()
 {
-	Player player;
-	int iMax = 0;
+	int iMaxVote = 0;
 	int iMaxIndex = 0; 
 
-	for (int i = 0; i < g_hPlayers.Length; i++)
+	for (int iIndex = 0, vote; iIndex < g_iPlayers; iIndex++)
 	{
-		g_hPlayers.GetArray(i, player);
+		vote = g_hPlayers.vote.Get(iIndex);
 
-		if (player.vote > iMax) {
-			iMax = player.vote;
-			iMaxIndex = i;
+		if (vote > iMaxVote) {
+			iMaxVote = vote;
+			iMaxIndex = iIndex;
 		}
 	}
 	
@@ -1083,15 +1080,8 @@ int GetMaxVotePlayer()
  * @param iIndex     Item index
  * @noreturn
  */
-void ClearVotePlayer(int iIndex)
-{
-	Player player;
-
-	g_hPlayers.GetArray(iIndex, player);
-
-	player.vote = 0;
-
-	g_hPlayers.SetArray(iIndex, player);
+void ClearVotePlayer(int iIndex) {
+	g_hPlayers.vote.Set(iIndex, 0);
 }
 
 /**
@@ -1101,15 +1091,8 @@ void ClearVotePlayer(int iIndex)
  * @param iStatus     Player status
  * @noreturn
  */
-void SetPlayerStatus(int iIndex, int iStatus)
-{
-	Player player;
-
-	g_hPlayers.GetArray(iIndex, player);
-
-	player.status = iStatus;
-
-	g_hPlayers.SetArray(iIndex, player);
+void SetPlayerStatus(int iIndex, int iStatus) {
+	g_hPlayers.status.Set(iIndex, iStatus);
 }
 
 /**
@@ -1118,10 +1101,8 @@ void SetPlayerStatus(int iIndex, int iStatus)
  * @param iStatus     Player status
  * @return            Client index
  */
-int GetClientByStatus(int iStatus)
+int FindClientByStatus(int iStatus)
 {
-	Player player;
-
 	for (int iClient = 1, iIndex; iClient <= MaxClients; iClient++) 
 	{
 		if (!IS_REAL_CLIENT(iClient)) {
@@ -1130,10 +1111,9 @@ int GetClientByStatus(int iStatus)
 
 		iIndex = IsClientInPlayers(iClient);
 
-		if (iIndex >= 0) {
-			g_hPlayers.GetArray(iIndex, player);
-
-			if (player.status == iStatus) {
+		if (iIndex >= 0) 
+		{
+			if (g_hPlayers.status.Get(iIndex) == iStatus) {
 				return iClient;
 			}
 		}
@@ -1150,9 +1130,9 @@ int GetClientByStatus(int iStatus)
  */
 void ClearAllVotePlayers()
 {
-	for (int i = 0; i < g_hPlayers.Length; i++)
+	for (int iIndex = 0; iIndex < g_iPlayers; iIndex++)
 	{
-		ClearVotePlayer(i);
+		ClearVotePlayer(iIndex);
 	}
 }
 
@@ -1199,11 +1179,11 @@ void ToggleReadyPanelAll(bool bShow)
  */
 int GetClientBySteamId(const char[] sSteamId) 
 {
-	char sSteamIdTmp[32];
+	char sSteamIdTmp[MAX_PLAYER_STEAMID_LENGTH];
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
-		GetClientAuthId(iClient, AuthId_SteamID64, sSteamIdTmp, sizeof(sSteamIdTmp));
+		GetClientAuthId(iClient, AuthId_SteamID64, sSteamIdTmp, MAX_PLAYER_STEAMID_LENGTH);
 		if (StrEqual(sSteamIdTmp, sSteamId)) {
 			return iClient;
 		}  

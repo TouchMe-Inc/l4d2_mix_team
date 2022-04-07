@@ -859,7 +859,7 @@ public Action NextStepTimer(Handle timer)
 				if (AddMenuItems())
 				{
 					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? 
-						FindClientByStatus(STATE_PICK_TEAM_FIRST) : FindClientByStatus(STATE_PICK_TEAM_SECOND);
+						FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
 					
 					g_hMenu.Display(iCapitan, 1);
 

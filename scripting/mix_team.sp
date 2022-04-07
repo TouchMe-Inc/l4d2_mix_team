@@ -309,6 +309,8 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	if (!g_bReadyUpAvailable) {
 		g_bRoundIsLive = false;
 	}
+
+	g_iMixState = STATE_NONE;
 }
 
 /**
@@ -387,11 +389,11 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 		} 
 		else if (StrEqual(sArg, CHAT_ARG_CAPITAN)) 
 		{
-			if (iTotal < (2 * iTeamSize)) 
-			{
-				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE");
-				return Plugin_Continue;
-			}
+			// if (iTotal < (2 * iTeamSize)) 
+			// {
+			// 	CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE");
+			// 	return Plugin_Continue;
+			// }
 
 			g_iMixType = TYPE_CAPITAN;
 		} else {
@@ -501,7 +503,8 @@ public void HandleVoteResult(Handle hVote, int iVotes, int num_clients, const in
 
 		switch(g_iMixType) 
 		{
-			case TYPE_RANDOM: {
+			case TYPE_RANDOM: 
+			{
 				if (g_bReadyUpAvailable) {
 					ToggleReadyPanel(true);
 				}
@@ -633,15 +636,15 @@ void RunCapitanMix()
 {
 	g_iMixState = STATE_RUNNING;
 
-	int iTotal = GetInGameClientCount();
-	int iTeamSize = GetConVarInt(g_hSurvivorLimit);
+	// int iTotal = GetInGameClientCount();
+	// int iTeamSize = GetConVarInt(g_hSurvivorLimit);
 
-	if (iTotal < (2 * iTeamSize)) 
-	{
-		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
-		g_iMixState = STATE_NONE;
-		return;
-	}
+	// if (iTotal < (2 * iTeamSize))
+	// {
+	// 	CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
+	// 	g_iMixState = STATE_NONE;
+	// 	return;
+	// }
 
 	ClearPlayers();
 

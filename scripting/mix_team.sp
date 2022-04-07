@@ -37,12 +37,11 @@ public Plugin myinfo =
 #define TYPE_CAPITAN            2
 
 #define STATE_NONE              0
-#define STATE_VOTING            1
-#define STATE_RUNNING           2
-#define STATE_FIRST_CAPITAN     3
-#define STATE_SECOND_CAPITAN    4
-#define STATE_PICK_TEAM_FIRST   5
-#define STATE_PICK_TEAM_SECOND  6
+#define STATE_RUNNING           1
+#define STATE_FIRST_CAPITAN     2
+#define STATE_SECOND_CAPITAN    3
+#define STATE_PICK_TEAM_FIRST   4
+#define STATE_PICK_TEAM_SECOND  5
 
 #define STATUS_NONE             0
 #define STATUS_FIRST_CAPITAN    1
@@ -310,8 +309,6 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	if (!g_bReadyUpAvailable) {
 		g_bRoundIsLive = false;
 	}
-
-	g_iMixState = STATE_NONE;
 }
 
 /**
@@ -420,8 +417,6 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
  */
 public void StartVote(int iClient) 
 {
-	g_iMixState = STATE_VOTING;
-
 	// get all non-spectating players
 	int iNumPlayers;
 	int[] iPlayers = new int[MaxClients];
@@ -448,10 +443,6 @@ public void StartVote(int iClient)
 	}
 	
 	SetBuiltinVoteArgument(g_hVote, sVoteTitle);
-
-	if (g_bReadyUpAvailable) {
-		ToggleReadyPanel(false);
-	}
 
 	// show vote
 	DisplayBuiltinVote(g_hVote, iPlayers, iNumPlayers, TIMER_VOTE_HIDE);
@@ -562,6 +553,7 @@ void RunRandomMix()
 	{
 		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
 		g_iMixState = STATE_NONE;
+		return;
 	}
 
 	if (iTotal < (2 * iTeamSize))

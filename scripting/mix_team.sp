@@ -142,20 +142,6 @@ public void OnClientPutInServer(int iClient)
  * 
  * @noreturn
  */
-void Run_OnMixTeamStart() 
-{
-	if (g_bReadyUpAvailable) {
-		ToggleReadyPanel(false);
-	}
-
-	Forward_OnMixTeamStart();
-}
-
-/**
- * Fragment
- * 
- * @noreturn
- */
 void CancelMixTeam()
 {
 	Run_OnMixTeamEnd();
@@ -171,11 +157,37 @@ void CancelMixTeam()
  * Fragment
  * 
  * @noreturn
+ */
+void Run_OnMixTeamStart() 
+{
+	if (g_bReadyUpAvailable && IsInReady()) 
+	{
+		for (int iClient = 1; iClient <= MaxClients; iClient++) 
+		{
+			if (IS_REAL_CLIENT(iClient) && IsClientInPlayers(iClient) >= 0) {
+				ToggleReadyPanel(false, iClient);
+			}
+		}
+	}
+
+	Forward_OnMixTeamStart();
+}
+
+/**
+ * Fragment
+ * 
+ * @noreturn
 */
 void Run_OnMixTeamEnd()
 {
-	if (g_bReadyUpAvailable) {
-		ToggleReadyPanel(true);
+	if (g_bReadyUpAvailable && IsInReady()) 
+	{
+		for (int iClient = 1; iClient <= MaxClients; iClient++) 
+		{
+			if (IS_REAL_CLIENT(iClient) && IsClientInPlayers(iClient) >= 0) {
+				ToggleReadyPanel(true, iClient);
+			}
+		}
 	}
 
 	Forward_OnMixTeamEnd();
@@ -221,7 +233,7 @@ void InitCmds()
 }
 
 /**
- * Description
+ * Called when a console variable's value is changed.
  * 
  * @param convar       Handle to the convar that was changed
  * @param oldValue     String containing the value of the convar before it was changed

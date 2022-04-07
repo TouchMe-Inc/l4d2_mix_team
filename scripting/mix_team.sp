@@ -5,7 +5,7 @@
 
 #undef REQUIRE_PLUGIN
 #include <readyup>
-#define LIB_READY              "ready" 
+#define LIB_READY              "readyup" 
 
 #pragma semicolon              1
 #pragma newdecls               required
@@ -180,7 +180,7 @@ void Run_OnMixTeamEnd()
  * 
  * @noreturn
  */
-void InitTranslations() 
+void InitTranslations()
 {
 	char sPath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, sPath, PLATFORM_MAX_PATH, "translations/mix_team.phrases.txt");
@@ -389,11 +389,11 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 		} 
 		else if (StrEqual(sArg, CHAT_ARG_CAPITAN)) 
 		{
-			// if (iTotal < (2 * iTeamSize)) 
-			// {
-			// 	CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE");
-			// 	return Plugin_Continue;
-			// }
+			if (iTotal < (2 * iTeamSize)) 
+			{
+				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE");
+				return Plugin_Continue;
+			}
 
 			g_iMixType = TYPE_CAPITAN;
 		} else {
@@ -636,15 +636,15 @@ void RunCapitanMix()
 {
 	g_iMixState = STATE_RUNNING;
 
-	// int iTotal = GetInGameClientCount();
-	// int iTeamSize = GetConVarInt(g_hSurvivorLimit);
+	int iTotal = GetInGameClientCount();
+	int iTeamSize = GetConVarInt(g_hSurvivorLimit);
 
-	// if (iTotal < (2 * iTeamSize))
-	// {
-	// 	CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
-	// 	g_iMixState = STATE_NONE;
-	// 	return;
-	// }
+	if (iTotal < (2 * iTeamSize))
+	{
+		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
+		g_iMixState = STATE_NONE;
+		return;
+	}
 
 	ClearPlayers();
 
@@ -827,19 +827,22 @@ public Action NextStepTimer(Handle timer)
 
 		case STATE_SECOND_CAPITAN: 
 		{
+			int iFirstCapitanClient = FindClientByStatus(STATUS_FIRST_CAPITAN);
+
 			// set first capitan
 			int iSecondCapitanIndex = GetMaxVotePlayer();
 			SetPlayerStatus(iSecondCapitanIndex, STATUS_SECOND_CAPITAN);
 
+			// if first capitan it's second capitan (lol)
 			int iSecondCapitanClient = FindClientByStatus(STATUS_SECOND_CAPITAN);
-			if (FindClientByStatus(STATUS_FIRST_CAPITAN) == iSecondCapitanClient) 
+			if (iFirstCapitanClient == iSecondCapitanClient) 
 			{
 				Run_OnMixTeamEnd();
 				g_iMixState = STATE_NONE;
 				return;
 			}
 
-			SetClientTeam(FindClientByStatus(STATUS_SECOND_CAPITAN), TEAM_INFECTED);
+			SetClientTeam(iSecondCapitanClient, TEAM_INFECTED);
 
 			// current step
 			g_iMixState = (GetURandomInt() & 1) ? STATE_PICK_TEAM_FIRST : STATE_PICK_TEAM_SECOND;

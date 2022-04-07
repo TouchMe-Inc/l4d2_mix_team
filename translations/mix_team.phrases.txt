@@ -96,6 +96,6 @@
 	"MENU_TITLE_PICK_TEAMS"
 	{
 		"en"			"Choose an ally"
-		"ru"			"Выберите второго капитана"
+		"ru"			"Выберите тиммейта"
 	}
 }

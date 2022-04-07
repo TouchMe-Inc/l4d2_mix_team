@@ -82,8 +82,7 @@ Menu
 	g_hMenu = null;
 
 Handle
-	g_hVote = INVALID_HANDLE,
-	g_hNextStepTimer = INVALID_HANDLE;
+	g_hVote = INVALID_HANDLE;
 
 Handle
 	g_hOnMixTeamStart = INVALID_HANDLE,
@@ -147,10 +146,6 @@ void CancelMixTeam()
 	Run_OnMixTeamEnd();
 
 	g_iMixState = STATE_NONE;
-
-	g_hMenu.Cancel();
-
-	delete g_hNextStepTimer;
 }
 
 /**
@@ -160,14 +155,8 @@ void CancelMixTeam()
  */
 void Run_OnMixTeamStart() 
 {
-	if (g_bReadyUpAvailable && IsInReady()) 
-	{
-		for (int iClient = 1; iClient <= MaxClients; iClient++) 
-		{
-			if (IS_REAL_CLIENT(iClient) && IsClientInPlayers(iClient) >= 0) {
-				ToggleReadyPanel(false, iClient);
-			}
-		}
+	if (g_bReadyUpAvailable) {
+		ToggleReadyPanel(false);
 	}
 
 	Forward_OnMixTeamStart();
@@ -180,14 +169,8 @@ void Run_OnMixTeamStart()
 */
 void Run_OnMixTeamEnd()
 {
-	if (g_bReadyUpAvailable && IsInReady()) 
-	{
-		for (int iClient = 1; iClient <= MaxClients; iClient++) 
-		{
-			if (IS_REAL_CLIENT(iClient) && IsClientInPlayers(iClient) >= 0) {
-				ToggleReadyPanel(true, iClient);
-			}
-		}
+	if (g_bReadyUpAvailable) {
+		ToggleReadyPanel(true);
 	}
 
 	Forward_OnMixTeamEnd();
@@ -329,10 +312,6 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	}
 
 	g_iMixState = STATE_NONE;
-
-	g_hMenu.Cancel();
-
-	delete g_hNextStepTimer;
 }
 
 /**
@@ -425,7 +404,7 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 
 		StartVote(iClient);
 
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 	
 	CPrintToChat(iClient, "%t", "CHAT_NO_ARGUMENT");
@@ -441,6 +420,8 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
  */
 public void StartVote(int iClient) 
 {
+	g_iMixState = STATE_VOTING;
+
 	// get all non-spectating players
 	int iNumPlayers;
 	int[] iPlayers = new int[MaxClients];
@@ -468,11 +449,13 @@ public void StartVote(int iClient)
 	
 	SetBuiltinVoteArgument(g_hVote, sVoteTitle);
 
+	if (g_bReadyUpAvailable) {
+		ToggleReadyPanel(false);
+	}
+
 	// show vote
 	DisplayBuiltinVote(g_hVote, iPlayers, iNumPlayers, TIMER_VOTE_HIDE);
 	FakeClientCommand(iClient, "Vote Yes");
-
-	g_iMixState = STATE_VOTING;
 }
 
 /**
@@ -525,16 +508,25 @@ public void HandleVoteResult(Handle hVote, int iVotes, int num_clients, const in
 
 		DisplayBuiltinVotePass(hVote, sVoteMsg);
 
-		if (g_iMixType == TYPE_RANDOM) {
-			RunRandomMix();
-		} else if (g_iMixType == TYPE_CAPITAN) {
-			RunCapitanMix();
+		switch(g_iMixType) 
+		{
+			case TYPE_RANDOM: {
+				if (g_bReadyUpAvailable) {
+					ToggleReadyPanel(true);
+				}
+
+				RunRandomMix();
+			}
+
+			case TYPE_CAPITAN: {
+				RunCapitanMix();
+			}
 		}
 
 		return;
 	}
 
-	// vote Failed
+	// vote failed
 	DisplayBuiltinVoteFail(hVote, BuiltinVoteFail_Loses);
 	return;
 }
@@ -673,7 +665,7 @@ void RunCapitanMix()
 	// set all players to spec
 	SetAllClientSpectator();
 
-	g_hNextStepTimer = CreateTimer(0.1, NextStepTimer); 
+	CreateTimer(0.1, NextStepTimer); 
 }
 
 /**
@@ -683,12 +675,11 @@ void RunCapitanMix()
   */
 public bool InitMenu()
 {
-	g_hMenu = new Menu(HandleClickMenu);
-
 	if (!IsMixTeam()) {
-		CloseHandle(g_hMenu);
 		return false;
 	}
+
+	g_hMenu = new Menu(HandleClickMenu);
 
 	char sMenuTitle[MAX_MENU_TITLE_LENGTH];
 
@@ -788,13 +779,13 @@ public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iInd
 }
 
 /**
- * Аive circles of hell.
+ * Five circles of hell.
  */
 public Action NextStepTimer(Handle timer)
 {
 	switch(g_iMixState)
 	{
-		case STATE_RUNNING: 
+		case STATE_RUNNING:
 		{
 			Run_OnMixTeamStart();
 
@@ -812,7 +803,7 @@ public Action NextStepTimer(Handle timer)
 			}
 
 			// go next step (wait 11 sec)!
-			g_hNextStepTimer = CreateTimer(11.0, NextStepTimer); 
+			CreateTimer(11.0, NextStepTimer); 
 		}
 
 		case STATE_FIRST_CAPITAN: 
@@ -820,7 +811,7 @@ public Action NextStepTimer(Handle timer)
 			// set first capitan
 			int iFirstCapitan = GetMaxVotePlayer();
 			SetPlayerStatus(iFirstCapitan, STATUS_FIRST_CAPITAN);
-			SetClientTeam(iFirstCapitan, TEAM_SURVIVOR);
+			SetClientTeam(FindClientByStatus(STATUS_FIRST_CAPITAN), TEAM_SURVIVOR);
 
 			// current step
 			g_iMixState = STATE_SECOND_CAPITAN;
@@ -836,21 +827,30 @@ public Action NextStepTimer(Handle timer)
 			}
 
 			// go next step (wait 11 sec)!
-			g_hNextStepTimer = CreateTimer(11.0, NextStepTimer); 
+			CreateTimer(11.0, NextStepTimer); 
 		}
 
 		case STATE_SECOND_CAPITAN: 
 		{
 			// set first capitan
-			int iSecondCapitan = GetMaxVotePlayer();
-			SetPlayerStatus(iSecondCapitan, STATUS_SECOND_CAPITAN);
-			SetClientTeam(iSecondCapitan, TEAM_INFECTED);
+			int iSecondCapitanIndex = GetMaxVotePlayer();
+			SetPlayerStatus(iSecondCapitanIndex, STATUS_SECOND_CAPITAN);
+
+			int iSecondCapitanClient = FindClientByStatus(STATUS_SECOND_CAPITAN);
+			if (FindClientByStatus(STATUS_FIRST_CAPITAN) == iSecondCapitanClient) 
+			{
+				Run_OnMixTeamEnd();
+				g_iMixState = STATE_NONE;
+				return;
+			}
+
+			SetClientTeam(FindClientByStatus(STATUS_SECOND_CAPITAN), TEAM_INFECTED);
 
 			// current step
 			g_iMixState = (GetURandomInt() & 1) ? STATE_PICK_TEAM_FIRST : STATE_PICK_TEAM_SECOND;
 
 			// go next step (wait 1 sec)!
-			g_hNextStepTimer = CreateTimer(1.0, NextStepTimer); 
+			CreateTimer(1.0, NextStepTimer); 
 		}
 
 		case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 
@@ -862,18 +862,17 @@ public Action NextStepTimer(Handle timer)
 				{
 					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? 
 						FindClientByStatus(STATE_PICK_TEAM_FIRST) : FindClientByStatus(STATE_PICK_TEAM_SECOND);
+					
 					g_hMenu.Display(iCapitan, 1);
+
+					// rebuild menu (every second)
+					CreateTimer(1.0, NextStepTimer);
 				} else {
+					Run_OnMixTeamEnd();
 					g_iMixState = STATE_NONE;
+					return;
 				}
 			}
-
-			// rebuild menu (every second)
-			g_hNextStepTimer = CreateTimer(1.0, NextStepTimer);
-		}
-
-		case STATE_NONE: {
-			Run_OnMixTeamEnd();
 		}
 	}
 }
@@ -1075,12 +1074,12 @@ int GetMaxVotePlayer()
 	int iMaxVote = 0;
 	int iMaxIndex = 0; 
 
-	for (int iIndex = 0, vote; iIndex < g_iPlayers; iIndex++)
+	for (int iIndex = 0, iVote; iIndex < g_iPlayers; iIndex++)
 	{
-		vote = g_hPlayers.vote.Get(iIndex);
+		iVote = g_hPlayers.vote.Get(iIndex);
 
-		if (vote > iMaxVote) {
-			iMaxVote = vote;
+		if (iVote > iMaxVote) {
+			iMaxVote = iVote;
 			iMaxIndex = iIndex;
 		}
 	}

@@ -330,11 +330,9 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 
 	g_iMixState = STATE_NONE;
 
-	if (g_hNextStepTimer != INVALID_HANDLE) 
-	{
-		KillTimer(g_hNextStepTimer);
-		g_hNextStepTimer = INVALID_HANDLE;
-	}
+	g_hMenu.Cancel();
+
+	delete g_hNextStepTimer;
 }
 
 /**

@@ -686,6 +686,7 @@ public bool InitMenu()
 	g_hMenu = new Menu(HandleClickMenu);
 
 	if (!IsMixTeam()) {
+		CloseHandle(g_hMenu);
 		return false;
 	}
 
@@ -703,11 +704,6 @@ public bool InitMenu()
 
 		case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: {
 			Format(sMenuTitle, MAX_MENU_TITLE_LENGTH, "%t", "MENU_TITLE_PICK_TEAMS");
-		}
-
-		default: {
-			CloseHandle(g_hMenu);
-			return false;
 		}
 	}
 	
@@ -732,7 +728,7 @@ bool AddMenuItems()
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
-		if (IS_SPECTATOR(iClient) && IsClientInPlayers(iClient) >= 0) 
+		if (IS_REAL_CLIENT(iClient) && IS_SPECTATOR(iClient) && IsClientInPlayers(iClient) >= 0) 
 		{
 			GetClientAuthId(iClient, AuthId_SteamID64, steamId, sizeof(steamId));
 			GetClientName(iClient, name, sizeof(name));
@@ -753,7 +749,7 @@ void ShowMenu()
 {
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
-		if (IS_SPECTATOR(iClient) && IsClientInPlayers(iClient) >= 0) {
+		if (IS_REAL_CLIENT(iClient) && IS_SPECTATOR(iClient) && IsClientInPlayers(iClient) >= 0) {
 			g_hMenu.Display(iClient, 10);
 		}  
 	}

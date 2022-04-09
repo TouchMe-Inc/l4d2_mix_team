@@ -215,11 +215,13 @@ void InitCmds()
 {
 	AddCommandListener(Cmd_OnPlayerJoinTeam, "jointeam");
 	RegConsoleCmd("sm_mix", Cmd_MixTeam, "Vote for a team mix.");
-	RegConsoleCmd("sm_mixstop", Cmd_MixTeamStop);
+	RegConsoleCmd("sm_cancelmix", Cmd_CancelMixTeam);
 }
 
-public Action Cmd_MixTeamStop(int iClient, int iArgs) {
-	CancelMixTeam();
+public Action Cmd_CancelMixTeam(int iClient, int iArgs) {
+	if (IsMixTeam() && g_iMixType == TYPE_CAPITAN) {
+		CancelMixTeam();
+	}
 }
 
 /**

@@ -540,12 +540,13 @@ void RunRandomMix()
 
 	for (int iClient = 1, iTeam; iClient <= MaxClients; iClient++)
 	{
-		if (IS_REAL_CLIENT(iClient)) 
-		{
-			iTeam = GetClientTeam(iClient);
-			g_iPreviousTeams[iTeam][g_iPreviousCount[iTeam]] = iClient;
-			g_iPreviousCount[iTeam]++;
+		if (!IS_REAL_CLIENT(iClient)) {
+			continue;
 		}
+
+		iTeam = GetClientTeam(iClient);
+		g_iPreviousTeams[iTeam][g_iPreviousCount[iTeam]] = iClient;
+		g_iPreviousCount[iTeam]++;
 	}
 
 	// if there are uneven players, move one to the other
@@ -650,7 +651,7 @@ void RunCapitanMix()
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
-		if (!IsClientInGame(iClient) || IsFakeClient(iClient) || IS_SPECTATOR(iClient)) { 
+		if (!IS_REAL_CLIENT(iClient) || IS_SPECTATOR(iClient)) { 
 			continue;
 		}
 
@@ -714,13 +715,14 @@ bool AddMenuItems()
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
-		if (IS_REAL_CLIENT(iClient) && IS_SPECTATOR(iClient) && IsClientInPlayers(iClient) >= 0) 
-		{
-			GetClientAuthId(iClient, AuthId_SteamID64, steamId, sizeof(steamId));
-			GetClientName(iClient, name, sizeof(name));
-			g_hMenu.AddItem(steamId, name);
-			iAdded ++;
+		if (!IS_REAL_CLIENT(iClient) || !IS_SPECTATOR(iClient) || IsClientInPlayers(iClient) == -1) {
+			continue;
 		}
+
+		GetClientAuthId(iClient, AuthId_SteamID64, steamId, sizeof(steamId));
+		GetClientName(iClient, name, sizeof(name));
+		g_hMenu.AddItem(steamId, name);
+		iAdded ++;
 	}
 
 	return iAdded > 0;
@@ -735,9 +737,11 @@ void ShowMenu()
 {
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
-		if (IS_REAL_CLIENT(iClient) && IS_SPECTATOR(iClient) && IsClientInPlayers(iClient) >= 0) {
-			g_hMenu.Display(iClient, 10);
-		}  
+		if (!IS_REAL_CLIENT(iClient) || !IS_SPECTATOR(iClient) || IsClientInPlayers(iClient) == -1) {
+			continue;
+		}
+
+		g_hMenu.Display(iClient, 10);
 	}
 }
 
@@ -752,8 +756,8 @@ void ShowMenu()
  */
 public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 {
-	char sSelectedSteamId[32];
-	hMenu.GetItem(iIndex, sSelectedSteamId, sizeof(sSelectedSteamId));
+	char sSelectedSteamId[MAX_PLAYER_STEAMID_LENGTH];
+	hMenu.GetItem(iIndex, sSelectedSteamId, MAX_PLAYER_STEAMID_LENGTH);
 
 	switch (iAction) {
 		case MenuAction_Select: {
@@ -917,10 +921,11 @@ int FindSurvivorBot()
 {
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
-		if (IsClientInGame(iClient) && IsFakeClient(iClient) && IS_SURVIVOR(iClient))
-		{
-			return iClient;
+		if (!IsClientInGame(iClient) || !IsFakeClient(iClient) || !IS_SURVIVOR(iClient)) {
+			continue;
 		}
+
+		return iClient;
 	}
 
 	return -1;
@@ -936,9 +941,11 @@ void SetAllClientSpectator()
 {
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
-		if (IS_REAL_CLIENT(iClient)) { 
-			SetClientTeam(iClient, TEAM_SPECTATOR);
-		} 
+		if (!IS_REAL_CLIENT(iClient)) { 
+			continue;
+		}
+
+		SetClientTeam(iClient, TEAM_SPECTATOR);
 	}
 }
 
@@ -1158,9 +1165,11 @@ int GetInGameClientCount()
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
-		if (IS_REAL_CLIENT(iClient) && !IS_SPECTATOR(iClient)) {
-			iCount++;
+		if (!IS_REAL_CLIENT(iClient) || IS_SPECTATOR(iClient)) {
+			continue;
 		}
+
+		iCount++;
 	}
 
 	return iCount;

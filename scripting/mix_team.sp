@@ -119,6 +119,7 @@ public void OnClientDisconnect(int iClient)
     {
 		CancelMixTeam();
 		CPrintToChatAll("%t", "CHAT_CLIENT_LEAVE", iClient);
+		RollbackPlayers();
     }
 }
 
@@ -145,6 +146,8 @@ void CancelMixTeam()
 	Run_OnMixTeamEnd();
 
 	g_iMixState = STATE_NONE;
+
+	RollbackPlayers();
 }
 
 /**
@@ -212,6 +215,11 @@ void InitCmds()
 {
 	AddCommandListener(Cmd_OnPlayerJoinTeam, "jointeam");
 	RegConsoleCmd("sm_mix", Cmd_MixTeam, "Vote for a team mix.");
+	RegConsoleCmd("sm_mixstop", Cmd_MixTeamStop);
+}
+
+public Action Cmd_MixTeamStop(int iClient, int iArgs) {
+	CancelMixTeam();
 }
 
 /**
@@ -340,7 +348,7 @@ public Action Cmd_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
  * @param iArgs       Number of parameters
  * @return            Plugin_Handled | Plugin_Continue
  */
-public Action Cmd_MixTeam(int iClient, int iArgs) 
+public Action Cmd_MixTeam(int iClient, int iArgs)
 {	
 	if (!IS_VALID_CLIENT(iClient) || IS_SPECTATOR(iClient)) {
 		return Plugin_Handled;
@@ -769,6 +777,9 @@ public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iInd
 
 				case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: {
 					SetClientTeam(GetClientBySteamId(sSelectedSteamId), g_iMixState == STATE_PICK_TEAM_FIRST ? TEAM_SURVIVOR : TEAM_INFECTED);
+
+					// next capitan
+					g_iMixState = g_iMixState == STATE_PICK_TEAM_FIRST ? STATE_PICK_TEAM_SECOND : STATE_PICK_TEAM_FIRST;
 				}
 			}
 		}
@@ -841,8 +852,7 @@ public Action NextStepTimer(Handle timer)
 			int iSecondCapitanClient = FindClientByStatus(STATUS_SECOND_CAPITAN);
 			if (iFirstCapitanClient == iSecondCapitanClient) 
 			{
-				Run_OnMixTeamEnd();
-				g_iMixState = STATE_NONE;
+				CancelMixTeam();
 				return;
 			}
 
@@ -862,8 +872,7 @@ public Action NextStepTimer(Handle timer)
 			{
 				if (AddMenuItems())
 				{
-					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? 
-						FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
+					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
 					
 					g_hMenu.Display(iCapitan, 1);
 
@@ -872,7 +881,6 @@ public Action NextStepTimer(Handle timer)
 				} else {
 					Run_OnMixTeamEnd();
 					g_iMixState = STATE_NONE;
-					return;
 				}
 			}
 		}
@@ -1093,6 +1101,29 @@ int GetMaxVotePlayer()
 }
 
 /**
+ * Returns the index of the player with the most votes.
+ * 
+ * @return           Index with max vote
+ */
+void RollbackPlayers()
+{
+	SetAllClientSpectator();
+
+	for (int iClient = 1, iIndex; iClient <= MaxClients; iClient++) 
+	{
+		if (!IS_REAL_CLIENT(iClient)) {
+			continue;
+		}
+
+		iIndex = IsClientInPlayers(iClient);
+
+		if (iIndex >= 0) {
+			SetClientTeam(iClient, g_hPlayers.team.Get(iIndex));
+		}
+	}
+}
+
+/**
  * Clears the vote for the player.
  * 
  * @param iIndex     Item index
@@ -1129,11 +1160,8 @@ int FindClientByStatus(int iStatus)
 
 		iIndex = IsClientInPlayers(iClient);
 
-		if (iIndex >= 0) 
-		{
-			if (g_hPlayers.status.Get(iIndex) == iStatus) {
+		if (iIndex >= 0 && g_hPlayers.status.Get(iIndex) == iStatus) {
 				return iClient;
-			}
 		}
 	}
 	

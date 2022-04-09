@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "Mix Team",
 	author = "TouchMe", // thx: Tabun [https://github.com/Tabbernaut/], Luckylock [https://github.com/LuckyServ/]
 	description = "Mixing players for versus mode",
-	version = "IN PROGRESS"
+	version = "1.0"
 };
 
 
@@ -389,8 +389,8 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 		{
 			if (iTotal < iTeamSize) 
 			{
-				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE");
-				return Plugin_Continue;
+				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE", iTeamSize);
+				return Plugin_Handled;
 			}
 
 			g_iMixType = TYPE_RANDOM;
@@ -399,8 +399,8 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 		{
 			if (iTotal < (2 * iTeamSize)) 
 			{
-				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE");
-				return Plugin_Continue;
+				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE", iTeamSize * 2);
+				return Plugin_Handled;
 			}
 
 			g_iMixType = TYPE_CAPITAN;
@@ -563,7 +563,7 @@ void RunRandomMix()
 
 	if (iTotal < iTeamSize) 
 	{
-		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
+		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE", iTeamSize);
 		g_iMixState = STATE_NONE;
 		return;
 	}
@@ -650,7 +650,7 @@ void RunCapitanMix()
 
 	if (iTotal < (2 * iTeamSize))
 	{
-		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE");
+		CPrintToChatAll("%t", "CHAT_BAD_TEAM_SIZE", iTeamSize * 2);
 		g_iMixState = STATE_NONE;
 		return;
 	}
@@ -775,8 +775,13 @@ public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iInd
 					AddVotePlayer(IsSteamIdInPlayers(sSelectedSteamId));
 				}
 
-				case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: {
-					SetClientTeam(GetClientBySteamId(sSelectedSteamId), g_iMixState == STATE_PICK_TEAM_FIRST ? TEAM_SURVIVOR : TEAM_INFECTED);
+				case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 
+				{
+					int iTarget = GetClientBySteamId(sSelectedSteamId);
+					SetClientTeam(iTarget, g_iMixState == STATE_PICK_TEAM_FIRST ? TEAM_SURVIVOR : TEAM_INFECTED);
+
+					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
+					CPrintToChatAll("%t", "CHAT_PICK_TEAM", iCapitan, iTarget);
 
 					// next capitan
 					g_iMixState = g_iMixState == STATE_PICK_TEAM_FIRST ? STATE_PICK_TEAM_SECOND : STATE_PICK_TEAM_FIRST;
@@ -819,9 +824,13 @@ public Action NextStepTimer(Handle timer)
 		case STATE_FIRST_CAPITAN: 
 		{
 			// set first capitan
-			int iFirstCapitan = GetMaxVotePlayer();
-			SetPlayerStatus(iFirstCapitan, STATUS_FIRST_CAPITAN);
-			SetClientTeam(FindClientByStatus(STATUS_FIRST_CAPITAN), TEAM_SURVIVOR);
+			int iFirstCapitanIndex = GetMaxVotePlayer();
+			SetPlayerStatus(iFirstCapitanIndex, STATUS_FIRST_CAPITAN);
+			
+			int iFirstCapitanClient = FindClientByStatus(STATUS_FIRST_CAPITAN);
+			SetClientTeam(iFirstCapitanClient, TEAM_SURVIVOR);
+
+			CPrintToChatAll("%t", "CHAT_NEW_FIRST_CAPITAN", iFirstCapitanClient);
 
 			// current step
 			g_iMixState = STATE_SECOND_CAPITAN;
@@ -848,7 +857,7 @@ public Action NextStepTimer(Handle timer)
 			int iSecondCapitanIndex = GetMaxVotePlayer();
 			SetPlayerStatus(iSecondCapitanIndex, STATUS_SECOND_CAPITAN);
 
-			// if first capitan it's second capitan (lol)
+			// if first capitan it's second capitan (wtf)
 			int iSecondCapitanClient = FindClientByStatus(STATUS_SECOND_CAPITAN);
 			if (iFirstCapitanClient == iSecondCapitanClient) 
 			{
@@ -857,6 +866,8 @@ public Action NextStepTimer(Handle timer)
 			}
 
 			SetClientTeam(iSecondCapitanClient, TEAM_INFECTED);
+
+			CPrintToChatAll("%t", "CHAT_NEW_SECOND_CAPITAN", iSecondCapitanClient);
 
 			// current step
 			g_iMixState = (GetURandomInt() & 1) ? STATE_PICK_TEAM_FIRST : STATE_PICK_TEAM_SECOND;

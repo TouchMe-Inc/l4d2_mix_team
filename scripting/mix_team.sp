@@ -1178,6 +1178,10 @@ int GetClientBySteamId(const char[] sSteamId)
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
+		if (!IS_REAL_CLIENT(iClient)) {
+			continue;
+		}
+
 		GetClientAuthId(iClient, AuthId_SteamID64, sSteamIdTmp, MAX_PLAYER_STEAMID_LENGTH);
 		if (StrEqual(sSteamIdTmp, sSteamId)) {
 			return iClient;

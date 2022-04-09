@@ -27,8 +27,9 @@
 
 	"CHAT_BAD_TEAM_SIZE"
 	{
-		"en"			"{olive}There are not enough players in the game. {default}Cancel mix"
-		"ru"			"{olive}В команде недостаточно игроков. {default}Отмена микса"
+		"#format"		"{1:d}"
+		"en"			"{olive}There are not enough players in the game. {default}Need {1}"
+		"ru"			"{olive}В команде недостаточно игроков. {default}Необходимо {1}"
 	}
 
 	"CHAT_LEFT_READYUP"
@@ -53,8 +54,29 @@
 	"CHAT_CLIENT_LEAVE"
 	{
 		"#format"		"{1:N}"
-		"en"			"{olive}Mix member {1} left. {default}Cancel mix"
-		"ru"			"{olive}Участник микса {1} вышел. {default}Отмена микса"
+		"en"			"{olive}Mix member {1} left. {default}Mix rollback"
+		"ru"			"{olive}Участник микса {1} вышел. {default}Откат микса"
+	}
+
+	"CHAT_NEW_FIRST_CAPITAN"
+	{
+		"#format"		"{1:N}"
+		"en"			"{olive}Team {default}survival {olive}captain {green}{1}"
+		"ru"			"{olive}Капитан команды {default}выживших {green}{1}"
+	}
+
+	"CHAT_NEW_SECOND_CAPITAN"
+	{
+		"#format"		"{1:N}"
+		"en"			"{olive}Team {default}infected {olive}captain {green}{1}"
+		"ru"			"{olive}Капитан команды {default}заражённых {green}{1}"
+	}
+
+	"CHAT_PICK_TEAM"
+	{
+		"#format"		"{1:N},{2:N}"
+		"en"			"{olive}The capitan {green}{1} {olive}chose the player {green}{2}"
+		"ru"			"{olive}Капитан {green}{1} {olive}выбрал игрока {green}{2}"
 	}
 
 	"VOTE_TITLE_RANDOM"
@@ -96,6 +118,6 @@
 	"MENU_TITLE_PICK_TEAMS"
 	{
 		"en"			"Choose an ally"
-		"ru"			"Выберите тиммейта"
+		"ru"			"Выберите союзника"
 	}
 }

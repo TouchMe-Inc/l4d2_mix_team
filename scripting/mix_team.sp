@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "Mix Team",
 	author = "TouchMe", // thx: Tabun [https://github.com/Tabbernaut/], Luckylock [https://github.com/LuckyServ/]
 	description = "Mixing players for versus mode",
-	version = "1.0"
+	version = "1.0rc"
 };
 
 
@@ -215,13 +215,6 @@ void InitCmds()
 {
 	AddCommandListener(Cmd_OnPlayerJoinTeam, "jointeam");
 	RegConsoleCmd("sm_mix", Cmd_MixTeam, "Vote for a team mix.");
-	RegConsoleCmd("sm_cancelmix", Cmd_CancelMixTeam);
-}
-
-public Action Cmd_CancelMixTeam(int iClient, int iArgs) {
-	if (IsMixTeam() && g_iMixType == TYPE_CAPITAN) {
-		CancelMixTeam();
-	}
 }
 
 /**
@@ -377,7 +370,6 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 		}
 		
 		if (IsMixTeam()) {
-			CPrintToChat(iClient, "%t", "CHAT_ALREADY_MIX_TEAM");
 			return Plugin_Handled;
 		}
 

@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "Mix Team",
 	author = "TouchMe", // thx: Tabun [https://github.com/Tabbernaut/], Luckylock [https://github.com/LuckyServ/]
 	description = "Mixing players for versus mode",
-	version = "1.0rc"
+	version = "1.0"
 };
 
 
@@ -52,7 +52,7 @@ public Plugin myinfo =
 
 #define MAX_MENU_TITLE_LENGTH   64
 #define MAX_VOTE_MESSAGE_LENGTH 128
-#define MAX_PLAYER_STEAMID_LENGTH 32
+#define MAX_STEAMID_LENGTH 32
 
 
 enum struct Players
@@ -333,7 +333,7 @@ public Action Cmd_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
 		return Plugin_Stop;
 	}
 
-	return Plugin_Continue; 
+	return Plugin_Continue;
 }
 
 /**
@@ -381,7 +381,7 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 
 		if (StrEqual(sArg, CHAT_ARG_RANDOM)) 
 		{
-			if (iTotal < iTeamSize) 
+			if (iTotal < iTeamSize)
 			{
 				CPrintToChat(iClient, "%t", "CHAT_BAD_TEAM_SIZE", iTeamSize);
 				return Plugin_Handled;
@@ -410,7 +410,7 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 	
 	CPrintToChat(iClient, "%t", "CHAT_NO_ARGUMENT");
 
-	return Plugin_Continue; 
+	return Plugin_Continue;
 }
 
 /**
@@ -758,8 +758,8 @@ void ShowMenu()
  */
 public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 {
-	char sSelectedSteamId[MAX_PLAYER_STEAMID_LENGTH];
-	hMenu.GetItem(iIndex, sSelectedSteamId, MAX_PLAYER_STEAMID_LENGTH);
+	char sSelectedSteamId[MAX_STEAMID_LENGTH];
+	hMenu.GetItem(iIndex, sSelectedSteamId, MAX_STEAMID_LENGTH);
 
 	switch (iAction) {
 		case MenuAction_Select: {
@@ -771,14 +771,16 @@ public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iInd
 
 				case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 
 				{
+					int bPickTeamFirst = (g_iMixState == STATE_PICK_TEAM_FIRST);
+					
+					// next capitan state
+					g_iMixState = bPickTeamFirst ? STATE_PICK_TEAM_SECOND : STATE_PICK_TEAM_FIRST;
+
 					int iTarget = GetClientBySteamId(sSelectedSteamId);
-					SetClientTeam(iTarget, g_iMixState == STATE_PICK_TEAM_FIRST ? TEAM_SURVIVOR : TEAM_INFECTED);
+					int iCapitan = bPickTeamFirst ? FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
+					SetClientTeam(iTarget, bPickTeamFirst ? TEAM_SURVIVOR : TEAM_INFECTED);					
 
-					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
 					CPrintToChatAll("%t", "CHAT_PICK_TEAM", iCapitan, iTarget);
-
-					// next capitan
-					g_iMixState = g_iMixState == STATE_PICK_TEAM_FIRST ? STATE_PICK_TEAM_SECOND : STATE_PICK_TEAM_FIRST;
 				}
 			}
 		}
@@ -800,9 +802,6 @@ public Action NextStepTimer(Handle timer)
 
 			// current step
 			g_iMixState = STATE_FIRST_CAPITAN;
-			
-			// clear players from voting
-			ClearAllVotePlayers();
 
 			// get first capitan
 			if (InitMenu())
@@ -867,7 +866,7 @@ public Action NextStepTimer(Handle timer)
 			g_iMixState = (GetURandomInt() & 1) ? STATE_PICK_TEAM_FIRST : STATE_PICK_TEAM_SECOND;
 
 			// go next step (wait 1 sec)!
-			CreateTimer(1.0, NextStepTimer); 
+			CreateTimer(0.1, NextStepTimer); 
 		}
 
 		case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 
@@ -878,7 +877,7 @@ public Action NextStepTimer(Handle timer)
 				if (AddMenuItems())
 				{
 					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
-					
+					g_hMenu.Cancel();
 					g_hMenu.Display(iCapitan, 1);
 
 					// rebuild menu (every second)
@@ -993,7 +992,7 @@ void CheckGameMode()
  */
 void InitPlayers() 
 {
-	g_hPlayers.steamId = new ArrayList(ByteCountToCells(MAX_PLAYER_STEAMID_LENGTH));
+	g_hPlayers.steamId = new ArrayList(ByteCountToCells(MAX_STEAMID_LENGTH));
 	g_hPlayers.team = new ArrayList();
 	g_hPlayers.status = new ArrayList();
 	g_hPlayers.vote = new ArrayList();
@@ -1023,8 +1022,8 @@ void ClearPlayers()
  */
 void PushPlayer(int iClient) 
 {
-	char sSteamId[MAX_PLAYER_STEAMID_LENGTH];
-	GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, MAX_PLAYER_STEAMID_LENGTH);
+	char sSteamId[MAX_STEAMID_LENGTH];
+	GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, MAX_STEAMID_LENGTH);
 
 	g_hPlayers.steamId.PushString(sSteamId);
 	g_hPlayers.team.Push(GetClientTeam(iClient));
@@ -1042,8 +1041,8 @@ void PushPlayer(int iClient)
  */
 int IsClientInPlayers(int iClient)
 {
-	char sSteamId[MAX_PLAYER_STEAMID_LENGTH];
-	GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, MAX_PLAYER_STEAMID_LENGTH);
+	char sSteamId[MAX_STEAMID_LENGTH];
+	GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, MAX_STEAMID_LENGTH);
 	
 	return IsSteamIdInPlayers(sSteamId);
 }
@@ -1056,11 +1055,11 @@ int IsClientInPlayers(int iClient)
  */
 int IsSteamIdInPlayers(const char[] sSteamId)
 {
-	char sSteamIdTmp[MAX_PLAYER_STEAMID_LENGTH];
+	char sSteamIdTmp[MAX_STEAMID_LENGTH];
 
 	for (int iIndex = 0; iIndex < g_iPlayers; iIndex++)
 	{
-		g_hPlayers.steamId.GetString(iIndex, sSteamIdTmp, MAX_PLAYER_STEAMID_LENGTH);
+		g_hPlayers.steamId.GetString(iIndex, sSteamIdTmp, MAX_STEAMID_LENGTH);
 
 		if (StrEqual(sSteamIdTmp, sSteamId)) {
 			return iIndex;
@@ -1216,7 +1215,7 @@ int GetInGameClientCount()
  */
 int GetClientBySteamId(const char[] sSteamId) 
 {
-	char sSteamIdTmp[MAX_PLAYER_STEAMID_LENGTH];
+	char sSteamIdTmp[MAX_STEAMID_LENGTH];
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
@@ -1224,7 +1223,7 @@ int GetClientBySteamId(const char[] sSteamId)
 			continue;
 		}
 
-		GetClientAuthId(iClient, AuthId_SteamID64, sSteamIdTmp, MAX_PLAYER_STEAMID_LENGTH);
+		GetClientAuthId(iClient, AuthId_SteamID64, sSteamIdTmp, MAX_STEAMID_LENGTH);
 		if (StrEqual(sSteamIdTmp, sSteamId)) {
 			return iClient;
 		}  

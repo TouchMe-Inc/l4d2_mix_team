@@ -16,14 +16,14 @@
 	"CHAT_CANT_CHAGNE_TEAM"
 	{
 		"en"			"You cannot change the team {olive}during the mix"
-		"ru"			"Нельзя менять команду {olive}во время микса"
+		"ru"			"{olive}Нельзя {default}менять команду {olive}во время микса"
 	}
 
 	"CHAT_BAD_TEAM_SIZE"
 	{
 		"#format"		"{1:d}"
 		"en"			"There are not enough players in the game. {olive}Need {1} players"
-		"ru"			"В команде недостаточно игроков. {olive}Необходимо {1} игрока"
+		"ru"			"В команде недостаточно игроков. {olive}Необходимо {1} игрока(ов)"
 	}
 
 	"CHAT_LEFT_READYUP"

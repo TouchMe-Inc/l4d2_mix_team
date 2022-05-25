@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "Mix Team",
 	author = "TouchMe", // thx: Tabun [https://github.com/Tabbernaut/], Luckylock [https://github.com/LuckyServ/]
 	description = "Mixing players for versus mode",
-	version = "1.0",
+	version = "1.1",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -892,12 +892,8 @@ public Action NextStepTimer(Handle timer)
 							continue;
 						}
 						
-						iIndex = IsClientInPlayers(iClient);
-						
-						if (iIndex != -1) {
-							SetClientTeam(iTarget, FindSurvivorBot() > 0 ? TEAM_SURVIVOR : TEAM_INFECTED);	
-							break;
-						}
+						SetClientTeam(iClient, FindSurvivorBot() > 0 ? TEAM_SURVIVOR : TEAM_INFECTED);	
+						break;
 					}
 					
 					Run_OnMixTeamEnd();

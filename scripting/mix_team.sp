@@ -866,24 +866,40 @@ public Action NextStepTimer(Handle timer)
 			// current step
 			g_iMixState = (GetURandomInt() & 1) ? STATE_PICK_TEAM_FIRST : STATE_PICK_TEAM_SECOND;
 
-			// go next step (wait 1 sec)!
+			// go next step
 			CreateTimer(0.1, NextStepTimer); 
 		}
 
 		case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 
 		{
+			delete g_hMenu;
+			
 			// get players for capitan
 			if (InitMenu())
 			{
-				if (AddMenuItems())
+				if (AddMenuItems() > 1)
 				{
 					int iCapitan = g_iMixState == STATE_PICK_TEAM_FIRST ? FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
-					g_hMenu.Cancel();
 					g_hMenu.Display(iCapitan, 1);
 
-					// rebuild menu (every second)
+					// rebuild menu
 					CreateTimer(1.0, NextStepTimer);
 				} else {
+					// auto-pick last player
+					for (int iClient = 1, iIndex; iClient <= MaxClients; iClient++) 
+					{
+						if (!IS_REAL_CLIENT(iClient) || !IS_SPECTATOR(iClient) || IsClientInPlayers(iClient) == -1) {
+							continue;
+						}
+						
+						iIndex = IsClientInPlayers(iClient);
+						
+						if (iIndex != -1) {
+							SetClientTeam(iTarget, FindSurvivorBot() > 0 ? TEAM_SURVIVOR : TEAM_INFECTED);	
+							break;
+						}
+					}
+					
 					Run_OnMixTeamEnd();
 					g_iMixState = STATE_NONE;
 				}
@@ -965,7 +981,7 @@ void SetAllClientSpectator()
 /**
  * Checks if the mix has started.
  * 
- * @return            Returns true if a mix is ​​currently taking place, otherwise false
+ * @return            Returns true if a mix is currently taking place, otherwise false
  */
 bool IsMixTeam() {
 	return g_iMixState >= STATE_RUNNING;

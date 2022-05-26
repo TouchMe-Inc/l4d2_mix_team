@@ -886,7 +886,7 @@ public Action NextStepTimer(Handle timer)
 					CreateTimer(1.0, NextStepTimer);
 				} else {
 					// auto-pick last player
-					for (int iClient = 1, iIndex; iClient <= MaxClients; iClient++) 
+					for (int iClient = 1; iClient <= MaxClients; iClient++) 
 					{
 						if (!IS_REAL_CLIENT(iClient) || !IS_SPECTATOR(iClient) || IsClientInPlayers(iClient) == -1) {
 							continue;

@@ -488,7 +488,7 @@ public void HandleActionVote(Handle hVote, BuiltinVoteAction iAction, int iParam
  */
 public void HandleVoteResult(Handle hVote, int iVotes, int num_clients, const int[][] client_info, int num_items, const int[][] iItemsInfo)
 {
-	for (new iItem = 0; iItem < num_items; iItem++)
+	for (int iItem = 0; iItem < num_items; iItem++)
 	{
 		if (iItemsInfo[iItem][BUILTINVOTEINFO_ITEM_INDEX] == BUILTINVOTES_VOTE_YES && iItemsInfo[iItem][BUILTINVOTEINFO_ITEM_VOTES] > (iVotes / 2)) 
 		{

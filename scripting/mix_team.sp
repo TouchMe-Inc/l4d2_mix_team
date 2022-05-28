@@ -488,39 +488,42 @@ public void HandleActionVote(Handle hVote, BuiltinVoteAction iAction, int iParam
  */
 public void HandleVoteResult(Handle hVote, int iVotes, int num_clients, const int[][] client_info, int num_items, const int[][] iItemsInfo)
 {
-	if (iItemsInfo[0][BUILTINVOTEINFO_ITEM_INDEX] == BUILTINVOTES_VOTE_YES && iItemsInfo[0][BUILTINVOTEINFO_ITEM_VOTES] > (iVotes / 2)) 
+	for (new iItem = 0; iItem < num_items; iItem++)
 	{
-		if (g_bRoundIsLive || g_bReadyUpAvailable && !IsInReady()) {
-			DisplayBuiltinVoteFail(hVote, BuiltinVoteFail_Loses);
-			return;
-		}
-
-		char sVoteMsg[MAX_VOTE_MESSAGE_LENGTH];
-		if (g_iMixType == TYPE_RANDOM) {
-			Format(sVoteMsg, sizeof(sVoteMsg), "%t", "VOTE_PASS_RANDOM");
-		} else if (g_iMixType == TYPE_CAPITAN) {
-			Format(sVoteMsg, sizeof(sVoteMsg), "%t", "VOTE_PASS_CAPITAN");
-		}
-
-		DisplayBuiltinVotePass(hVote, sVoteMsg);
-
-		switch(g_iMixType) 
+		if (iItemsInfo[iItem][BUILTINVOTEINFO_ITEM_INDEX] == BUILTINVOTES_VOTE_YES && iItemsInfo[iItem][BUILTINVOTEINFO_ITEM_VOTES] > (iVotes / 2)) 
 		{
-			case TYPE_RANDOM: 
+			if (g_bRoundIsLive || g_bReadyUpAvailable && !IsInReady()) {
+				DisplayBuiltinVoteFail(hVote, BuiltinVoteFail_Loses);
+				return;
+			}
+
+			char sVoteMsg[MAX_VOTE_MESSAGE_LENGTH];
+			if (g_iMixType == TYPE_RANDOM) {
+				Format(sVoteMsg, sizeof(sVoteMsg), "%t", "VOTE_PASS_RANDOM");
+			} else if (g_iMixType == TYPE_CAPITAN) {
+				Format(sVoteMsg, sizeof(sVoteMsg), "%t", "VOTE_PASS_CAPITAN");
+			}
+
+			DisplayBuiltinVotePass(hVote, sVoteMsg);
+
+			switch(g_iMixType) 
 			{
-				if (g_bReadyUpAvailable) {
-					ToggleReadyPanel(true);
+				case TYPE_RANDOM: 
+				{
+					if (g_bReadyUpAvailable) {
+						ToggleReadyPanel(true);
+					}
+
+					RunRandomMix();
 				}
 
-				RunRandomMix();
+				case TYPE_CAPITAN: {
+					RunCapitanMix();
+				}
 			}
 
-			case TYPE_CAPITAN: {
-				RunCapitanMix();
-			}
+			return;
 		}
-
-		return;
 	}
 
 	// vote failed

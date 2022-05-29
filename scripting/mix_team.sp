@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "Mix Team",
 	author = "TouchMe", // thx: Tabun [https://github.com/Tabbernaut/], Luckylock [https://github.com/LuckyServ/]
 	description = "Mixing players for versus mode",
-	version = "1.1",
+	version = "1.1rc",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -498,30 +498,23 @@ public void HandleVoteResult(Handle hVote, int iVotes, int num_clients, const in
 			}
 
 			char sVoteMsg[MAX_VOTE_MESSAGE_LENGTH];
-			if (g_iMixType == TYPE_RANDOM) {
+			if (g_iMixType == TYPE_RANDOM) 
+			{
 				Format(sVoteMsg, sizeof(sVoteMsg), "%t", "VOTE_PASS_RANDOM");
-			} else if (g_iMixType == TYPE_CAPITAN) {
+				
+				if (g_bReadyUpAvailable) {
+					ToggleReadyPanel(true);
+				}
+
+				RunRandomMix();
+			} 
+			else if (g_iMixType == TYPE_CAPITAN) 
+			{
 				Format(sVoteMsg, sizeof(sVoteMsg), "%t", "VOTE_PASS_CAPITAN");
+				RunCapitanMix();
 			}
 
 			DisplayBuiltinVotePass(hVote, sVoteMsg);
-
-			switch(g_iMixType) 
-			{
-				case TYPE_RANDOM: 
-				{
-					if (g_bReadyUpAvailable) {
-						ToggleReadyPanel(true);
-					}
-
-					RunRandomMix();
-				}
-
-				case TYPE_CAPITAN: {
-					RunCapitanMix();
-				}
-			}
-
 			return;
 		}
 	}
@@ -774,17 +767,19 @@ public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iInd
 				}
 
 				case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 
-				{
+				{	
 					int bPickTeamFirst = (g_iMixState == STATE_PICK_TEAM_FIRST);
 					
 					// next capitan state
 					g_iMixState = bPickTeamFirst ? STATE_PICK_TEAM_SECOND : STATE_PICK_TEAM_FIRST;
 
 					int iTarget = GetClientBySteamId(sSelectedSteamId);
+					SetClientTeam(iTarget, bPickTeamFirst ? TEAM_SURVIVOR : TEAM_INFECTED);	
+					
 					int iCapitan = bPickTeamFirst ? FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
-					SetClientTeam(iTarget, bPickTeamFirst ? TEAM_SURVIVOR : TEAM_INFECTED);					
-
 					CPrintToChatAll("%t", "CHAT_PICK_TEAM", iCapitan, iTarget);
+					
+					g_hMenu.Cancel();
 				}
 			}
 		}
@@ -874,9 +869,7 @@ public Action NextStepTimer(Handle timer)
 		}
 
 		case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 
-		{
-			delete g_hMenu;
-			
+		{	
 			// get players for capitan
 			if (InitMenu())
 			{

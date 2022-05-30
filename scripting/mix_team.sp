@@ -778,8 +778,6 @@ public int HandleClickMenu(Menu hMenu, MenuAction iAction, int iClient, int iInd
 					
 					int iCapitan = bPickTeamFirst ? FindClientByStatus(STATUS_FIRST_CAPITAN) : FindClientByStatus(STATUS_SECOND_CAPITAN);
 					CPrintToChatAll("%t", "CHAT_PICK_TEAM", iCapitan, iTarget);
-					
-					g_hMenu.Cancel();
 				}
 			}
 		}
@@ -865,7 +863,7 @@ public Action NextStepTimer(Handle timer)
 			g_iMixState = (GetURandomInt() & 1) ? STATE_PICK_TEAM_FIRST : STATE_PICK_TEAM_SECOND;
 
 			// go next step
-			CreateTimer(0.1, NextStepTimer); 
+			CreateTimer(1.0, NextStepTimer); 
 		}
 
 		case STATE_PICK_TEAM_FIRST, STATE_PICK_TEAM_SECOND: 

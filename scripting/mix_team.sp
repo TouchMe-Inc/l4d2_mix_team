@@ -704,7 +704,7 @@ public bool InitMenu()
  * 
  * @return            Returns true if at least one is added, otherwise false
  */
-bool AddMenuItems() 
+int AddMenuItems() 
 {
 	g_hMenu.RemoveAllItems();
 

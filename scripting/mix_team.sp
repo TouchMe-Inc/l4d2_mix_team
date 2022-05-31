@@ -120,7 +120,6 @@ public void OnClientDisconnect(int iClient)
     {
 		CancelMixTeam();
 		CPrintToChatAll("%t", "CHAT_CLIENT_LEAVE", iClient);
-		RollbackPlayers();
     }
 }
 

@@ -724,7 +724,7 @@ int AddMenuItems()
 		iAdded ++;
 	}
 
-	return iAdded > 0;
+	return iAdded;
 }
 
 /**

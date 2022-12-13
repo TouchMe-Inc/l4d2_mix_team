@@ -1,2 +1,2 @@
-# l4d2_mix_team
+# About mix_team
 Plugin adds voting for mixing teams

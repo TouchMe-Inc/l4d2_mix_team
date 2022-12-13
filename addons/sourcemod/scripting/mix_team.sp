@@ -16,7 +16,7 @@
 public Plugin myinfo =
 {
 	name = "MixTeam",
-	author = "TouchMe", // thx: Tabun [https://github.com/Tabbernaut/], Luckylock [https://github.com/LuckyServ/]
+	author = "TouchMe",
 	description = "Mixing players for versus mode",
 	version = "1.0",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"

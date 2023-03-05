@@ -22,8 +22,7 @@ public void GetVoteMessage(int iClient, char[] sMsg) {
 	Format(sMsg, VOTE_MSG_SIZE, "My vote successful!"); // <-- Message if voting is successful
 }
 
-public void OnMixStart() // <-- Point of entry
-{
+public void OnMixStart() { // <-- Point of entry
 	CallEndMix(); // <-- Exit point
 }
 ```

@@ -7,9 +7,6 @@ Plugin adds voting for mixing teams
 ## How to add mix?
 You must write and compile a plugin that implements all methods:
 ```
-#pragma semicolon               1
-#pragma newdecls                required
-
 #include <sourcemod>
 #include <mix_team>
 

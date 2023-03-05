@@ -10,7 +10,7 @@ public Plugin myinfo = {
 	name = "MixTeamCapitan",
 	author = "TouchMe",
 	description = "Adds capitan mix",
-	version = "1.0"
+	version = "1.0.1"
 };
 
 

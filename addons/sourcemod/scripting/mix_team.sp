@@ -180,7 +180,7 @@ public void OnLibraryAdded(const char[] sName)
 public void OnRoundIsLive() 
 {
 	if (g_iMixState != STATE_NONE) {
-		CanceclMix();
+		CancelMix();
 	}
 
 	g_bRoundIsLive = true;
@@ -277,7 +277,7 @@ int Native_GetMixType(Handle hPlugin, int iParams) {
  */
 int Native_CallCancelMix(Handle hPlugin, int iParams)
 {
-	CanceclMix();
+	CancelMix();
 	return 1;
 }
 
@@ -327,7 +327,7 @@ int Native_GetLastTeam(Handle hPlugin, int iParams)
  * 
  * @noreturn
  */
-void CanceclMix()
+void CancelMix()
 {
 	EndMix();
 

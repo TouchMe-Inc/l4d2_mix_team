@@ -281,6 +281,11 @@ public void Flow(int iStep)
 	return Plugin_Stop;
 }
 
+/**
+ * Resetting voting results.
+ *
+ * @noreturn
+ */
 void PrepareVote()
 {
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
@@ -289,6 +294,11 @@ void PrepareVote()
 	}
 }
 
+/**
+ * Returns the index of the player with the most votes.
+ *
+ * @return            Winner index
+ */
 int GetVoteWinner()
 {
 	int iWinner = -1;
@@ -332,7 +342,7 @@ void SetSecondCapitan(int iClient)
  * 
  * @param iClient     Client index
  * @param iTeam       Param description
- * @return            true if success
+ * @noreturn
  */
 void SetClientTeamByCapitan(int iClient, int iTeam)
 {

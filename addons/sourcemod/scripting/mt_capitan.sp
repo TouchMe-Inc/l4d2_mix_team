@@ -190,7 +190,7 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 
 				if (bIsPickFirstCapitan)
 				{
-					ChangeClientTeam(iTarget, TEAM_SURVIVOR);	
+					SetClientTeamByCapitan(iTarget, TEAM_SURVIVOR);	
 					CPrintToChatAll("%t", "PICK_TEAM", g_iFirstCapitan, iTarget);
 
 					Flow(STEP_PICK_TEAM_SECOND);
@@ -198,7 +198,7 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 
 				else
 				{
-					ChangeClientTeam(iTarget, TEAM_INFECTED);	
+					SetClientTeamByCapitan(iTarget, TEAM_INFECTED);	
 					CPrintToChatAll("%t", "PICK_TEAM", g_iSecondCapitan, iTarget);
 
 					Flow(STEP_PICK_TEAM_FIRST);
@@ -252,8 +252,8 @@ public void Flow(int iStep)
 					if (!IS_REAL_CLIENT(iClient) || !IS_SPECTATOR(iClient) || !IsMixMember(iClient)) {
 						continue;
 					}
-
-					ChangeClientTeam(iClient, FindSurvivorBot() > 0 ? TEAM_SURVIVOR : TEAM_INFECTED);	
+					
+					(FindSurvivorBot() > 0) ? CheatCommand(iClient, "sb_takecontrol") : ChangeClientTeam(iClient, TEAM_INFECTED);	
 					break;
 				}
 
@@ -315,7 +315,7 @@ void SetFirstCapitan(int iClient)
 {
 	g_iFirstCapitan = iClient;
 
-	ChangeClientTeam(iClient, TEAM_SURVIVOR);
+	CheatCommand(iClient, "sb_takecontrol");
 	CPrintToChatAll("%t", "NEW_FIRST_CAPITAN", iClient, g_iVoteCount[iClient]);
 }
 
@@ -325,6 +325,37 @@ void SetSecondCapitan(int iClient)
 
 	ChangeClientTeam(iClient, TEAM_INFECTED);
 	CPrintToChatAll("%t", "NEW_SECOND_CAPITAN", iClient, g_iVoteCount[iClient]);
+}
+
+/**
+ * Sets the client team by capitan.
+ * 
+ * @param iClient     Client index
+ * @param iTeam       Param description
+ * @return            true if success
+ */
+void SetClientTeamByCapitan(int iClient, int iTeam)
+{
+	if (iTeam == TEAM_INFECTED) {
+		ChangeClientTeam(iClient, TEAM_INFECTED);
+	}
+	
+	else if (FindSurvivorBot() > 0) {
+		CheatCommand(iClient, "sb_takecontrol");
+	}
+}
+
+/**
+ * Hack to execute cheat commands.
+ * 
+ * @noreturn
+ */
+void CheatCommand(int iClient, const char[] sCmd, const char[] sArgs = "")
+{
+	int iFlags = GetCommandFlags(sCmd);
+	SetCommandFlags(sCmd, iFlags & ~FCVAR_CHEAT);
+	FakeClientCommand(iClient, "%s %s", sCmd, sArgs);
+	SetCommandFlags(sCmd, iFlags);
 }
 
 /**

@@ -4,6 +4,10 @@ Plugin adds voting for mixing teams
 ## Commands
 `!mix <type>` - start mix <type>.
 
+## TODO
+- [ ] Interrupting a mix with a chat command.
+- [ ] Translating to Russian language.
+
 ## How to add mix?
 You must write and compile a plugin that implements all methods:
 ```

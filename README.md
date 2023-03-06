@@ -6,7 +6,6 @@ Plugin adds voting for mixing teams
 
 ## TODO
 - [ ] Interrupting a mix with a chat command.
-- [ ] Translating to Russian language.
 - [ ] Automatic collection of mix types for messages
 
 ## How to add mix?

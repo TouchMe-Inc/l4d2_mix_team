@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "1.0",
+	version = "1.0.1",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -128,6 +128,7 @@ int
 
 bool
 	g_bReadyUpAvailable = false,
+	g_bGamemodeAvailable = false,
 	g_bRoundIsLive = false;
 
 ConVar
@@ -432,7 +433,11 @@ public void OnConfigsExecuted()
 void CheckGameMode(const char[] sGameMode)
 {
 	if (!StrEqual(sGameMode, "versus", false) && !StrEqual(sGameMode, "mutation12", false)) {
-		SetFailState("Unsupported mode %s.", sGameMode);
+		g_bGamemodeAvailable = false;
+	} 
+	
+	else {
+		g_bGamemodeAvailable = true;
 	}
 }
 
@@ -463,7 +468,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 		g_bRoundIsLive = true;
 
 		if (g_iMixState != STATE_NONE) {
-			CanceclMix();
+			CancelMix();
 		}
 	}
 
@@ -503,7 +508,7 @@ public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcas
 
 		if (iNewTeam == TEAM_NONE && g_hPlayers[iClient].member)
 		{
-			CanceclMix();
+			CancelMix();
 			CPrintToChatAll("%t", "CLIENT_LEAVE", iClient);
 		}
 	}
@@ -550,7 +555,7 @@ public Action Cmd_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
  */
 public Action Cmd_MixTeam(int iClient, int iArgs)
 {	
-	if (!IS_VALID_CLIENT(iClient) || IS_SPECTATOR(iClient)) {
+	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient) || IS_SPECTATOR(iClient)) {
 		return Plugin_Handled;
 	}
 

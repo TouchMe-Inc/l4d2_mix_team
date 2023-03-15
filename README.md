@@ -6,6 +6,8 @@ Several prepared author's mix types are available: mt_capitan and mt_random.
 ## Commands
 `!mix <type>` - start mix <type>.
 
+`!unmix` or `!cancelmix` - abort the mix.
+
 ## How to create mix type?
 You must write and compile a plugin that implements all methods:
 ```

@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "1.0.1",
+	version = "1.0.2",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -91,6 +91,17 @@ methodmap TypeList < ArrayList
 		}
 
 		return null;
+	}
+
+	public void GetName(int index, char[] sName, int iLen)
+	{
+		if (this.Length > index)
+		{
+			TypeItem item;
+			this.GetArray(index, item);
+
+			strcopy(sName, iLen, item.name);
+		}
 	}
 
 	public int GetMinPlayers(int index)
@@ -559,27 +570,32 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 
-	if (!iArgs) 
-	{
-		CPrintToChat(iClient, "%T", "NO_ARGUMENT", iClient);
-		return Plugin_Handled;
-	}
-
 	if (g_bReadyUpAvailable && !IsInReady())
 	{
 		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
+
 		return Plugin_Handled;
 	} 
 		
 	else if (g_bRoundIsLive) 
 	{
 		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
+
+		return Plugin_Handled;
+	}
+
+	if (!iArgs) 
+	{
+		CPrintToChat(iClient, "%T", "NO_ARGUMENT", iClient);
+		CPrintExampleArguments(iClient);
+
 		return Plugin_Handled;
 	}
 
 	if (g_iMixState != STATE_NONE) 
 	{
 		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
+
 		return Plugin_Handled;
 	}
 	
@@ -591,6 +607,8 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 	if (iMixType == -1)
 	{
 		CPrintToChat(iClient, "%T", "BAD_ARGUMENT", iClient, sArg);
+		CPrintExampleArguments(iClient);
+
 		return Plugin_Handled;
 	}
 
@@ -604,6 +622,7 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 	}
 
 	StartVoteMix(iClient, iMixType);
+	
 	return Plugin_Continue;
 }
 
@@ -909,4 +928,14 @@ bool IsEmptyString(const char[] str, int maxlength)
 	}
 	
 	return true;
+}
+
+void CPrintExampleArguments(int iClient)
+{
+	char sMixName[MIX_TYPE_SIZE];
+	for (int index = 0; index < g_hTypeList.Length; index++)
+	{
+		g_hTypeList.GetName(index, sMixName, MIX_TYPE_SIZE);
+		CPrintToChat(iClient, "%T", "ARGUMENT_EXAMPLE", iClient, sMixName);
+	}
 }

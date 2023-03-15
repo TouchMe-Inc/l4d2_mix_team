@@ -5,7 +5,7 @@
 		"#format"		"{1:s}"
 		"en"			"Bad argument {1} for mix. Use: {olive}!mix <type>"
 	}
-	
+
 	"ARGUMENT_EXAMPLE"
 	{
 		"#format"		"{1:s}"
@@ -33,7 +33,7 @@
 		"en"			"Impossible to mix: {olive}only available during ready-up"
 	}
 
-	"COULDOWN"
+	"VOTE_COULDOWN"
 	{
 		"#format"		"{1:d}"
 		"en"			"A vote cannot be called at this moment, try again in a {1} second"
@@ -47,9 +47,21 @@
 	"CLIENT_LEAVE"
 	{
 		"#format"		"{1:N}"
-		"en"			"Mix member {olive}{1} left{default}. {olive}Mix rollback"
+		"en"			"Mix member {olive}{1} {default}left. {olive}Mix rollback"
 	}
-	
+
+	"CANCEL_MIX_SUCCESS"
+	{
+		"#format"		"{1:N}"
+		"en"			"Mix member {olive}{1} {default}interrupted the mix"
+	}
+
+	"CANCEL_MIX_FAIL"
+	{
+		"#format"		"{1:d}"
+		"en"			"The mix cannot be interrupted at at this moment, try again in {1} seconds"
+	}
+
 	"ALREADY_IN_PROGRESS"
 	{
 		"en"			"A mix session is in progress!"

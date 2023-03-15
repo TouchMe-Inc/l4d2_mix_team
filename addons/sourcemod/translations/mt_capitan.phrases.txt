@@ -18,12 +18,12 @@
 		"en"			"The capitan {olive}{1} {default}chose the player {green}{2}"
 	}
 
-	"VOTE_TITLE"
+	"VOTE_DISPLAY_MSG"
 	{
 		"en"			"Start mix with captains"
 	}
 
-	"VOTE_MESSAGE"
+	"VOTE_END_MSG"
 	{
 		"en"			"Team mixing with captains in progress"
 	}

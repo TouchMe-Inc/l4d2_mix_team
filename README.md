@@ -1,6 +1,7 @@
 # About mix_team
 Plugin adds voting for mixing teams. The mix_team plugin itself does not implement any mixing of players, but provides an API. 
-Several prepared author's mix types are available: capitan and random.
+
+Several prepared author's mix types are available: mt_capitan and mt_random.
 
 ## Commands
 `!mix <type>` - start mix <type>.

@@ -10,7 +10,7 @@ Several prepared author's mix types are available: mt_capitan and mt_random.
 
 ## How to create mix type?
 You must write and compile a plugin that implements all methods:
-```
+```pawn
 #include <sourcemod>
 #include <mix_team>
 

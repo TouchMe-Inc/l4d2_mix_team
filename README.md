@@ -6,9 +6,9 @@ Plugin adds voting for mixing teams
 
 ## TODO
 - [ ] Interrupting a mix with a chat command.
-- [ ] Automatic collection of mix types for messages
+- [x] Automatic collection of mix types for messages
 
-## How to add mix?
+## How to add mix type?
 You must write and compile a plugin that implements all methods:
 ```
 #include <sourcemod>

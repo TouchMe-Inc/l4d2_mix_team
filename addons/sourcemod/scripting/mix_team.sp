@@ -18,12 +18,16 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "1.0.2",
+	version = "2.0",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
 
 #define TRANSLATIONS            "mix_team.phrases"
+
+#define FORWARD_DISPLAY_MSG     "GetVoteDisplayMessage"
+#define FORWARD_VOTEEND_MSG     "GetVoteEndMessage"
+#define FORWARD_IN_PROGRESS     "OnMixInProgress"
 
 #define TEAM_NONE               0
 #define TEAM_SPECTATOR          1
@@ -40,8 +44,9 @@ public Plugin myinfo =
 enum struct TypeItem
 {
 	Handle plugin;
-	char name[MIX_TYPE_SIZE];
+	char name[MIX_NAME_SIZE];
 	int minPlayers;
+	int timeout;
 }
 
 methodmap TypeList < ArrayList 
@@ -50,9 +55,9 @@ methodmap TypeList < ArrayList
 		return view_as<TypeList>(new ArrayList(sizeof(TypeItem)));
 	}
 
-	public int Add(Handle hPlugin, const char[] sName, int iMinPlayers)
+	public int Add(Handle hPlugin, const char[] sName, int iMinPlayers, int iTimeout)
 	{
-		if (hPlugin == null || IsEmptyString(sName, MIX_TYPE_SIZE) || iMinPlayers > MaxClients) {
+		if (hPlugin == null || IsEmptyString(sName, MIX_NAME_SIZE) || iMinPlayers > MaxClients) {
 			return -1;
 		}
 
@@ -61,6 +66,7 @@ methodmap TypeList < ArrayList
 		item.plugin = hPlugin;
 		strcopy(item.name, sizeof(item.name), sName);
 		item.minPlayers = iMinPlayers;
+		item.timeout = iTimeout;
 		
 		return this.PushArray(item);
 	}
@@ -116,6 +122,19 @@ methodmap TypeList < ArrayList
 
 		return 0;
 	}
+
+	public int GetTimeout(int index)
+	{
+		if (this.Length > index)
+		{
+			TypeItem item;
+			this.GetArray(index, item);
+
+			return item.timeout;
+		}
+
+		return 0;
+	}
 }
 
 enum struct Players
@@ -134,6 +153,7 @@ NativeVote
 	g_hCurVote = null;
 
 int
+	g_iMixTimeout = 0,
 	g_iMixState = STATE_NONE,
 	g_iMixType = TYPE_NONE;
 
@@ -242,17 +262,18 @@ void InitNatives()
  */
 int Native_AddMixType(Handle hPlugin, int iParams)
 {
-	if (iParams < 2) {
+	if (iParams < 3) {
 		return -1;
 	}
 
-	char sName[MIX_TYPE_SIZE];
+	char sName[MIX_NAME_SIZE];
 	
 	if (GetNativeString(1, sName, sizeof(sName)) == SP_ERROR_NONE)
 	{
 		int iMinPlayers = GetNativeCell(2);
+		int iTimeout = GetNativeCell(3);
 
-		return g_hTypeList.Add(hPlugin, sName, iMinPlayers);
+		return g_hTypeList.Add(hPlugin, sName, iMinPlayers, iTimeout);
 	}
 
 	return -1;
@@ -376,6 +397,11 @@ public void OnPluginStart()
 	InitEvents();
 }
 
+/**
+ * Called when the plugin is about to be unloaded.
+ *
+ * @noreturn
+*/
 public void OnPluginEnd()
 {
 	if (g_hTypeList != null) {
@@ -401,7 +427,7 @@ void InitTranslations()
 }
 
 /**
- * Fragment
+ * Initializing the necessary cvars.
  * 
  * @noreturn
  */
@@ -535,7 +561,9 @@ public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcas
 void InitCmds() 
 {
 	AddCommandListener(Cmd_OnPlayerJoinTeam, "jointeam");
-	RegConsoleCmd("sm_mix", Cmd_MixTeam, "Vote for a team mix.");
+	RegConsoleCmd("sm_mix", Cmd_VoteMix, "Vote for a team mix.");
+	RegConsoleCmd("sm_cancelmix", Cmd_CancelMix, "Interrupting the mix.");
+	RegConsoleCmd("sm_unmix", Cmd_CancelMix, "Interrupting the mix.");
 }
 
 /**
@@ -564,7 +592,7 @@ public Action Cmd_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
  * @param iArgs       Number of parameters
  * @return            Plugin_Handled | Plugin_Continue
  */
-public Action Cmd_MixTeam(int iClient, int iArgs)
+public Action Cmd_VoteMix(int iClient, int iArgs)
 {	
 	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient) || IS_SPECTATOR(iClient)) {
 		return Plugin_Handled;
@@ -627,6 +655,38 @@ public Action Cmd_MixTeam(int iClient, int iArgs)
 }
 
 /**
+ * ...
+ * 
+ * @param iClient     Client index
+ * @param iArgs       Number of parameters
+ * @return            Plugin_Handled | Plugin_Continue
+ */
+public Action Cmd_CancelMix(int iClient, int iArgs)
+{
+	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient) || !g_hPlayers[iClient].member) {
+		return Plugin_Handled;
+	}
+
+	if (g_iMixState == STATE_NONE) {
+		return Plugin_Handled;
+	}
+
+	int iEndTime = g_iMixTimeout - GetTime();
+
+	if (iEndTime < 0)
+	{
+		CancelMix();
+		CPrintToChatAll("%t", "CANCEL_MIX_SUCCESS", iClient);
+	} 
+	
+	else {
+		CPrintToChat(iClient, "%T", "CANCEL_MIX_FAIL", iClient, iEndTime);
+	}
+
+	return Plugin_Handled;
+}
+
+/**
  * Start voting.
  * 
  * @param iClient     Client index
@@ -642,7 +702,7 @@ public void StartVoteMix(int iClient, int iMixType)
 
 	if (!NativeVotes_IsNewVoteAllowed())
 	{
-		CPrintToChat(iClient, "%T", "COULDOWN", iClient, NativeVotes_CheckVoteDelay());
+		CPrintToChat(iClient, "%T", "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
 		return;
 	}
 
@@ -705,26 +765,26 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 			hVote.Close();
 			g_hCurVote = null;
 		}
-		
+
 		case MenuAction_Display:
 		{
-			char sVoteTitle[VOTE_TITLE_SIZE];
+			char sVoteDisplayMessage[DISPLAY_MSG_SIZE];
 			int iReturn;
 
 			Handle hPlugin = g_hTypeList.GetPlugin(g_iMixType);
-			Function hFunc = GetFunctionByName(hPlugin, "GetVoteTitle");
+			Function hFunc = GetFunctionByName(hPlugin, FORWARD_DISPLAY_MSG);
 		
 			if (hFunc == INVALID_FUNCTION) {
-				SetFailState("Failed to get the function id of GetVoteTitle");
+				SetFailState("Failed to get the function id of " ... FORWARD_DISPLAY_MSG);
 			}
 
-			// Get Title
+			// call FORWARD_DISPLAY_MSG
 			Call_StartFunction(hPlugin, hFunc);
 			Call_PushCell(iParam1);
-			Call_PushStringEx(sVoteTitle, sizeof(sVoteTitle), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
+			Call_PushStringEx(sVoteDisplayMessage, sizeof(sVoteDisplayMessage), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
 			Call_Finish(iReturn);
 
-			NativeVotes_RedrawVoteTitle(sVoteTitle);
+			NativeVotes_RedrawVoteTitle(sVoteDisplayMessage);
 
 			return view_as<int>(Plugin_Changed);
 		}
@@ -739,7 +799,7 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 				hVote.DisplayFail(NativeVotesFail_Generic);
 			}
 		}
-		
+
 		case MenuAction_VoteEnd:
 		{
 			if (iParam1 == NATIVEVOTES_VOTE_NO) {
@@ -748,14 +808,14 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 
 			else
 			{
-				char sVoteMsg[VOTE_MSG_SIZE];
+				char sVoteEndMsg[VOTEEND_MSG_SIZE];
 				
 				int iReturn;
 				Function hFunc;
 				Handle hPlugin = g_hTypeList.GetPlugin(g_iMixType);
 
-				if ((hFunc = GetFunctionByName(hPlugin, "GetVoteMessage")) == INVALID_FUNCTION) {
-					SetFailState("Failed to get the function id of GetVoteMessage");
+				if ((hFunc = GetFunctionByName(hPlugin, FORWARD_VOTEEND_MSG)) == INVALID_FUNCTION) {
+					SetFailState("Failed to get the function id of " ... FORWARD_VOTEEND_MSG);
 				}
 
 				for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
@@ -766,26 +826,30 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 
 					SetGlobalTransTarget(iPlayer);
 
-					// Get Msg
+					// call FORWARD_VOTEEND_MSG
 					Call_StartFunction(hPlugin, hFunc);
 					Call_PushCell(iPlayer);
-					Call_PushStringEx(sVoteMsg, sizeof(sVoteMsg), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
+					Call_PushStringEx(sVoteEndMsg, sizeof(sVoteEndMsg), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
 					Call_Finish(iReturn);
 					
-					hVote.DisplayPassCustomToOne(iPlayer, sVoteMsg);
+					hVote.DisplayPassCustomToOne(iPlayer, sVoteEndMsg);
 				}
 
 				g_iMixState = STATE_IN_PROGRESS;
 
 				SetAllClientSpectator();
 
-				// Run mix
-				if ((hFunc = GetFunctionByName(hPlugin, "OnMixStart")) == INVALID_FUNCTION) {
-					SetFailState("Failed to get the function id of OnMixStart");
+				if ((hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS)) == INVALID_FUNCTION) {
+					SetFailState("Failed to get the function id of " ... FORWARD_IN_PROGRESS);
 				}
 
+				// call FORWARD_IN_PROGRESS
 				Call_StartFunction(hPlugin, hFunc);
 				Call_Finish(iReturn);
+
+				// set timeout for cancel mix
+				int iTimeout = g_hTypeList.GetTimeout(g_iMixType);
+				g_iMixTimeout = (iTimeout > 0) ? (GetTime() + iTimeout) : 0;
 			}
 		}
 	}
@@ -814,6 +878,11 @@ int GetPlayerCount()
 	return iCount;
 }
 
+/**
+ * Returns players to teams before the mix starts.
+ *
+* @noreturn
+*/
 void RollbackPlayers()
 {
 	SetAllClientSpectator();
@@ -907,6 +976,11 @@ int FindSurvivorBot()
 	return -1;
 }
 
+/**
+ * Checks if a string is empty.
+ *
+ * @return     true|false
+*/
 bool IsEmptyString(const char[] str, int maxlength)
 {
 	int len = strlen(str);
@@ -930,12 +1004,17 @@ bool IsEmptyString(const char[] str, int maxlength)
 	return true;
 }
 
+/**
+ * Displays all types of mixes.
+ *
+ * @noreturn
+*/
 void CPrintExampleArguments(int iClient)
 {
-	char sMixName[MIX_TYPE_SIZE];
+	char sMixName[MIX_NAME_SIZE];
 	for (int index = 0; index < g_hTypeList.Length; index++)
 	{
-		g_hTypeList.GetName(index, sMixName, MIX_TYPE_SIZE);
+		g_hTypeList.GetName(index, sMixName, MIX_NAME_SIZE);
 		CPrintToChat(iClient, "%T", "ARGUMENT_EXAMPLE", iClient, sMixName);
 	}
 }

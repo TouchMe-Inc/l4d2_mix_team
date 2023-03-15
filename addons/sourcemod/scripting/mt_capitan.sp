@@ -10,7 +10,8 @@ public Plugin myinfo = {
 	name = "MixTeamCapitan",
 	author = "TouchMe",
 	description = "Adds capitan mix",
-	version = "1.0.1"
+	version = "2.0",
+	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
 
@@ -66,15 +67,15 @@ public void OnPluginStart() {
 }
 
 public void OnAllPluginsLoaded() {
-	AddMixType("capitan", (FindConVar("survivor_limit").IntValue * 2));
+	AddMixType("capitan", (FindConVar("survivor_limit").IntValue * 2), 60);
 }
 
-public void GetVoteTitle(int iClient, char[] sTitle) {
-	Format(sTitle, VOTE_TITLE_SIZE, "%T", "VOTE_TITLE", iClient);
+public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
+	Format(sTitle, DISPLAY_MSG_SIZE, "%T", "VOTE_DISPLAY_MSG", iClient);
 }
 
-public void GetVoteMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTE_MSG_SIZE, "%T", "VOTE_MESSAGE", iClient);
+public void GetVoteEndMessage(int iClient, char[] sMsg) {
+	Format(sMsg, VOTEEND_MSG_SIZE, "%T", "VOTE_END_MSG", iClient);
 }
 
 /**
@@ -82,7 +83,7 @@ public void GetVoteMessage(int iClient, char[] sMsg) {
  * 
  * @noreturn
  */
-public void OnMixStart() {
+public void OnMixInProgress() {
 	Flow(STEP_INIT);
 }
 
@@ -225,6 +226,7 @@ public void Flow(int iStep)
 		case STEP_FIRST_CAPITAN: 
 		{
 			SetFirstCapitan(GetVoteWinner());
+
 			PrepareVote();
 			DisplayMenuAll(STEP_SECOND_CAPITAN);
 
@@ -274,8 +276,12 @@ public void Flow(int iStep)
 /**
  * Timer.
  */
- public Action NextStepTimer(Handle hTimer, int iStep)
+public Action NextStepTimer(Handle hTimer, int iStep)
 {
+	if (GetMixState() != STATE_IN_PROGRESS) {
+		return Plugin_Stop;
+	}
+
 	Flow(iStep);
 
 	return Plugin_Stop;

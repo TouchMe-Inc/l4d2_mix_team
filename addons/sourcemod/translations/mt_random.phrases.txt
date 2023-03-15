@@ -1,11 +1,11 @@
 "Phrases"
 {
-	"VOTE_TITLE"
+	"VOTE_DISPLAY_MSG"
 	{
 		"en"			"Start command mix randomly"
 	}
 
-	"VOTE_MESSAGE"
+	"VOTE_END_MSG"
 	{
 		"en"			"Random command mixing in progress"
 	}

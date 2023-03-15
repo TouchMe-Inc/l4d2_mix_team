@@ -9,7 +9,8 @@ public Plugin myinfo = {
 	name = "MixTeamRandom",
 	author = "TouchMe",
 	description = "Adds random mix",
-	version = "1.0"
+	version = "2.0",
+	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
 
@@ -51,15 +52,15 @@ public void OnPluginStart() {
 }
 
 public void OnAllPluginsLoaded() {
-	AddMixType("random", MIN_PLAYERS);
+	AddMixType("random", MIN_PLAYERS, 0);
 }
 
-public void GetVoteTitle(int iClient, char[] sTitle) {
-	Format(sTitle, VOTE_TITLE_SIZE, "%T", "VOTE_TITLE", iClient);
+public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
+	Format(sTitle, DISPLAY_MSG_SIZE, "%T", "VOTE_DISPLAY_MSG", iClient);
 }
 
-public void GetVoteMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTE_MSG_SIZE, "%T", "VOTE_MESSAGE", iClient);
+public void GetVoteEndMessage(int iClient, char[] sMsg) {
+	Format(sMsg, VOTEEND_MSG_SIZE, "%T", "VOTE_END_MSG", iClient);
 }
 
 /**
@@ -67,7 +68,7 @@ public void GetVoteMessage(int iClient, char[] sMsg) {
  * 
  * @noreturn
  */
-public void OnMixStart()
+public void OnMixInProgress()
 {
 	// save current player / team setup
 	int g_iPreviousCount[4];

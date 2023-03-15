@@ -1,12 +1,12 @@
 # About mix_team
-Plugin adds voting for mixing teams
+Plugin adds voting for mixing teams. The mix_team plugin itself does not implement any mixing of players, but provides an API. 
+Several prepared author's mix types are available: capitan and random.
 
 ## Commands
 `!mix <type>` - start mix <type>.
 
 ## TODO
 - [ ] Interrupting a mix with a chat command.
-- [x] Automatic collection of mix types for messages
 
 ## How to add mix type?
 You must write and compile a plugin that implements all methods:
@@ -19,11 +19,11 @@ public void OnAllPluginsLoaded() {
 }
 
 public void GetVoteTitle(int iClient, char[] sTitle) {
-	Format(sTitle, VOTE_TITLE_SIZE, "%T", "My vote title!"); // <-- Voting header
+	Format(sTitle, VOTE_TITLE_SIZE, "My vote title!"); // <-- Voting header
 }
 
 public void GetVoteMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTE_MSG_SIZE, "My vote successful!"); // <-- Message if voting is successful
+	Format(sMsg, VOTE_MSG_SIZE, "Vote done!"); // <-- Message if voting is successful
 }
 
 public void OnMixStart() { // <-- Point of entry

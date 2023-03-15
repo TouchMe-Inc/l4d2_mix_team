@@ -6,28 +6,29 @@ Several prepared author's mix types are available: mt_capitan and mt_random.
 ## Commands
 `!mix <type>` - start mix <type>.
 
-## TODO
-- [ ] Interrupting a mix with a chat command.
-
-## How to add mix type?
+## How to create mix type?
 You must write and compile a plugin that implements all methods:
 ```
 #include <sourcemod>
 #include <mix_team>
 
 public void OnAllPluginsLoaded() {
-	AddMixType("supermix", 4); // <-- add mix type. Run: "!mix supermix"
+	AddMixType("supermix", 4, 60); // <-- add mix type with timeout 60sec (can be interrupted). Run: "!mix supermix"
 }
 
-public void GetVoteTitle(int iClient, char[] sTitle) {
-	Format(sTitle, VOTE_TITLE_SIZE, "My vote title!"); // <-- Voting header
+public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
+	Format(sTitle, DISPLAY_MSG_SIZE, "My vote title!"); // <-- Voting header
 }
 
-public void GetVoteMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTE_MSG_SIZE, "Vote done!"); // <-- Message if voting is successful
+public void GetVoteEndMessage(int iClient, char[] sMsg) {
+	Format(sMsg, VOTEEND_MSG_SIZE, "Vote done!"); // <-- Message if voting is successful
 }
 
-public void OnMixStart() { // <-- Point of entry
+public void OnMixInProgress() // <-- Point of entry
+{
+	// Payload
+	...
+	...
 	CallEndMix(); // <-- Exit point
 }
 ```

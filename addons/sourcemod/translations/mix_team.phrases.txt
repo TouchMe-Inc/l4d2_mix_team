@@ -3,12 +3,18 @@
 	"BAD_ARGUMENT"
 	{
 		"#format"		"{1:s}"
-		"en"			"Bad argument {1} for mix. Use: {olive}!mix [random|capitan]"
+		"en"			"Bad argument {1} for mix. Use: {olive}!mix <type>"
+	}
+	
+	"ARGUMENT_EXAMPLE"
+	{
+		"#format"		"{1:s}"
+		"en"			"> {olive}!mix {1}"
 	}
 	
 	"NO_ARGUMENT"
 	{
-		"en"			"No arguments for mix. Use: {olive}!mix [random|capitan]"
+		"en"			"No arguments for mix. Use: {olive}!mix <type>"
 	}
 
 	"CANT_CHAGNE_TEAM"

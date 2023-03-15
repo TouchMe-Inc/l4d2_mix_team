@@ -14,24 +14,28 @@ You must write and compile a plugin that implements all methods:
 #include <sourcemod>
 #include <mix_team>
 
-public void OnAllPluginsLoaded() {
-	AddMixType("supermix", 4, 60); // <-- add mix type with timeout 60sec (can be interrupted). Run: "!mix supermix"
+public void OnAllPluginsLoaded()
+{
+	// add mix type with timeout 60sec (can be interrupted). Run: "!mix supermix"
+	AddMixType("supermix", 4, 60);
 }
 
-public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
-	Format(sTitle, DISPLAY_MSG_SIZE, "My vote title!"); // <-- Voting header
+// MANDATORY set the name of the vote
+public void GetVoteDisplayMessage(int iClient, char[] sTitle) { // Required!!!
+	Format(sTitle, DISPLAY_MSG_SIZE, "My vote title!");
 }
 
-public void GetVoteEndMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTEEND_MSG_SIZE, "Vote done!"); // <-- Message if voting is successful
+// MANDATORY set a message in case of success
+public void GetVoteEndMessage(int iClient, char[] sMsg) { // Required!!!
+	Format(sMsg, VOTEEND_MSG_SIZE, "Vote done!");
 }
 
-public void OnMixInProgress() // <-- Point of entry
+public void OnMixInProgress() // Required!!! Point of entry
 {
 	// Payload
+	
 	...
-	...
-	CallEndMix(); // <-- Exit point
+	CallEndMix(); // Required!!! Exit point
 }
 ```
 

@@ -11,7 +11,7 @@
 		"ru"			"Не выбран тип микса. Используйте: {olive}!mix <type>"
 	}
 
-	"CANT_CHAGNE_TEAM"
+	"CANT_CHANGE_TEAM"
 	{
 		"ru"			"{olive}Нельзя {default}менять команду {olive}во время микса"
 	}

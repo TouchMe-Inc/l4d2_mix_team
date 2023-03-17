@@ -10,7 +10,7 @@ public Plugin myinfo = {
 	name = "MixTeamCapitan",
 	author = "TouchMe",
 	description = "Adds capitan mix",
-	version = "2.0",
+	version = "2.0.1",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -28,6 +28,8 @@ public Plugin myinfo = {
 #define STEP_SECOND_CAPITAN    2
 #define STEP_PICK_TEAM_FIRST   3
 #define STEP_PICK_TEAM_SECOND  4
+
+#define MIN_PLAYERS             4
 
 // Macros
 #define IS_REAL_CLIENT(%1)      (IsClientInGame(%1) && !IsFakeClient(%1))
@@ -66,8 +68,12 @@ public void OnPluginStart() {
 	InitTranslations();
 }
 
-public void OnAllPluginsLoaded() {
-	AddMixType("capitan", (FindConVar("survivor_limit").IntValue * 2), 60);
+public void OnAllPluginsLoaded()
+{
+	int iCalcMinPlayers = (FindConVar("survivor_limit").IntValue * 2);
+	
+	// fix for 1v1
+	AddMixType("capitan", (iCalcMinPlayers < MIN_PLAYERS) ? MIN_PLAYERS : iCalcMinPlayers, 60);
 }
 
 public void GetVoteDisplayMessage(int iClient, char[] sTitle) {

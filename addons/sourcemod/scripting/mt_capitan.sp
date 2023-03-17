@@ -197,20 +197,23 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 
 			case STEP_PICK_PLAYER: 
 			{
-				// if g_iOrderPickPlayer in [1, 2, 3, 4, ..] => [SECOND, FIRST, FIRST, SECOND]
-				if (g_iOrderPickPlayer & 2) // SECOND
-				{
-					SetClientTeamByCapitan(iTarget, TEAM_INFECTED);	
-					CPrintToChatAll("%t", "PICK_TEAM", g_iSecondCapitan, iTarget);
-				}
+				bool bIsOrderPickFirstCapitan = !(g_iOrderPickPlayer & 2);
 
-				else // FIRST
+				if (bIsOrderPickFirstCapitan && IsFirstCapitan(iClient))
 				{
 					SetClientTeamByCapitan(iTarget, TEAM_SURVIVOR);	
-					CPrintToChatAll("%t", "PICK_TEAM", g_iFirstCapitan, iTarget);
+					CPrintToChatAll("%t", "PICK_TEAM", iClient, iTarget);
+
+					g_iOrderPickPlayer++;
 				}
 
-				g_iOrderPickPlayer++;
+				if (!bIsOrderPickFirstCapitan && IsSecondCapitan(iClient))
+				{
+					SetClientTeamByCapitan(iTarget, TEAM_INFECTED);	
+					CPrintToChatAll("%t", "PICK_TEAM", iClient, iTarget);
+
+					g_iOrderPickPlayer++;
+				}
 			}
 		}
 	}
@@ -234,17 +237,26 @@ public void Flow(int iStep)
 
 		case STEP_FIRST_CAPITAN: 
 		{
-			SetFirstCapitan(GetVoteWinner());
+			int iFirstCapitan = GetVoteWinner();
+
+			SetFirstCapitan(iFirstCapitan);
+
+			CPrintToChatAll("%t", "NEW_FIRST_CAPITAN", iFirstCapitan, g_iVoteCount[iFirstCapitan]);
 
 			PrepareVote();
-			DisplayMenuAll(STEP_SECOND_CAPITAN, 10);
 
 			CreateTimer(11.0, NextStepTimer, STEP_SECOND_CAPITAN);
+
+			DisplayMenuAll(STEP_SECOND_CAPITAN, 10);
 		}
 
 		case STEP_SECOND_CAPITAN:
 		{
-			SetSecondCapitan(GetVoteWinner());
+			int iSecondCapitan = GetVoteWinner();
+
+			SetSecondCapitan(iSecondCapitan);
+
+			CPrintToChatAll("%t", "NEW_SECOND_CAPITAN", iSecondCapitan, g_iVoteCount[iSecondCapitan]);
 
 			Flow(STEP_PICK_PLAYER);
 		}
@@ -274,9 +286,9 @@ public void Flow(int iStep)
 
 			else
 			{
-				DisplayMenu(hMenu, iCapitan, 1);
+				CreateTimer(1.0, NextStepTimer, iStep);
 
-				CreateTimer(1.0, NextStepTimer, iStep); 
+				DisplayMenu(hMenu, iCapitan, 1);
 			}
 		}
 	}
@@ -336,20 +348,20 @@ int GetVoteWinner()
 	return iWinner;
 }
 
-void SetFirstCapitan(int iClient)
-{
-	g_iFirstCapitan = iClient;
-
-	CheatCommand(iClient, "sb_takecontrol");
-	CPrintToChatAll("%t", "NEW_FIRST_CAPITAN", iClient, g_iVoteCount[iClient]);
+void SetFirstCapitan(int iClient) {
+	CheatCommand((g_iFirstCapitan = iClient), "sb_takecontrol");
 }
 
-void SetSecondCapitan(int iClient)
-{
-	g_iSecondCapitan = iClient;
+bool IsFirstCapitan(int iClient) {
+	return g_iFirstCapitan == iClient;
+}
 
-	ChangeClientTeam(iClient, TEAM_INFECTED);
-	CPrintToChatAll("%t", "NEW_SECOND_CAPITAN", iClient, g_iVoteCount[iClient]);
+void SetSecondCapitan(int iClient) {
+	ChangeClientTeam((g_iSecondCapitan = iClient), TEAM_INFECTED);
+}
+
+bool IsSecondCapitan(int iClient) {
+	return g_iSecondCapitan == iClient;
 }
 
 /**

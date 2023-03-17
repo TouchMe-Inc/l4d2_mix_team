@@ -197,17 +197,17 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 
 			case STEP_PICK_PLAYER: 
 			{
-				// if g_iOrderPickPlayer in [1, 2, 3, 4, ..] => [FIRST, SECOND, SECOND, FIRST]
-				if (g_iOrderPickPlayer & 2) // FIRST
-				{
-					SetClientTeamByCapitan(iTarget, TEAM_SURVIVOR);	
-					CPrintToChatAll("%t", "PICK_TEAM", g_iFirstCapitan, iTarget);
-				}
-
-				else // SECOND
+				// if g_iOrderPickPlayer in [1, 2, 3, 4, ..] => [SECOND, FIRST, FIRST, SECOND]
+				if (g_iOrderPickPlayer & 2) // SECOND
 				{
 					SetClientTeamByCapitan(iTarget, TEAM_INFECTED);	
 					CPrintToChatAll("%t", "PICK_TEAM", g_iSecondCapitan, iTarget);
+				}
+
+				else // FIRST
+				{
+					SetClientTeamByCapitan(iTarget, TEAM_SURVIVOR);	
+					CPrintToChatAll("%t", "PICK_TEAM", g_iFirstCapitan, iTarget);
 				}
 
 				g_iOrderPickPlayer++;

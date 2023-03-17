@@ -9,7 +9,7 @@ public Plugin myinfo = {
 	name = "MixTeamRandom",
 	author = "TouchMe",
 	description = "Adds random mix",
-	version = "2.0",
+	version = "2.0.1",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 

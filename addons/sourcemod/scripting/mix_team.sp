@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "2.0",
+	version = "2.0.1",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -57,7 +57,7 @@ methodmap TypeList < ArrayList
 
 	public int Add(Handle hPlugin, const char[] sName, int iMinPlayers, int iTimeout)
 	{
-		if (hPlugin == null || IsEmptyString(sName, MIX_NAME_SIZE) || iMinPlayers > MaxClients) {
+		if (hPlugin == null || IsEmptyString(sName, MIX_NAME_SIZE) || iMinPlayers > MaxClients || iTimeout < 0) {
 			return -1;
 		}
 
@@ -835,6 +835,7 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 					hVote.DisplayPassCustomToOne(iPlayer, sVoteEndMsg);
 				}
 
+				g_iMixTimeout = GetTime() + g_hTypeList.GetTimeout(g_iMixType);
 				g_iMixState = STATE_IN_PROGRESS;
 
 				SetAllClientSpectator();
@@ -846,10 +847,6 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 				// call FORWARD_IN_PROGRESS
 				Call_StartFunction(hPlugin, hFunc);
 				Call_Finish(iReturn);
-
-				// set timeout for cancel mix
-				int iTimeout = g_hTypeList.GetTimeout(g_iMixType);
-				g_iMixTimeout = (iTimeout > 0) ? (GetTime() + iTimeout) : 0;
 			}
 		}
 	}

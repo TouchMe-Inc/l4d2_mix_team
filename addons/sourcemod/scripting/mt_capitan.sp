@@ -21,13 +21,15 @@ public Plugin myinfo = {
 #define TEAM_SURVIVOR           2
 #define TEAM_INFECTED           3
 
-#define MENU_TITTLE_SIZE       128
+#define MENU_TITTLE_SIZE        128
 
-#define STEP_INIT              0
-#define STEP_FIRST_CAPITAN     1
-#define STEP_SECOND_CAPITAN    2
-#define STEP_PICK_TEAM_FIRST   3
-#define STEP_PICK_TEAM_SECOND  4
+#define STEP_INIT               0
+#define STEP_FIRST_CAPITAN      1
+#define STEP_SECOND_CAPITAN     2
+#define STEP_PICK_PLAYER        3
+
+#define LAST_PICK               0
+#define CURRENT_PICK            1
 
 #define MIN_PLAYERS             4
 
@@ -40,7 +42,8 @@ public Plugin myinfo = {
 int
 	g_iFirstCapitan = 0,
 	g_iSecondCapitan = 0,
-	g_iVoteCount[MAXPLAYERS + 1] = {0, ...};
+	g_iVoteCount[MAXPLAYERS + 1] = {0, ...},
+	g_iOrderPickPlayer = 0;
 
 /**
  * Loads dictionary files. On failure, stops the plugin execution.
@@ -114,7 +117,7 @@ public Menu BuildMenu(int iClient, int iStep)
 			Format(sMenuTitle, sizeof(sMenuTitle), "%t", "MENU_TITLE_SECOND_CAPITAN", iClient);
 		}
 
-		case STEP_PICK_TEAM_FIRST, STEP_PICK_TEAM_SECOND: {
+		case STEP_PICK_PLAYER: {
 			Format(sMenuTitle, sizeof(sMenuTitle), "%t", "MENU_TITLE_PICK_TEAMS", iClient);
 		}
 	}
@@ -140,7 +143,7 @@ public Menu BuildMenu(int iClient, int iStep)
 	return hMenu.ItemCount > 1 ? hMenu : null;
 }
 
-bool DisplayMenuAll(int iStep) 
+bool DisplayMenuAll(int iStep, int iTime) 
 {
 	Menu hMenu;
 
@@ -154,7 +157,7 @@ bool DisplayMenuAll(int iStep)
 			return false;
 		}
 
-		DisplayMenu(hMenu, iClient, 10);
+		DisplayMenu(hMenu, iClient, iTime);
 	}
 
 	return true;
@@ -191,25 +194,23 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 			case STEP_FIRST_CAPITAN, STEP_SECOND_CAPITAN: {
 				g_iVoteCount[iTarget] ++;
 			}
-			case STEP_PICK_TEAM_FIRST, STEP_PICK_TEAM_SECOND: 
-			{	
-				bool bIsPickFirstCapitan = (iStep == STEP_PICK_TEAM_FIRST);
 
-				if (bIsPickFirstCapitan)
+			case STEP_PICK_PLAYER: 
+			{
+				// if g_iOrderPickPlayer in [1, 2, 3, 4, ..] => [FIRST, SECOND, SECOND, FIRST]
+				if (g_iOrderPickPlayer & 2) // FIRST
 				{
 					SetClientTeamByCapitan(iTarget, TEAM_SURVIVOR);	
 					CPrintToChatAll("%t", "PICK_TEAM", g_iFirstCapitan, iTarget);
-
-					Flow(STEP_PICK_TEAM_SECOND);
 				}
 
-				else
+				else // SECOND
 				{
 					SetClientTeamByCapitan(iTarget, TEAM_INFECTED);	
 					CPrintToChatAll("%t", "PICK_TEAM", g_iSecondCapitan, iTarget);
-
-					Flow(STEP_PICK_TEAM_FIRST);
 				}
+
+				g_iOrderPickPlayer++;
 			}
 		}
 	}
@@ -223,8 +224,10 @@ public void Flow(int iStep)
 	{
 		case STEP_INIT:
 		{
+			g_iOrderPickPlayer = 1;
+
 			PrepareVote();
-			DisplayMenuAll(STEP_FIRST_CAPITAN);
+			DisplayMenuAll(STEP_FIRST_CAPITAN, 10);
 
 			CreateTimer(11.0, NextStepTimer, STEP_FIRST_CAPITAN);
 		}
@@ -234,7 +237,7 @@ public void Flow(int iStep)
 			SetFirstCapitan(GetVoteWinner());
 
 			PrepareVote();
-			DisplayMenuAll(STEP_SECOND_CAPITAN);
+			DisplayMenuAll(STEP_SECOND_CAPITAN, 10);
 
 			CreateTimer(11.0, NextStepTimer, STEP_SECOND_CAPITAN);
 		}
@@ -243,12 +246,12 @@ public void Flow(int iStep)
 		{
 			SetSecondCapitan(GetVoteWinner());
 
-			Flow(STEP_PICK_TEAM_FIRST);
+			Flow(STEP_PICK_PLAYER);
 		}
 
-		case STEP_PICK_TEAM_FIRST, STEP_PICK_TEAM_SECOND: 
+		case STEP_PICK_PLAYER: 
 		{
-			int iCapitan = (iStep == STEP_PICK_TEAM_FIRST) ? g_iFirstCapitan : g_iSecondCapitan;
+			int iCapitan = (g_iOrderPickPlayer & 2) ? g_iFirstCapitan : g_iSecondCapitan;
 
 			Menu hMenu = BuildMenu(iCapitan, iStep);
 

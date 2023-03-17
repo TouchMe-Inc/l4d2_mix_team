@@ -251,7 +251,7 @@ public void Flow(int iStep)
 
 		case STEP_PICK_PLAYER: 
 		{
-			int iCapitan = (g_iOrderPickPlayer & 2) ? g_iFirstCapitan : g_iSecondCapitan;
+			int iCapitan = (g_iOrderPickPlayer & 2) ? g_iSecondCapitan : g_iFirstCapitan;
 
 			Menu hMenu = BuildMenu(iCapitan, iStep);
 

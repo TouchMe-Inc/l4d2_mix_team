@@ -207,7 +207,7 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 					g_iOrderPickPlayer++;
 				}
 
-				if (!bIsOrderPickFirstCapitan && IsSecondCapitan(iClient))
+				else if (!bIsOrderPickFirstCapitan && IsSecondCapitan(iClient))
 				{
 					SetClientTeamByCapitan(iTarget, TEAM_INFECTED);	
 					CPrintToChatAll("%t", "PICK_TEAM", iClient, iTarget);
@@ -275,13 +275,12 @@ public void Flow(int iStep)
 					if (!IS_REAL_CLIENT(iClient) || !IS_SPECTATOR(iClient) || !IsMixMember(iClient)) {
 						continue;
 					}
-					
+
 					(FindSurvivorBot() > 0) ? CheatCommand(iClient, "sb_takecontrol") : ChangeClientTeam(iClient, TEAM_INFECTED);	
 					break;
 				}
 
-				// Required
-				CallEndMix();
+				CallEndMix(); // Required
 			}
 
 			else

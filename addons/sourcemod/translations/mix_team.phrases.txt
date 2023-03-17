@@ -17,7 +17,7 @@
 		"en"			"No arguments for mix. Use: {olive}!mix <type>"
 	}
 
-	"CANT_CHAGNE_TEAM"
+	"CANT_CHANGE_TEAM"
 	{
 		"en"			"You cannot change the team {olive}during the mix"
 	}

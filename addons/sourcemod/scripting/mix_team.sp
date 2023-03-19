@@ -605,7 +605,7 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 		return Plugin_Handled;
 	} 
 		
-	else if (g_bRoundIsLive) 
+	else if (!g_bReadyUpAvailable && g_bRoundIsLive) 
 	{
 		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
 

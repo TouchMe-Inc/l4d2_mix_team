@@ -171,8 +171,10 @@ ConVar
   *
   * @noreturn
   */
-public void OnAllPluginsLoaded() {
+public void OnAllPluginsLoaded() 
+{
 	g_bReadyUpAvailable = LibraryExists(LIB_READY);
+	g_bRoundIsLive = false;
 }
 
 /**
@@ -605,7 +607,7 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 		return Plugin_Handled;
 	} 
 		
-	else if (!g_bReadyUpAvailable && g_bRoundIsLive) 
+	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
 	{
 		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
 
@@ -683,7 +685,7 @@ public Action Cmd_CancelMix(int iClient, int iArgs)
 		CPrintToChat(iClient, "%T", "CANCEL_MIX_FAIL", iClient, iEndTime);
 	}
 
-	return Plugin_Handled;
+	return Plugin_Continue;
 }
 
 /**

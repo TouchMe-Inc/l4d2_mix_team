@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "2.0.2",
+	version = "2.0.3",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -174,7 +174,6 @@ ConVar
 public void OnAllPluginsLoaded() 
 {
 	g_bReadyUpAvailable = LibraryExists(LIB_READY);
-	g_bRoundIsLive = false;
 }
 
 /**
@@ -218,6 +217,15 @@ public void OnRoundIsLive()
 	}
 
 	g_bRoundIsLive = true;
+}
+
+/**
+  * Called when the map is loaded.
+  *
+  * @noreturn
+  */
+public void OnMapStart() { 
+	g_bRoundIsLive = false;
 }
 
 /**
@@ -600,18 +608,25 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 
+	if (InSecondHalfOfRound())
+	{
+		CPrintToChat(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
+
+		return Plugin_Continue;
+	}
+
 	if (g_bReadyUpAvailable && !IsInReady())
 	{
 		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
 
-		return Plugin_Handled;
+		return Plugin_Continue;
 	} 
 		
 	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
 	{
 		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
 
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 
 	if (!iArgs) 
@@ -619,14 +634,14 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 		CPrintToChat(iClient, "%T", "NO_ARGUMENT", iClient);
 		CPrintExampleArguments(iClient);
 
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 
 	if (g_iMixState != STATE_NONE) 
 	{
 		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
 
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 	
 	char sArg[32];
@@ -639,7 +654,7 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 		CPrintToChat(iClient, "%T", "BAD_ARGUMENT", iClient, sArg);
 		CPrintExampleArguments(iClient);
 
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 
 	int iMinPlayers = g_hTypeList.GetMinPlayers(iMixType);
@@ -648,11 +663,11 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 	if (iTotalPlayers < iMinPlayers)
 	{
 		CPrintToChat(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 
 	StartVoteMix(iClient, iMixType);
-	
+
 	return Plugin_Continue;
 }
 
@@ -670,7 +685,7 @@ public Action Cmd_CancelMix(int iClient, int iArgs)
 	}
 
 	if (g_iMixState == STATE_NONE) {
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 
 	int iEndTime = g_iMixTimeout - GetTime();
@@ -1003,6 +1018,7 @@ bool IsEmptyString(const char[] str, int maxlength)
 	return true;
 }
 
+
 /**
  * Displays all types of mixes.
  *
@@ -1016,4 +1032,8 @@ void CPrintExampleArguments(int iClient)
 		g_hTypeList.GetName(index, sMixName, MIX_NAME_SIZE);
 		CPrintToChat(iClient, "%T", "ARGUMENT_EXAMPLE", iClient, sMixName);
 	}
+}
+
+int InSecondHalfOfRound() {
+	return GameRules_GetProp("m_bInSecondHalfOfRound");
 }

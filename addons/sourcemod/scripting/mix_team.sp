@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "2.0.1",
+	version = "2.0.2",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -723,7 +723,7 @@ public void StartVoteMix(int iClient, int iMixType)
 
 		iTeam = GetClientTeam(iPlayer);
 
-		if (iTeam != TEAM_SPECTATOR)
+		if (iTeam == TEAM_INFECTED || iTeam == TEAM_SURVIVOR)
 		{
 			iPlayers[iTotalPlayers++] = iPlayer;
 			g_hPlayers[iPlayer].member = true;

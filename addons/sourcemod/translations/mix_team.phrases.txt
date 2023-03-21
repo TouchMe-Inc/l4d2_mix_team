@@ -38,6 +38,11 @@
 		"#format"		"{1:d}"
 		"en"			"A vote cannot be called at this moment, try again in a {1} second"
 	}
+	
+	"SECOND_HALF_OF_ROUND"
+	{
+		"en"			"Impossible to mix: {olive}now the second half of the round"
+	}
 
 	"ROUND_LIVE"
 	{

@@ -71,3 +71,77 @@ public void __pl_mix_team_SetNTVOptional()
 	MarkNativeAsOptional("GetLastTeam");
 }
 #endif
+
+
+#define TEAM_NONE               0
+#define TEAM_SPECTATOR          1
+#define TEAM_SURVIVOR           2
+#define TEAM_INFECTED           3
+
+// Macros
+#define IS_SURVIVOR(%1)         (GetClientTeam(%1) == TEAM_SURVIVOR)
+#define IS_SPECTATOR(%1)        (GetClientTeam(%1) == TEAM_SPECTATOR)
+#define IS_INFECTED(%1)         (GetClientTeam(%1) == TEAM_INFECTED)
+
+/**
+ * Sets the client team.
+ * 
+ * @param iClient     Client index
+ * @param iTeam       Param description
+ * @return            true if success
+ */
+stock bool SetClientTeam(int iClient, int iTeam)
+{
+	if (iClient <= 0 || iClient > MaxClients) {
+		return false;
+	}
+
+	if (GetClientTeam(iClient) == iTeam) {
+		return true;
+	}
+
+	if (iTeam != TEAM_SURVIVOR) {
+		ChangeClientTeam(iClient, iTeam);
+		return true;
+	}
+
+	else if (FindSurvivorBot() > 0)
+	{
+		CheatCommand(iClient, "sb_takecontrol");
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Hack to execute cheat commands.
+ * 
+ * @noreturn
+ */
+stock void CheatCommand(int iClient, const char[] sCmd, const char[] sArgs = "")
+{
+	int iFlags = GetCommandFlags(sCmd);
+	SetCommandFlags(sCmd, iFlags & ~FCVAR_CHEAT);
+	FakeClientCommand(iClient, "%s %s", sCmd, sArgs);
+	SetCommandFlags(sCmd, iFlags);
+}
+
+/**
+ * Finds a free bot.
+ * 
+ * @return     Bot index or -1
+ */
+stock int FindSurvivorBot()
+{
+	for (int iClient = 1; iClient <= MaxClients; iClient++)
+	{
+		if (!IsClientInGame(iClient) || !IsFakeClient(iClient) || GetClientTeam(iClient) != TEAM_SURVIVOR) {
+			continue;
+		}
+
+		return iClient;
+	}
+
+	return -1;
+}

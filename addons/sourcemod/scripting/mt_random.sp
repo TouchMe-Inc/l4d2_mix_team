@@ -9,21 +9,14 @@ public Plugin myinfo = {
 	name = "MixTeamRandom",
 	author = "TouchMe",
 	description = "Adds random mix",
-	version = "2.0.1",
+	version = "2.0.4",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
 
 #define TRANSLATIONS            "mt_random.phrases"
 
-#define TEAM_SURVIVOR           2 
-#define TEAM_INFECTED           3
-
 #define MIN_PLAYERS             4
-
-// Macros
-#define IS_REAL_CLIENT(%1)      (IsClientInGame(%1) && !IsFakeClient(%1))
-#define IS_SURVIVOR(%1)         (GetClientTeam(%1) == TEAM_SURVIVOR)
 
 
 /**
@@ -77,7 +70,7 @@ public void OnMixInProgress()
 
 	for (int iClient = 1, iTeam; iClient <= MaxClients; iClient++)
 	{
-		if (!IS_REAL_CLIENT(iClient) || !IsMixMember(iClient)) {
+		if (!IsClientInGame(iClient) || !IsMixMember(iClient)) {
 			continue;
 		}
 		
@@ -151,54 +144,4 @@ public void OnMixInProgress()
 
 	// Required
 	CallEndMix();
-}
-
-/**
- * Sets the client team.
- * 
- * @param iClient     Client index
- * @param iTeam       Param description
- * @noreturn
- */
-void SetClientTeam(int iClient, int iTeam)
-{
-	if (iTeam == TEAM_INFECTED) {
-		ChangeClientTeam(iClient, TEAM_INFECTED);
-	}
-	
-	else if (FindSurvivorBot() > 0) {
-		CheatCommand(iClient, "sb_takecontrol");
-	}
-}
-
-/**
- * Hack to execute cheat commands.
- * 
- * @noreturn
- */
-void CheatCommand(int iClient, const char[] sCmd, const char[] sArgs = "")
-{
-	int iFlags = GetCommandFlags(sCmd);
-	SetCommandFlags(sCmd, iFlags & ~FCVAR_CHEAT);
-	FakeClientCommand(iClient, "%s %s", sCmd, sArgs);
-	SetCommandFlags(sCmd, iFlags);
-}
-
-/**
- * Finds a free bot.
- * 
- * @return     Bot index or -1
- */
-int FindSurvivorBot()
-{
-	for (int iClient = 1; iClient <= MaxClients; iClient++)
-	{
-		if (!IsClientInGame(iClient) || !IsFakeClient(iClient) || !IS_SURVIVOR(iClient)) {
-			continue;
-		}
-
-		return iClient;
-	}
-
-	return -1;
 }

@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "2.0.3",
+	version = "2.0.4",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -29,17 +29,11 @@ public Plugin myinfo =
 #define FORWARD_VOTEEND_MSG     "GetVoteEndMessage"
 #define FORWARD_IN_PROGRESS     "OnMixInProgress"
 
-#define TEAM_NONE               0
-#define TEAM_SPECTATOR          1
-#define TEAM_SURVIVOR           2
-#define TEAM_INFECTED           3
-
 #define VOTE_TIME               15
 
 #define IS_VALID_CLIENT(%1)     (%1 > 0 && %1 <= MaxClients)
 #define IS_REAL_CLIENT(%1)      (IsClientInGame(%1) && !IsFakeClient(%1))
-#define IS_SPECTATOR(%1)        (GetClientTeam(%1) == TEAM_SPECTATOR)
-#define IS_SURVIVOR(%1)         (GetClientTeam(%1) == TEAM_SURVIVOR)
+
 
 enum struct TypeItem
 {
@@ -49,7 +43,7 @@ enum struct TypeItem
 	int timeout;
 }
 
-methodmap TypeList < ArrayList 
+methodmap TypeList < ArrayList
 {
 	public TypeList() {
 		return view_as<TypeList>(new ArrayList(sizeof(TypeItem)));
@@ -926,68 +920,6 @@ void SetAllClientSpectator()
 
 		SetClientTeam(iClient, TEAM_SPECTATOR);
 	}
-}
-
-/**
- * Sets the client team.
- * 
- * @param iClient     Client index
- * @param iTeam       Param description
- * @return            true if success
- */
-bool SetClientTeam(int iClient, int iTeam)
-{
-	if (!IS_VALID_CLIENT(iClient)) {
-		return false;
-	}
-
-	if (GetClientTeam(iClient) == iTeam) {
-		return true;
-	}
-
-	if (iTeam != TEAM_SURVIVOR) {
-		ChangeClientTeam(iClient, iTeam);
-		return true;
-	}
-	else if (FindSurvivorBot() > 0)
-	{
-		CheatCommand(iClient, "sb_takecontrol");
-		return true;
-	}
-
-	return false;
-}
-
-/**
- * Hack to execute cheat commands.
- * 
- * @noreturn
- */
-void CheatCommand(int iClient, const char[] sCmd, const char[] sArgs = "")
-{
-	int iFlags = GetCommandFlags(sCmd);
-	SetCommandFlags(sCmd, iFlags & ~FCVAR_CHEAT);
-	FakeClientCommand(iClient, "%s %s", sCmd, sArgs);
-	SetCommandFlags(sCmd, iFlags);
-}
-
-/**
- * Finds a free bot.
- * 
- * @return     Bot index or -1
- */
-int FindSurvivorBot()
-{
-	for (int iClient = 1; iClient <= MaxClients; iClient++)
-	{
-		if (!IsClientInGame(iClient) || !IsFakeClient(iClient) || !IS_SURVIVOR(iClient)) {
-			continue;
-		}
-
-		return iClient;
-	}
-
-	return -1;
 }
 
 /**

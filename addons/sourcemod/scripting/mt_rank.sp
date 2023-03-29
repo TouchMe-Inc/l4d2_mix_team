@@ -11,7 +11,7 @@ public Plugin myinfo = {
 	name = "MixTeamRank",
 	author = "TouchMe",
 	description = "Adds rank mix",
-	version = "2.0.0",
+	version = "2.0.1",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -73,7 +73,7 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
  * 
  * @noreturn
  */
-public void OnMixInProgress()
+public Action OnMixInProgress()
 {
 	Handle hPlayers = CreateArray(sizeof(Player));
 	Player tPlayer;
@@ -91,20 +91,13 @@ public void OnMixInProgress()
 		{
 			CallCancelMix();
 			CPrintToChatAll("%t", "NO_RANK", iClient);
-			return;
+			return Plugin_Handled;
 		}
 
 		PushArrayArray(hPlayers, tPlayer);
 	}
 
 	SortADTArrayCustom(hPlayers, SortByRank);
-
-	// TEMPLATE:
-	// 1,             (2  2)  1                // Players: 4   Center: 1,2
-	// 1, 2,          (2, 1), 2, 1             // Players: 6   Center: 2,3
-	// 1, 2, 1,       (2, 2), 1, 2, 1          // Players: 8   Center: 3,4
-	// 1, 2, 1, 2,    (2, 1), 2, 1, 2, 1       // Players: 10  Center: 4,5
-	// 1, 2, 1, 2, 1, (2, 2), 1, 2, 1, 2, 1    // Players: 12  Center: 5,6
 
 	int iPlayers = GetArraySize(hPlayers);
 	int iHalfPlayers = iPlayers / 2;
@@ -114,9 +107,11 @@ public void OnMixInProgress()
 	{
 		bIsSurvivorTeam = (iIndex % 2 == 0);
 
+		// Left
 		GetArrayArray(hPlayers, iIndex, tPlayer);
 		SetClientTeam(tPlayer.id, bIsSurvivorTeam ? TEAM_SURVIVOR : TEAM_INFECTED);
 
+		// Right
 		GetArrayArray(hPlayers, iPlayers - iIndex - 1, tPlayer);
 		SetClientTeam(tPlayer.id, bIsSurvivorTeam ? TEAM_SURVIVOR : TEAM_INFECTED);
 	}
@@ -130,8 +125,7 @@ public void OnMixInProgress()
 		SetClientTeam(tPlayer.id, (iPlayers % 4 != 0) ? TEAM_SURVIVOR : TEAM_INFECTED);
 	}
 
-	// Required
-	CallEndMix();
+	return Plugin_Continue;
 }
 
 /**
@@ -139,6 +133,7 @@ public void OnMixInProgress()
   * @param index2        Second index to compare.
   * @param array         Array that is being sorted (order is undefined).
   * @param hndl          Handle optionally passed in while sorting.
+  *
   * @return              -1 if first should go before second
   *                      0 if first is equal to second
   *                      1 if first should go after second

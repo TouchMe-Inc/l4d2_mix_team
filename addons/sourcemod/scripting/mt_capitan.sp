@@ -10,7 +10,7 @@ public Plugin myinfo = {
 	name = "MixTeamCapitan",
 	author = "TouchMe",
 	description = "Adds capitan mix",
-	version = "2.0.4",
+	version = "2.0.5",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -83,8 +83,11 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
  * 
  * @noreturn
  */
-public void OnMixInProgress() {
+public Action OnMixInProgress() 
+{
 	Flow(STEP_INIT);
+
+	return Plugin_Handled;
 }
 
 /**

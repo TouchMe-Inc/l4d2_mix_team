@@ -9,7 +9,7 @@ public Plugin myinfo = {
 	name = "MixTeamRandom",
 	author = "TouchMe",
 	description = "Adds random mix",
-	version = "2.0.4",
+	version = "2.0.5",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -62,7 +62,7 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
  * 
  * @noreturn
  */
-public void OnMixInProgress()
+public Action OnMixInProgress()
 {
 	// save current player / team setup
 	int g_iPreviousCount[4];
@@ -142,6 +142,5 @@ public void OnMixInProgress()
 		}
 	}
 
-	// Required
-	CallEndMix();
+	return Plugin_Continue;
 }

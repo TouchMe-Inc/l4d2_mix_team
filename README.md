@@ -1,7 +1,7 @@
 # About mix_team
 Plugin adds voting for mixing teams. The mix_team plugin itself does not implement any mixing of players, but provides an API. 
 
-Several prepared author's mix types are available: mt_capitan and mt_random.
+Several prepared author's mix types are available: mt_capitan and mt_random. Also mix by rank [VersusStats](https://github.com/TouchMe-Inc/l4d2_versus_stats)
 
 ## Commands
 `!mix <type>` - start mix <type>.
@@ -16,7 +16,8 @@ You must write and compile a plugin that implements all methods:
 
 public void OnAllPluginsLoaded()
 {
-	// add mix type with timeout 60sec (can be interrupted). Run: "!mix supermix"
+	// Add mix type with minimum number of players 4 and timeout 60sec (can be interrupted). 
+	// Run: "!mix supermix"
 	AddMixType("supermix", 4, 60);
 }
 
@@ -30,12 +31,23 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) { // Required!!!
 	Format(sMsg, VOTEEND_MSG_SIZE, "Vote done!");
 }
 
-public void OnMixInProgress() // Required!!! Point of entry
+public Action OnMixInProgress() // Required!!! Point of entry
 {
 	// Payload
+	// ...
 	
-	...
+	// If the mix goes beyond the life cycle of the function, then you need to return Plugin_Handled
+	if (CreateTimer(1.0, Timer_EndMix)) {
+		return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
+}
+
+public Action Timer_EndMix()
+{
 	CallEndMix(); // Required!!! Exit point
+	return Plugin_Stop;
 }
 ```
 

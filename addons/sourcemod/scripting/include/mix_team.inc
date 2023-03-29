@@ -34,19 +34,64 @@
 #define VOTEEND_MSG_SIZE        128
 
 
+native void CallCancelMix();
+
+native void CallEndMix();
+
 native int AddMixType(char[] sName, int iMinPlayers, int iTimeout);
 
+/**
+ * @brief Returns the status of the mix
+ *
+ * @return              STATE_NONE | STATE_VOTING | STATE_IN_PROGRESS
+ **/
 native int GetMixState();
 
+/**
+ * @brief Returns the mix type
+ * @remarks The mix type is equal to the index of the element in the TypeList
+ *
+ * @return              TypeList Index or TYPE_NONE
+ **/
 native int GetMixType();
 
-native int CallCancelMix();
+/**
+ * @brief Returns whether the player is a member of the mix
+ *
+ * @param iClient       Client ID
+ *
+ * @return              true or false
+ **/
+native bool IsMixMember(int iClient);
 
-native int CallEndMix();
-
-native int IsMixMember(int iClient);
-
+/**
+ * @brief Returns the team the player was on after voting for the mix
+ *
+ * @param iClient       Client ID
+ *
+ * @return              Returns the command if the player was in the mix, otherwise -1
+ **/
 native int GetLastTeam(int iClient);
+
+/**
+ * @brief Called when the mix completes successfully
+ * @remarks The mix name is the same as the first argument AddMixType()
+ *
+ * @param sMixName      Mix name
+ *
+ * @noreturn
+ */
+forward void OnMixSuccess(const char[] sMixName);
+
+/**
+ * @brief Called when the mix is ​​interrupted
+ * @remarks The mix name is the same as the first argument AddMixType()
+ *
+ * @param sMixName      Mix name
+ *
+ * @noreturn
+ */
+forward void OnMixFailed(const char[] sMixName);
 
 public SharedPlugin __pl_mix_team =
 {

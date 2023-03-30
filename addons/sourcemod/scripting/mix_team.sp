@@ -213,17 +213,6 @@ public void OnRoundIsLive()
 	if (g_iMixState != STATE_NONE) {
 		AbortMix();
 	}
-
-	g_bRoundIsLive = true;
-}
-
-/**
-  * Called when the map starts loading.
-  *
-  * @noreturn
-  */
-public void OnMapInit(const char[] sMapName) { 
-	g_bRoundIsLive = false;
 }
 
 /**
@@ -365,6 +354,18 @@ int Native_GetLastTeam(Handle hPlugin, int iParams)
 }
 
 /**
+  * Called when the map starts loading.
+  *
+  * @noreturn
+  */
+public void OnMapInit(const char[] sMapName) 
+{
+	g_bRoundIsLive = false;
+	g_iMixState = STATE_NONE;
+	g_iMixType = TYPE_NONE;
+}
+
+/**
  * Called when the plugin is fully initialized and all known external references are resolved.
  * 
  * @noreturn
@@ -493,7 +494,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
  */
 public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) 
 {
-	if (g_bRoundIsLive) {
+	if (!g_bReadyUpAvailable) {
 		g_bRoundIsLive = false;
 	}
 	

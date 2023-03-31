@@ -95,7 +95,7 @@ public Action OnMixInProgress()
   *
   * @noreturn
   */
-public int BuildMenu(Menu hMenu, int iClient, int iStep)
+public int BuildMenu(Menu &hMenu, int iClient, int iStep)
 {
 	hMenu = new Menu(HandleMenu);
 

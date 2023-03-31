@@ -10,7 +10,7 @@ public Plugin myinfo = {
 	name = "MixTeamCapitan",
 	author = "TouchMe",
 	description = "Adds capitan mix",
-	version = "2.0.7",
+	version = "2.0.8",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -115,13 +115,13 @@ public int BuildMenu(Menu &hMenu, int iClient, int iStep)
 			Format(sMenuTitle, MENU_TITTLE_SIZE, "%t", "MENU_TITLE_PICK_TEAMS", iClient);
 		}
 	}
-	
+
 	hMenu.SetTitle(sMenuTitle);
 
 	char sPlayerInfo[6], sPlayerName[32];
 	for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++) 
 	{
-		if (!IsClientInGame(iPlayer) || !IS_SPECTATOR(iPlayer) || !IsMixMember(iPlayer)) {
+		if (!IsClientInGame(iPlayer) || !IS_SPECTATOR(iPlayer) || !IsMixMember(iPlayer) || iClient == iPlayer) {
 			continue;
 		}
 
@@ -295,10 +295,10 @@ bool DisplayMenuAll(int iStep, int iTime)
 
 		if (!BuildMenu(hMenu, iClient, iStep)) 
 		{
-			if (hMenu != null)
-			{
+			if (hMenu != null) {
 				delete hMenu;
 			}
+
 			return false;
 		}
 

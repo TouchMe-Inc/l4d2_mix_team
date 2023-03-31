@@ -10,7 +10,7 @@ public Plugin myinfo = {
 	name = "MixTeamCapitan",
 	author = "TouchMe",
 	description = "Adds capitan mix",
-	version = "2.0.6",
+	version = "2.0.7",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -240,8 +240,18 @@ public void Flow(int iStep)
 
 			Menu hMenu;
 
-			if (BuildMenu(hMenu, iCapitan, iStep) == 1)
+			if (BuildMenu(hMenu, iCapitan, iStep) > 1)
 			{
+				CreateTimer(1.0, NextStepTimer, iStep);
+
+				DisplayMenu(hMenu, iCapitan, 1);
+			}
+
+			else {
+				if (hMenu != null) {
+					delete hMenu;
+				}
+
 				// auto-pick last player
 				for (int iClient = 1; iClient <= MaxClients; iClient++) 
 				{
@@ -254,13 +264,6 @@ public void Flow(int iStep)
 				}
 
 				CallEndMix(); // Required
-			}
-
-			else
-			{
-				CreateTimer(1.0, NextStepTimer, iStep);
-
-				DisplayMenu(hMenu, iCapitan, 1);
 			}
 		}
 	}
@@ -290,7 +293,12 @@ bool DisplayMenuAll(int iStep, int iTime)
 			continue;
 		}
 
-		if (!BuildMenu(hMenu, iClient, iStep)) {
+		if (!BuildMenu(hMenu, iClient, iStep)) 
+		{
+			if (hMenu != null)
+			{
+				delete hMenu;
+			}
 			return false;
 		}
 

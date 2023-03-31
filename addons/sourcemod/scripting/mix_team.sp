@@ -503,15 +503,14 @@ void InitEvents()
 {
 	HookEvent("versus_round_start", Event_RoundStart);
 	HookEvent("round_end", Event_RoundEnd);
+
+	HookEvent("player_team", Event_PlayerTeam);
+	HookEvent("player_disconnect", Event_PlayerDisconnect, EventHookMode_Pre);
 }
 
 /**
-  * Round start event.
-  *
-  * @params  				see events.inc > HookEvent.
-  *
-  * @noreturn
-  */
+ * Round start event.
+ */
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) 
 {
 	if (!g_bReadyUpAvailable)
@@ -539,30 +538,46 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 }
 
 /**
- * Called when a client is disconnecting from the server.
- *
- * @noreturn
-*/
-public void OnClientConnected(int iClient)
+ * Player change his team.
+ */
+public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcast)
 {
-	if (IsMix() && IS_VALID_CLIENT(iClient) && !g_hPlayers[iClient].member)
-	{
-		ChangeClientTeam(iClient, TEAM_SPECTATOR);
+	if (!IsMix()) {
+		return Plugin_Continue;
 	}
+
+	int iClient = GetClientOfUserId(event.GetInt("userid"));
+	int iOldTeam = event.GetInt("oldteam");
+	int iNewTeam = event.GetInt("team");
+
+	if (IS_VALID_CLIENT(iClient)
+	&& !g_hPlayers[iClient].member
+	&& iOldTeam == TEAM_NONE
+	&& iNewTeam != TEAM_SPECTATOR) {
+		SetupClientTeam(iClient, TEAM_SPECTATOR);
+	}
+
+	return Plugin_Continue;
 }
 
 /**
- * Called when a client is disconnecting from the server.
- *
- * @noreturn
-*/
-public void OnClientDisconnect(int iClient)
+ * Called before client disconnected.
+ */
+public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) 
 {
-	if (IsMix() && IS_VALID_CLIENT(iClient) && g_hPlayers[iClient].member)
+	if (!IsMix()) {
+		return Plugin_Continue;
+	}
+
+	int iClient = GetClientOfUserId(event.GetInt("userid"));
+
+	if (IS_VALID_CLIENT(iClient) && g_hPlayers[iClient].member)
 	{
 		AbortMix();
 		CPrintToChatAll("%t", "CLIENT_LEAVE", iClient);
 	}
+
+	return Plugin_Continue;
 }
 
 /**
@@ -992,7 +1007,7 @@ void SetAllClientSpectator()
 			continue;
 		}
 
-		ChangeClientTeam(iClient, TEAM_SPECTATOR);
+		SetupClientTeam(iClient, TEAM_SPECTATOR);
 	}
 }
 

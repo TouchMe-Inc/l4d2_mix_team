@@ -56,3 +56,4 @@ public Action Timer_EndMix()
 
 ## Support
 [ReadyUp](https://github.com/SirPlease/L4D2-Competitive-Rework/blob/master/addons/sourcemod/scripting/readyup.sp)
+[Left4DHooks](https://github.com/SilvDev/Left4DHooks)

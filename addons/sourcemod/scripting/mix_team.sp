@@ -561,10 +561,14 @@ public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcas
 {
 	int iClient = GetClientOfUserId(event.GetInt("userid"));
 
-	if (!IsMix() || IS_VALID_CLIENT(iClient) || !g_hPlayers[iClient].member)
-	{
+	if (!IsMix() || !IS_VALID_CLIENT(iClient)) {
+		return Plugin_Continue;
+	}
+
+	int iOldTeam = event.GetInt("oldteam");
+
+	if (iOldTeam == TEAM_NONE && !g_hPlayers[iClient].member) {
 		SetupClientTeam(iClient, TEAM_SPECTATOR);
-		return Plugin_Handled;
 	}
 
 	return Plugin_Continue;
@@ -997,7 +1001,7 @@ void SetAllClientSpectator()
 			continue;
 		}
 
-		SetupClientTeam(iClient, TEAM_SPECTATOR);
+		ChangeClientTeam(iClient, TEAM_SPECTATOR);
 	}
 }
 

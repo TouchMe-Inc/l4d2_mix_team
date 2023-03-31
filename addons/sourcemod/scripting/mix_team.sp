@@ -551,6 +551,7 @@ public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcas
 	int iNewTeam = event.GetInt("team");
 
 	if (IS_VALID_CLIENT(iClient)
+	&& !IsFakeClient(iClient)
 	&& !g_hPlayers[iClient].member
 	&& iOldTeam == TEAM_NONE
 	&& iNewTeam != TEAM_SPECTATOR) {

@@ -572,7 +572,7 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 
 	int iClient = GetClientOfUserId(event.GetInt("userid"));
 
-	if (IS_VALID_CLIENT(iClient) && g_hPlayers[iClient].member)
+	if (IS_VALID_CLIENT(iClient) && !IsFakeClient(iClient) && g_hPlayers[iClient].member)
 	{
 		AbortMix();
 		CPrintToChatAll("%t", "CLIENT_LEAVE", iClient);

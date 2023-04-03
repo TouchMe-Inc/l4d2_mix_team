@@ -1,0 +1,72 @@
+"Phrases"
+{
+	"VOTE_DISPLAY_MSG"
+	{
+		"en"			"Start command mix by experience"
+	}
+
+	"VOTE_END_MSG"
+	{
+		"en"			"Mixing by experience in progress"
+	}
+	"START_GET_INFO"
+	{
+		"en"			"{green} Start getting stats for mix members!"
+	}
+	"SHOW_ONE_RP"
+	{
+		"#format"		"{1:N},{2:i}"
+		"en" 			"{green}The experience of %N is divided into %i!"
+	}
+	"CHECK_DONE"
+	{
+		"en"			"{green}All checks are done, start the mix!"
+	}
+	"EXP_EQUATION"
+	{
+		"en"			"Mix member Experience score = Matchup win rate * (0.55 * real game hours + TANK stone hits * number of stones hit per hour + T1 weapon kills * 0.005 * (1 + single spray kills in T1 weapon kills as a percentage))"
+	}
+	"MIX_FINISH"
+	{
+		"en"			"[{green}! {default}] {olive} team assignment complete!"
+	}
+	"SUR_TOTAL_RP"
+	{
+		"#format"		"{1:i}"
+		"en"			"The survivor team's experience is divided into {blue}{1}"
+	}
+	"INF_TOTAL_RP"
+	{
+		"#format"		"{1:i}"
+		"en"			"The infected team's experience is divided into {red}{1}"
+	}
+	"DIFF_RP"
+	{
+		"#format"		"{1:i}"
+		"en"			"Difference {olive}{1}"
+	}
+	"HINT_CONSOLE"
+	{
+		"en"			"[{green}! {default}] {olive} you can view the console output to get information about each person's experience!"
+	}
+	"FAIL_CANT_GET_ID"
+	{
+		"#format"		"{1:N},{2:i}"
+		"en"			"{red}{1} Unable to get Steam 64-bit ID, will participate in mix with {2} points"
+	}
+	"FAIL_CANT_GET_INFO"
+	{
+		"#format"		"{1:N},{2:i}"
+		"en"			"{red}{1} Failed to get game information, will participate in mix with {2} points"
+	}
+	"FAIL_PLAYER_HIDE_INFO_CONTINUE"
+	{	
+		"#format"		"{1:N},{2:i}"
+		"en"			"{red}{1} No game details disclosed, will participate in mix with {2} points"
+	}
+	"FAIL_PLAYER_HIDE_INFO_STOP"
+	{
+		"#format"		"{1:N}"
+		"en"			"{red}{1} Undisclosed game details, MIX STOP. \n{default}[{green}! {default}] Please make sure that all mix members have made the game details public."
+	}
+}

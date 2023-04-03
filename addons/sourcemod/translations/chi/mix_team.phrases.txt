@@ -39,6 +39,11 @@
         "chi"           "{default}[{green}!{default}] 此时无法发起投票，请在{1}秒后重试"
     }
 
+	"SECOND_HALF_OF_ROUND"
+	{
+		"chi"			"{default}[{green}!{default}] 无法进行mix: {olive}回合已经过了一半"
+	}
+
     "ROUND_LIVE"
     {
         "chi"           "{default}[{green}!{default}] 无法进行mix：{olive}回合已经开始"

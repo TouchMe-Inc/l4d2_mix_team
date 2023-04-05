@@ -82,4 +82,9 @@
         "#format"    "{1:N}"
         "en"         "{red}{1} Undisclosed game details, mix rollback. \n{default}[{green}! {default}] Please make sure that all mix members have made the game details public."
     }
+
+	"INVAILD_RESPONSE"
+	{
+		"en"			"Steam returns abnormal data, probably because the API Key is not set correctly, please contact the server owner or plugin developer."
+	}
 }   

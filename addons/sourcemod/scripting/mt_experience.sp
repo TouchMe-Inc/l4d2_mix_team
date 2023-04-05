@@ -46,7 +46,7 @@ public Plugin myinfo = {
 #define TEAM_SURVIVOR           2 
 #define TEAM_INFECTED           3
 
-#define MIN_PLAYERS             8
+#define MIN_PLAYERS             1
 
 // Macros
 #define IS_REAL_CLIENT(%1)      (IsClientInGame(%1) && !IsFakeClient(%1))
@@ -132,7 +132,9 @@ public Action TimerCallback(Handle timer)
             prps[CheckingClientRPid] = temp_prp.IntValue;
             checking = false;
         }
-        CPrintToChatAll("%t", "SHOW_ONE_RP", CheckingClientRPid, prps[CheckingClientRPid]);
+        //PrintToConsoleAll("Checking > %i", CheckingClientRPid);
+        //CPrintToChatAll("%t", "SHOW_ONE_RP", CheckingClientRPid, prps[CheckingClientRPid]);
+        //PrintToConsoleAll("Checking > %i", CheckingClientRPid);
         checking = false;
         // 开始检查下一个
         CheckingClientRPid++;
@@ -419,6 +421,11 @@ public void OnReceived(HTTPResponse response, int id)
         CPrintToChatAll("%t", "FAIL_CANT_GET_INFO", id, temp_prp.IntValue);
         PrintToConsoleAll("%N(X)  %i=%f*(0.55*%i*+%i*1+100000*0.005*(1+0.35))",iPlayer.id, iPlayer.rankpoint, iPlayer.winrounds ,iPlayer.gametime, iPlayer.tankrocks);
         return;  
+    }
+    if (response.Data[0] == '<') {
+        PrintToChatAll("%t", "INVAILD_RESPONSE")
+        CallCancelMix();
+        SetFailState("Steam returns HTML data.");
     }
     JSONObject json = view_as<JSONObject>(response.Data);
     if (json.HasKey("playerstats")){

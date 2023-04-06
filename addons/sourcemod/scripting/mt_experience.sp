@@ -446,12 +446,9 @@ public void OnReceived(HTTPResponse response, int id)
     Player iPlayer;
     iPlayer.id = id;
     char buff[50];
-    //TODO: Check if the returned content is not in JSON format.
-    PrintToServer("%i", response.Status);
     if ((response.Status) == HTTPStatus_Forbidden) {
         PrintToChatAll("%t", "INVAILD_RESPONSE");
         CallCancelMix();
-        //SetFailState("Steam returned 403.");
     }
     if (response.Data == null) {
         PrintToServer("Invalid JSON response");

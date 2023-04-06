@@ -1,1 +1,1 @@
-Your steam api key here.
+YOUR_STEAM_WEB_API_KEY

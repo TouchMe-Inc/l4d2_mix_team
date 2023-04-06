@@ -5,17 +5,17 @@
 #include <colors>
 #include <mix_team>
 #include <ripext>
-#include <l4d2util>
+
 
 #define VALVEURL "http://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?appid=550"
 
-char VALVEKEY[64];
+char VALVEKEY[64];  //steam web api key
 enum struct Player{
     int id;
-    int rankpoint;  // 综合评分
-    int gametime;	// 真实游戏时长
-    int tankrocks;	// 坦克饼命中数
-    float winrounds;	//胜场百分比（0-1）, <500置默认
+    int rankpoint;  // Unfortunately, it's zero here.
+    int gametime;	
+    int tankrocks;	
+    float winrounds;
     int versustotal;
     int versuswin;
     int versuslose;
@@ -29,9 +29,9 @@ ConVar not_allow_npublicinfo;
 Handle h_mixTimer;
 int g_iPlayerRP[MAXPLAYERS + 1] = {-1};
 int g_iTeamData[3];
-int g_iCheckingClientRPid = 0;
-bool g_bchecking = false;
-bool g_bcheckfinished = false;
+int g_iCheckingClientRPid = 0;          
+bool g_bchecking = false;               // Retrieve the RP status of a single player.
+bool g_bcheckfinished = false;          // All members of the mix have been checked.
 
 #define IS_VALID_CLIENT(%1)     (%1 > 0 && %1 <= MaxClients)
 #define IS_REAL_CLIENT(%1)      (IsClientInGame(%1) && !IsFakeClient(%1))
@@ -150,9 +150,6 @@ public Action TimerCallback(Handle timer)
     
     CPrintToChatAll("%t", "CHECK_DONE");
     MixMembers();
-    g_iCheckingClientRPid = 0;
-    g_bchecking = false;
-    g_bcheckfinished = false;
     CallEndMix();
     return Plugin_Stop;
 }
@@ -196,13 +193,13 @@ void MixMembers(){
     for (int i = 0; i < g_Lteam1.Length; i++)
     {
         g_Lteam1.GetArray(i, tempPlayer);
-        if (IsMixMember(tempPlayer.id)) SetClientTeam(tempPlayer.id, L4D2Team_Survivor);
+        if (IsMixMember(tempPlayer.id)) SetClientTeam(tempPlayer.id, TEAM_SURVIVOR);
         surrankpoint += g_iPlayerRP[tempPlayer.id];
     }
     for (int i = 0; i < g_Lteam2.Length; i++)
     {
         g_Lteam2.GetArray(i, tempPlayer);
-        if (IsMixMember(tempPlayer.id)) SetClientTeam(tempPlayer.id, L4D2Team_Infected);
+        if (IsMixMember(tempPlayer.id)) SetClientTeam(tempPlayer.id, TEAM_INFECTED);
         infrankpoint += g_iPlayerRP[tempPlayer.id];
     }
     g_iTeamData[0] = surrankpoint;
@@ -244,6 +241,12 @@ int SortByRank(int indexFirst, int indexSecond, Handle hArrayList, Handle hndl)
     return 0;
 }
 
+/**
+ * Calculate the absolute value.
+ * 
+ * @param value
+ * @return The absolute value of "value".
+ */
 int abs(int value){
     if (value < 0) return -value;
     return value;   
@@ -277,9 +280,11 @@ int diff_sum(ArrayList array1, ArrayList array2)
 /**
  * Output the result when the mix is finished.
  * Retrieve the data from the global variable "data".
+ * 
  * g_iTeamData[0] - Survivors RP
  * g_iTeamData[1] - Infected RP
  * g_iTeamData[2] - difference between the two teams
+ * 
  * This approach is necessary as it appears that passing multiple arguments into 
  * the "CreateTimer()" function is not possible (or beyond my current ability).
  */
@@ -393,6 +398,7 @@ void GetKeyinFile()
         Format(VALVEKEY, sizeof(VALVEKEY), "%s", readData);
     }
 }
+
 
 /**
  * Retrieve the player's experience rating and save it to the RP array, 

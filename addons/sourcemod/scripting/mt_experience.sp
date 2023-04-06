@@ -439,7 +439,7 @@ int GetClientRP(int iClient)
  * HTTP callback function for calculating the player's RP.
  * 
  * @param id player id
- * @noreturn
+ * @noreturn The RP of the client will be saved in "temp_prp.IntValue".
  */
 public void OnReceived(HTTPResponse response, int id)
 {
@@ -447,11 +447,12 @@ public void OnReceived(HTTPResponse response, int id)
     iPlayer.id = id;
     char buff[50];
     //TODO: Check if the returned content is not in JSON format.
-    //if ((response.Data) == '<') {
-    //    PrintToChatAll("%t", "INVAILD_RESPONSE")
-    //    CallCancelMix();
-    //    SetFailState("Steam returns HTML data.");
-    //}
+    PrintToServer("%i", response.Status);
+    if ((response.Status) == HTTPStatus_Forbidden) {
+        PrintToChatAll("%t", "INVAILD_RESPONSE");
+        CallCancelMix();
+        //SetFailState("Steam returned 403.");
+    }
     if (response.Data == null) {
         PrintToServer("Invalid JSON response");
         iPlayer.gametime = 700;

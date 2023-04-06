@@ -82,4 +82,9 @@
         "#format"    "{1:N}"
         "chi"        "{red}{1} 未公开游戏详情，MIX停止。\n{default}[{green}!{default}] 请确保所有mix成员都已公开游戏信息。"
     }
+
+    "INVAILD_RESPONSE"
+	{
+		"chi"			"Steam返回了403，这可能是由于Key设置错误，请联系服务器所有者或插件开发者！"
+	}
 }

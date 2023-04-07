@@ -25,7 +25,7 @@ enum struct Player{
 ArrayList g_Lteam1, g_Lteam2, g_Lplayers;
 Player tempPlayer;
 ConVar temp_prp;
-ConVar not_allow_npublicinfo;
+ConVar not_allow_npublicinfo, g_team_allocation;
 Handle h_mixTimer;
 int g_iPlayerRP[MAXPLAYERS + 1] = {-1};
 int g_iTeamData[3];
@@ -85,6 +85,8 @@ public void OnPluginStart() {
     g_Lplayers = new ArrayList(sizeof(Player));
     temp_prp = CreateConVar("itemp_prp", "-1", "TempVariable");
     not_allow_npublicinfo = CreateConVar("sm_mix_allow_hide_gameinfo", "1", "如果有玩家隐藏游戏信息，mix是否继续分队。隐藏的玩家将按一个固定值计算。1 - 继续分队。0 - 阻止继续");
+    g_team_allocation = CreateConVar("sm_mix_exp_type", "1", "MIX的分队算法。1 - 平均分差最小。0 - 尽量2带2");
+
 }
 
 public void OnAllPluginsLoaded() {
@@ -185,7 +187,20 @@ void MixMembers(){
     g_Lplayers.SortCustom(SortByRank);
     int surrankpoint, infrankpoint = 0;
 
-    min_diff();
+    switch (g_team_allocation.IntValue){
+        case 0: 
+        {
+            balance_diff();
+        }
+        case 1: 
+        {
+            min_diff();
+        }
+        default:  
+        {
+            min_diff();
+        }
+    }
 
     PrintToConsoleAll("%t", "EXP_EQUATION");
     PrintToConsoleAll("-----------------------------------------------------------");
@@ -298,9 +313,47 @@ public Action PrintResult(Handle timer)
     return Plugin_Stop;
 }
 
+
+/**
+ * Simply balancing the team.
+ * 1368 - 2457
+ * This is suitable when at least 2/4 players' roleplaying abilities far surpass those of the remaining players.
+ * 
+ * @noreturn
+ */
+void balance_diff()
+{
+    g_Lplayers.SortCustom(SortByRank);
+    ArrayList group1 = new ArrayList();
+    ArrayList group2 = new ArrayList();
+    group1.Resize(4);
+    g_Lplayers.GetArray(0, tempPlayer);  
+    group1.SetArray(0,tempPlayer);
+    g_Lplayers.GetArray(2, tempPlayer);  
+    group1.SetArray(1,tempPlayer);
+    g_Lplayers.GetArray(5, tempPlayer);  
+    group1.SetArray(2,tempPlayer);
+    g_Lplayers.GetArray(7, tempPlayer);  
+    group1.SetArray(3,tempPlayer);
+
+    group2.Resize(4);
+    g_Lplayers.GetArray(1, tempPlayer);  
+    group2.SetArray(0,tempPlayer);
+    g_Lplayers.GetArray(3, tempPlayer);  
+    group2.SetArray(1,tempPlayer);
+    g_Lplayers.GetArray(4, tempPlayer);  
+    group2.SetArray(2,tempPlayer);
+    g_Lplayers.GetArray(6, tempPlayer);  
+    group2.SetArray(3,tempPlayer);
+
+    g_Lteam1 = group1.Clone();
+    g_Lteam2 = group2.Clone();
+}
+
 /**
  * Find all possible ways of grouping and return the minimum point difference along with
  * the corresponding groupings.
+ * This is suitable when the overall skill gap is relatively small.
  * 
  * @noreturn
  */

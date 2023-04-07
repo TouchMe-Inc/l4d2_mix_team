@@ -447,7 +447,6 @@ void InitCvars()
  * @param convar       Handle to the convar that was changed
  * @param oldValue     String containing the value of the convar before it was changed
  * @param newValue     String containing the new value of the convar
- * @noreturn
  */
 public void OnGamemodeChanged(ConVar convar, const char[] sOldGameMode, const char[] sNewGameMode) {
 	g_bGamemodeAvailable = IsVersusMode(sNewGameMode);
@@ -465,9 +464,7 @@ public void OnConfigsExecuted()
 }
 
 /**
- * Fragment
- * 
- * @noreturn
+ * Event interception initialization.
  */
 void InitEvents() 
 {
@@ -552,9 +549,7 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 }
 
 /**
- * Fragment
- * 
- * @noreturn
+ * Command interception initialization.
  */
 void InitCmds() 
 {
@@ -603,6 +598,30 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 		return Plugin_Continue;
 	}
 
+	if (InSecondHalfOfRound())
+	{
+		CPrintToChat(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
+		return Plugin_Continue;
+	}
+
+	if (g_bReadyUpAvailable && !IsInReady())
+	{
+		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
+		return Plugin_Continue;
+	} 
+		
+	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
+	{
+		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
+		return Plugin_Continue;
+	}
+
+	if (IsMix()) 
+	{
+		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
+		return Plugin_Continue;
+	}
+
 	char sArg[32]; GetCmdArg(1, sArg, sizeof(sArg));
 
 	int iMixType = g_hTypeList.Find(sArg);
@@ -613,12 +632,18 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 		CPrintExampleArguments(iClient);
 		return Plugin_Continue;
 	}
+	
+	int iMinPlayers = g_hTypeList.GetMinPlayers(iMixType);
+	int iTotalPlayers = GetPlayerCount();
 
-	if (CanRunMix(iClient, iMixType))
+	if (iTotalPlayers < iMinPlayers)
 	{
-		g_iMixType = iMixType;
-		RunVoteMix(iClient);
+		CPrintToChat(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
+		return Plugin_Continue;
 	}
+
+	g_iMixType = iMixType;
+	RunVoteMix(iClient);
 
 	return Plugin_Continue;
 }
@@ -675,6 +700,30 @@ public Action Cmd_ForceMix(int iClient, int iArgs)
 		return Plugin_Continue;
 	}
 
+	if (InSecondHalfOfRound())
+	{
+		CPrintToChat(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
+		return Plugin_Continue;
+	}
+
+	if (g_bReadyUpAvailable && !IsInReady())
+	{
+		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
+		return Plugin_Continue;
+	} 
+		
+	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
+	{
+		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
+		return Plugin_Continue;
+	}
+
+	if (IsMix()) 
+	{
+		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
+		return Plugin_Continue;
+	}
+
 	char sArg[32]; GetCmdArg(1, sArg, sizeof(sArg));
 
 	int iMixType = g_hTypeList.Find(sArg);
@@ -686,57 +735,23 @@ public Action Cmd_ForceMix(int iClient, int iArgs)
 		return Plugin_Continue;
 	}
 
-	if (CanRunMix(iClient, iMixType)) 
-	{
-		g_iMixType = iMixType;
-		RunMix();
-	}
-
-	return Plugin_Continue;
-}
-
-bool CanRunMix(int iClient, int iMixType)
-{
-	if (InSecondHalfOfRound())
-	{
-		CPrintToChat(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
-		return false;
-	}
-
-	if (g_bReadyUpAvailable && !IsInReady())
-	{
-		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
-		return false;
-	} 
-		
-	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
-	{
-		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
-		return false;
-	}
-
-	if (IsMix()) 
-	{
-		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
-		return false;
-	}
-
 	int iMinPlayers = g_hTypeList.GetMinPlayers(iMixType);
 	int iTotalPlayers = GetPlayerCount();
 
 	if (iTotalPlayers < iMinPlayers)
 	{
 		CPrintToChat(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
-		return false;
+		return Plugin_Continue;
 	}
 
-	return true;
+	g_iMixType = iMixType;
+	RunMix();
+
+	return Plugin_Continue;
 }
 
 /**
- * Fragment
- * 
- * @noreturn
+ * Initializing global forwards.
  */
 void InitForwards() 
 {
@@ -990,8 +1005,6 @@ int GetPlayerCount()
 
 /**
  * Returns players to teams before the mix starts.
- *
-* @noreturn
 */
 void RollbackPlayers()
 {

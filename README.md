@@ -13,48 +13,8 @@ Several prepared author's mix types are available:
 
 `!unmix` - abort the mix.
 
-## How to create mix type?
-You must write and compile a plugin that implements all methods:
-```pawn
-#include <sourcemod>
-#include <mix_team>
-
-public void OnAllPluginsLoaded()
-{
-	// Add mix type with minimum number of players 4 and timeout 60sec (can be interrupted). 
-	// Run: "!mix supermix"
-	AddMixType("supermix", 4, 60);
-}
-
-// MANDATORY set the name of the vote
-public void GetVoteDisplayMessage(int iClient, char[] sTitle) { // Required!!!
-	Format(sTitle, DISPLAY_MSG_SIZE, "My vote title!");
-}
-
-// MANDATORY set a message in case of success
-public void GetVoteEndMessage(int iClient, char[] sMsg) { // Required!!!
-	Format(sMsg, VOTEEND_MSG_SIZE, "Vote done!");
-}
-
-public Action OnMixInProgress() // Required!!! Point of entry
-{
-	// Payload
-	// ...
-	
-	// If the mix goes beyond the life cycle of the function, then you need to return Plugin_Handled
-	if (CreateTimer(1.0, Timer_EndMix)) {
-		return Plugin_Handled;
-	}
-	
-	return Plugin_Continue;
-}
-
-public Action Timer_EndMix()
-{
-	CallEndMix(); // Required!!! Exit point
-	return Plugin_Stop;
-}
-```
+## Wiki
+[How to create mix type?](https://github.com/TouchMe-Inc/l4d2_mix_team/wiki/How-to-create-mix-type%3F)
 
 ## Require
 * Colors

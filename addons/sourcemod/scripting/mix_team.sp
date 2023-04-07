@@ -85,12 +85,13 @@ methodmap TypeList < ArrayList
 		for (int index = 0; index < this.Length; index++)
 		{
 			this.GetArray(index, item);
+
 			if (StrEqual(item.name, sName, false)) {
 				return index;
 			}
 		}
 
-		return -1;
+		return TYPE_NONE;
 	}
 
 	public Handle GetPlugin(int index)
@@ -155,9 +156,6 @@ enum struct Players
 
 Players 
 	g_tPlayers[MAXPLAYERS + 1];
-
-NativeVote
-	g_hCurVote = null;
 
 int
 	g_iMixTimeout = 0,
@@ -332,7 +330,7 @@ int Native_CallCancelMix(Handle hPlugin, int iParams)
  */
 int Native_CallEndMix(Handle hPlugin, int iParams)
 {
-	EndMix();
+	FinishMix();
 
 	return 0;
 }
@@ -561,9 +559,9 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 void InitCmds() 
 {
 	AddCommandListener(Cmd_OnPlayerJoinTeam, "jointeam");
-	RegConsoleCmd("sm_mix", Cmd_VoteMix, "Vote for a team mix.");
-	RegConsoleCmd("sm_cancelmix", Cmd_CancelMix, "Interrupting the mix.");
-	RegConsoleCmd("sm_unmix", Cmd_CancelMix, "Interrupting the mix.");
+	RegConsoleCmd("sm_mix", Cmd_VoteMix, "Start Team Mix Voting");
+	RegConsoleCmd("sm_unmix", Cmd_CancelMix, "Cancel the current Mix");
+	RegAdminCmd("sm_fmix", Cmd_ForceMix, ADMFLAG_BAN, "Run forced Mix");
 }
 
 /**
@@ -598,65 +596,29 @@ public Action Cmd_VoteMix(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 
-	if (InSecondHalfOfRound())
-	{
-		CPrintToChat(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
-
-		return Plugin_Continue;
-	}
-
-	if (g_bReadyUpAvailable && !IsInReady())
-	{
-		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
-
-		return Plugin_Continue;
-	} 
-		
-	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
-	{
-		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
-
-		return Plugin_Continue;
-	}
-
 	if (!iArgs)
 	{
 		CPrintToChat(iClient, "%T", "NO_ARGUMENT", iClient);
 		CPrintExampleArguments(iClient);
-
 		return Plugin_Continue;
 	}
 
-	if (IsMix()) 
-	{
-		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
-
-		return Plugin_Continue;
-	}
-	
-	char sArg[32];
-	GetCmdArg(1, sArg, sizeof(sArg));
+	char sArg[32]; GetCmdArg(1, sArg, sizeof(sArg));
 
 	int iMixType = g_hTypeList.Find(sArg);
 
-	if (iMixType == -1)
+	if (iMixType == TYPE_NONE)
 	{
 		CPrintToChat(iClient, "%T", "BAD_ARGUMENT", iClient, sArg);
 		CPrintExampleArguments(iClient);
-
 		return Plugin_Continue;
 	}
 
-	int iMinPlayers = g_hTypeList.GetMinPlayers(iMixType);
-	int iTotalPlayers = GetPlayerCount();
-
-	if (iTotalPlayers < iMinPlayers)
+	if (CanRunMix(iClient, iMixType))
 	{
-		CPrintToChat(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
-		return Plugin_Continue;
+		g_iMixType = iMixType;
+		RunVoteMix(iClient);
 	}
-
-	StartVoteMix(iClient, iMixType);
 
 	return Plugin_Continue;
 }
@@ -694,6 +656,84 @@ public Action Cmd_CancelMix(int iClient, int iArgs)
 }
 
 /**
+ * Action on command input at the start of the mix.
+ *
+ * @param iClient     Client index
+ * @param iArgs       Number of parameters
+ * @return            Plugin_Handled | Plugin_Continue
+ */
+public Action Cmd_ForceMix(int iClient, int iArgs)
+{	
+	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient)) {
+		return Plugin_Handled;
+	}
+
+	if (!iArgs)
+	{
+		CPrintToChat(iClient, "%T", "NO_ARGUMENT", iClient);
+		CPrintExampleArguments(iClient);
+		return Plugin_Continue;
+	}
+
+	char sArg[32]; GetCmdArg(1, sArg, sizeof(sArg));
+
+	int iMixType = g_hTypeList.Find(sArg);
+
+	if (iMixType == TYPE_NONE)
+	{
+		CPrintToChat(iClient, "%T", "BAD_ARGUMENT", iClient, sArg);
+		CPrintExampleArguments(iClient);
+		return Plugin_Continue;
+	}
+
+	if (CanRunMix(iClient, iMixType)) 
+	{
+		g_iMixType = iMixType;
+		RunMix();
+	}
+
+	return Plugin_Continue;
+}
+
+bool CanRunMix(int iClient, int iMixType)
+{
+	if (InSecondHalfOfRound())
+	{
+		CPrintToChat(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
+		return false;
+	}
+
+	if (g_bReadyUpAvailable && !IsInReady())
+	{
+		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
+		return false;
+	} 
+		
+	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
+	{
+		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
+		return false;
+	}
+
+	if (IsMix()) 
+	{
+		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
+		return false;
+	}
+
+	int iMinPlayers = g_hTypeList.GetMinPlayers(iMixType);
+	int iTotalPlayers = GetPlayerCount();
+
+	if (iTotalPlayers < iMinPlayers)
+	{
+		CPrintToChat(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * Fragment
  * 
  * @noreturn
@@ -710,7 +750,7 @@ void InitForwards()
  * @param iClient     Client index
  * @return            Return description
  */
-public void StartVoteMix(int iClient, int iMixType) 
+public void RunVoteMix(int iClient) 
 {
 	if (!NativeVotes_IsVoteTypeSupported(NativeVotesType_Custom_YesNo))
 	{
@@ -723,6 +763,8 @@ public void StartVoteMix(int iClient, int iMixType)
 		CPrintToChat(iClient, "%T", "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
 		return;
 	}
+
+	g_iMixState = STATE_VOTING;
 
 	if (g_bReadyUpAvailable) {
 		ToggleReadyPanel(false);
@@ -753,11 +795,6 @@ public void StartVoteMix(int iClient, int iMixType)
 
 	NativeVote hVote = new NativeVote(HandlerVote, NativeVotesType_Custom_YesNo, NATIVEVOTES_ACTIONS_DEFAULT|MenuAction_Display);
 	hVote.Initiator = iClient;
-
-	g_iMixState = STATE_VOTING;
-	g_iMixType = iMixType;
-	g_hCurVote = hVote;
-
 	hVote.DisplayVote(iPlayers, iTotalPlayers, VOTE_TIME);
 }
 
@@ -781,7 +818,6 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 			}
 
 			hVote.Close();
-			g_hCurVote = null;
 		}
 
 		case MenuAction_Display:
@@ -805,13 +841,13 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 
 			return view_as<int>(Plugin_Changed);
 		}
-		
+
 		case MenuAction_VoteCancel:
 		{
 			if (iParam1 == VoteCancel_NoVotes) {
 				hVote.DisplayFail(NativeVotesFail_NotEnoughVotes);
 			}
-			
+
 			else {
 				hVote.DisplayFail(NativeVotesFail_Generic);
 			}
@@ -825,14 +861,14 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 
 			else
 			{
-				char sVoteEndMsg[VOTEEND_MSG_SIZE];
-				
 				Function hFunc;
 				Handle hPlugin = g_hTypeList.GetPlugin(g_iMixType);
 
 				if ((hFunc = GetFunctionByName(hPlugin, FORWARD_VOTEEND_MSG)) == INVALID_FUNCTION) {
 					SetFailState("Failed to get the function id of " ... FORWARD_VOTEEND_MSG);
 				}
+
+				char sVoteEndMsg[VOTEEND_MSG_SIZE];
 
 				for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
 				{
@@ -847,29 +883,11 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 					Call_PushCell(iPlayer);
 					Call_PushStringEx(sVoteEndMsg, sizeof(sVoteEndMsg), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
 					Call_Finish();
-					
+								
 					hVote.DisplayPassCustomToOne(iPlayer, sVoteEndMsg);
 				}
 
-				g_iMixTimeout = GetTime() + g_hTypeList.GetTimeout(g_iMixType);
-				g_iMixState = STATE_IN_PROGRESS;
-
-				SetAllClientSpectator();
-
-				if ((hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS)) == INVALID_FUNCTION) {
-					SetFailState("Failed to get the function id of " ... FORWARD_IN_PROGRESS);
-				}
-
-				Action aReturn = Plugin_Continue;
-				
-				// call FORWARD_IN_PROGRESS
-				Call_StartFunction(hPlugin, hFunc);
-				Call_Finish(aReturn);
-
-				if (aReturn == Plugin_Continue) {
-					PrintToChatAll("aReturn == Plugin_Continue");
-					EndMix();
-				}
+				RunMix();
 			}
 		}
 	}
@@ -877,10 +895,35 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 	return 0;
 }
 
+void RunMix()
+{
+	g_iMixState = STATE_IN_PROGRESS;
+	g_iMixTimeout = GetTime() + g_hTypeList.GetTimeout(g_iMixType);
+
+	Function hFunc;
+	Handle hPlugin = g_hTypeList.GetPlugin(g_iMixType);
+
+	if ((hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS)) == INVALID_FUNCTION) {
+		SetFailState("Failed to get the function id of " ... FORWARD_IN_PROGRESS);
+	}
+	
+	SetAllClientSpectator();
+
+	Action aReturn = Plugin_Continue;
+				
+	// call FORWARD_IN_PROGRESS
+	Call_StartFunction(hPlugin, hFunc);
+	Call_Finish(aReturn);
+
+	if (aReturn == Plugin_Continue) {
+		FinishMix();
+	}
+}
+
 /**
  * Initiation of the end of the command mix.
  */
-void EndMix()
+void FinishMix()
 {
 	char sMixName[MIX_NAME_SIZE];
 	g_hTypeList.GetName(g_iMixType, sMixName, MIX_NAME_SIZE);
@@ -898,8 +941,8 @@ void EndMix()
  */
 void AbortMix()
 {
-	if (g_hCurVote != null) {
-		g_hCurVote.Close(); 
+	if (NativeVotes_IsVoteInProgress()) {
+		NativeVotes_Cancel(); 
 	}
 
 	RollbackPlayers();

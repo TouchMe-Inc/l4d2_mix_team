@@ -18,13 +18,25 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) { // Required!!!
 	Format(sMsg, VOTEEND_MSG_SIZE, "Vote done!");
 }
 
-public Action OnMixInProgress() // Required!!! Point of entry
+public Action OnMixInProgress()
 {
-    CallEndMix();
+	CreateTimer(1.0, Timer_NextStep);
+
+	// If the mix goes beyond the life cycle of the function, then you need to return Plugin_Handled
+	return Plugin_Handled; 
 }
 
-public Action Timer_EndMix()
+public Action Timer_NextStep(Handle Timer)
 {
-	CallEndMix(); // Required!!! Exit point
+	// Payload
+	if (1)
+	{
+		CallEndMix(); // Required if returned Plugin_Handled in OnMixInProgress();
+		return Plugin_Stop;
+	}
+
+	CreateTimer(1.0, Timer_NextStep);
+
 	return Plugin_Stop;
 }
+

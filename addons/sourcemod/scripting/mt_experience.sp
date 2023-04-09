@@ -163,7 +163,6 @@ public Action TimerCallback(Handle timer)
 public void OnMixFailed(const char[] sMixName){
     KillTimer(h_mixTimer);
     h_mixTimer = INVALID_HANDLE;
-    CallCancelMix();
 }
 
 
@@ -236,6 +235,7 @@ public void OnMixInProgress()
     g_bchecking = false;
     g_bcheckfinished = false;
     h_mixTimer = CreateTimer(1.0, TimerCallback, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+    return Plugin_Handled;
 }
 
 int SortByRank(int indexFirst, int indexSecond, Handle hArrayList, Handle hndl)
@@ -502,6 +502,8 @@ public void OnReceived(HTTPResponse response, int id)
     if ((response.Status) == HTTPStatus_Forbidden) {
         PrintToChatAll("%t", "INVAILD_RESPONSE");
         CallCancelMix();
+        OnMixFailed();
+        return;
     }
     if (response.Data == null) {
         PrintToServer("Invalid JSON response");

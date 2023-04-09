@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "2.3",
+	version = "2.3.2",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -317,6 +317,10 @@ int Native_GetMixType(Handle hPlugin, int iParams) {
  */
 int Native_CallCancelMix(Handle hPlugin, int iParams)
 {
+	if (!IsMix()) {
+		ThrowNativeError(SP_ERROR_NATIVE, "Call Native CallCancelMix() without mix");
+	}
+
 	AbortMix();
 	return 0;
 }
@@ -330,6 +334,10 @@ int Native_CallCancelMix(Handle hPlugin, int iParams)
  */
 int Native_CallEndMix(Handle hPlugin, int iParams)
 {
+	if (!IsMix()) {
+		ThrowNativeError(SP_ERROR_NATIVE, "Call Native CallEndMix() without mix");
+	}
+
 	FinishMix();
 
 	return 0;
@@ -539,7 +547,9 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 
 	int iClient = GetClientOfUserId(event.GetInt("userid"));
 
-	if (IS_VALID_CLIENT(iClient) && g_tPlayers[iClient].member)
+	if (IS_VALID_CLIENT(iClient)
+	&& !IsFakeClient(iClient)
+	&& g_tPlayers[iClient].member)
 	{
 		AbortMix();
 		CPrintToChatAll("%t", "CLIENT_LEAVE", iClient);

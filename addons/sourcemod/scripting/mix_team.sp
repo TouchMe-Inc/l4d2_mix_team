@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "2.3.1",
+	version = "2.3.2",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -317,6 +317,10 @@ int Native_GetMixType(Handle hPlugin, int iParams) {
  */
 int Native_CallCancelMix(Handle hPlugin, int iParams)
 {
+	if (!IsMix()) {
+		ThrowNativeError(SP_ERROR_NATIVE, "Call Native CallCancelMix() without mix");
+	}
+
 	AbortMix();
 	return 0;
 }
@@ -330,6 +334,10 @@ int Native_CallCancelMix(Handle hPlugin, int iParams)
  */
 int Native_CallEndMix(Handle hPlugin, int iParams)
 {
+	if (!IsMix()) {
+		ThrowNativeError(SP_ERROR_NATIVE, "Call Native CallEndMix() without mix");
+	}
+
 	FinishMix();
 
 	return 0;

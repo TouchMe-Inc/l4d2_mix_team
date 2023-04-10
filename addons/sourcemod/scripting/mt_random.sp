@@ -9,7 +9,7 @@ public Plugin myinfo = {
 	name = "MixTeamRandom",
 	author = "TouchMe",
 	description = "Adds random mix",
-	version = "2.0.5",
+	version = "2.0.6",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -70,11 +70,12 @@ public Action OnMixInProgress()
 
 	for (int iClient = 1, iTeam; iClient <= MaxClients; iClient++)
 	{
-		if (!IsClientInGame(iClient) || !IsMixMember(iClient)) {
+		if (!IsClientInGame(iClient) || IsFakeClient(iClient) || !IsMixMember(iClient)) {
 			continue;
 		}
-		
+
 		iTeam = GetLastTeam(iClient);
+
 		g_iPreviousTeams[iTeam][g_iPreviousCount[iTeam]] = iClient;
 		g_iPreviousCount[iTeam]++;
 	}
@@ -134,11 +135,11 @@ public Action OnMixInProgress()
 	}
 
 	// now place all the players in the teams according to previousteams (silly name now, but ok)
-	for (int iTeam = TEAM_SURVIVOR, iClient; iTeam <= TEAM_INFECTED; iTeam++)
+	for (int iTeam = TEAM_SURVIVOR, iPrevious; iTeam <= TEAM_INFECTED; iTeam++)
 	{
-		for (iClient = 0; iClient < g_iPreviousCount[iTeam]; iClient++)
+		for (iPrevious = 0; iPrevious < g_iPreviousCount[iTeam]; iPrevious++)
 		{
-			SetClientTeam(g_iPreviousTeams[iTeam][iClient], iTeam);
+			SetClientTeam(g_iPreviousTeams[iTeam][iPrevious], iTeam);
 		}
 	}
 

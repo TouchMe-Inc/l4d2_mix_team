@@ -228,7 +228,7 @@ void MixMembers(){
  * @noreturn
  */
 
-public void OnMixInProgress()
+public Action OnMixInProgress()
 {
     g_Lplayers.Clear();
     g_iCheckingClientRPid = 0;
@@ -502,7 +502,7 @@ public void OnReceived(HTTPResponse response, int id)
     if ((response.Status) == HTTPStatus_Forbidden) {
         PrintToChatAll("%t", "INVAILD_RESPONSE");
         CallCancelMix();
-        OnMixFailed();
+        OnMixFailed("");
         return;
     }
     if (response.Data == null) {

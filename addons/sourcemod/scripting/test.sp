@@ -31,7 +31,7 @@ public Action Timer_NextStep(Handle Timer)
 	// Payload
 	if (1)
 	{
-		CallEndMix(); // Required if returned Plugin_Handled in OnMixInProgress();
+		CallCancelMix(); // Required if returned Plugin_Handled in OnMixInProgress();
 		return Plugin_Stop;
 	}
 

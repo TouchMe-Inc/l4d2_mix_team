@@ -91,8 +91,7 @@ methodmap MixList < ArrayList
 
 	public Handle GetPlugin(int index)
 	{
-		MixData tMixData;
-		this.GetArray(index, tMixData);
+		MixData tMixData; this.GetArray(index, tMixData);
 
 		return tMixData.plugin;
 	}
@@ -124,7 +123,7 @@ MixList
 	g_hMixList = null;
 
 enum struct PlayerInfo {
-	bool member;
+	bool mixMember;
 	int team;
 }
 
@@ -335,7 +334,7 @@ int Native_IsMixMember(Handle hPlugin, int iParams)
 {
 	int iClient = GetNativeCell(1);
 
-	return g_tPlayers[iClient].member;
+	return g_tPlayers[iClient].mixMember;
 }
 
 /**
@@ -502,13 +501,26 @@ public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcas
 
 	if (IS_VALID_CLIENT(iClient)
 	&& !IsFakeClient(iClient)
-	&& !g_tPlayers[iClient].member
+	&& !g_tPlayers[iClient].mixMember
 	&& iOldTeam == TEAM_NONE
 	&& iNewTeam != TEAM_SPECTATOR) {
-		SetupClientTeam(iClient, TEAM_SPECTATOR);
+		CreateTimer(0.1, Timer_MoveClientToSpec, iClient);
+
 	}
 
 	return Plugin_Continue;
+}
+
+/**
+ * Bot kill bug fix timer.
+ */
+public Action Timer_MoveClientToSpec(Handle hTimer, int iClient)
+{
+	if (IS_REAL_CLIENT(iClient)) {
+		SetupClientTeam(iClient, TEAM_SPECTATOR);
+	}
+
+	return Plugin_Stop;
 }
 
 /**
@@ -524,7 +536,7 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 
 	if (IS_VALID_CLIENT(iClient)
 	&& !IsFakeClient(iClient)
-	&& g_tPlayers[iClient].member)
+	&& g_tPlayers[iClient].mixMember)
 	{
 		AbortMix();
 		CPrintToChatAll("%t", "CLIENT_LEAVE", iClient);
@@ -641,7 +653,7 @@ public Action Cmd_RunMix(int iClient, int iArgs)
  */
 public Action Cmd_AbortMix(int iClient, int iArgs)
 {
-	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient) || !g_tPlayers[iClient].member) {
+	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient) || !g_tPlayers[iClient].mixMember) {
 		return Plugin_Handled;
 	}
 
@@ -774,6 +786,7 @@ public void RunVoteMix(int iClient)
 	for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
 	{
 		if (!IsClientInGame(iPlayer) || IsFakeClient(iPlayer)) {
+			g_tPlayers[iPlayer].mixMember = false;
 			continue;
 		}
 
@@ -782,12 +795,12 @@ public void RunVoteMix(int iClient)
 		if (iTeam == TEAM_INFECTED || iTeam == TEAM_SURVIVOR)
 		{
 			iPlayers[iTotalPlayers++] = iPlayer;
-			g_tPlayers[iPlayer].member = true;
+			g_tPlayers[iPlayer].mixMember = true;
 			g_tPlayers[iPlayer].team = iTeam;
 		}
 
 		else {
-			g_tPlayers[iPlayer].member = false;
+			g_tPlayers[iPlayer].mixMember = false;
 		}
 	}
 
@@ -993,7 +1006,7 @@ void RollbackPlayers()
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++) 
 	{
-		if (!IS_REAL_CLIENT(iClient) || !g_tPlayers[iClient].member) {
+		if (!IS_REAL_CLIENT(iClient) || !g_tPlayers[iClient].mixMember) {
 			continue;
 		}
 

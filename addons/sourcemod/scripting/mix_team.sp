@@ -34,7 +34,6 @@ public Plugin myinfo =
 #define FORWARD_IN_PROGRESS     "OnMixInProgress"
 #define FORWARD_ON_MIX_SUCCESS  "OnMixSuccess"
 #define FORWARD_ON_MIX_FAILED   "OnMixFailed"
-#define FORWARD_ON_MIX_TEAM_LOADED "OnMixTeamLoaded"
 
 // Other
 #define TRANSLATIONS            "mix_team.phrases"
@@ -49,8 +48,7 @@ public Plugin myinfo =
 #define TakeOverBot             L4D_TakeOverBot
 
 
-enum struct MixData
-{
+enum struct MixData {
 	Handle plugin;
 	char type[MIX_TYPE_SIZE];
 	int minPlayers;
@@ -71,7 +69,7 @@ methodmap MixList < ArrayList
 		strcopy(item.type, sizeof(item.type), sType);
 		item.minPlayers = iMinPlayers;
 		item.abortDelay = iAbortDelay;
-		
+
 		return this.PushArray(item);
 	}
 
@@ -93,60 +91,39 @@ methodmap MixList < ArrayList
 
 	public Handle GetPlugin(int index)
 	{
-		if (this.Length > index)
-		{
-			MixData tMixData;
-			this.GetArray(index, tMixData);
+		MixData tMixData;
+		this.GetArray(index, tMixData);
 
-			return tMixData.plugin;
-		}
-
-		return INVALID_HANDLE;
+		return tMixData.plugin;
 	}
 
 	public void GetTypeByIndex(int index, char[] sType, int iLen)
 	{
-		if (this.Length > index)
-		{
-			MixData tMixData;
-			this.GetArray(index, tMixData);
+		MixData tMixData; this.GetArray(index, tMixData);
 
-			strcopy(sType, iLen, tMixData.type);
-		}
+		strcopy(sType, iLen, tMixData.type);
 	}
 
 	public int GetMinPlayers(int index)
 	{
-		if (this.Length > index)
-		{
-			MixData tMixData;
-			this.GetArray(index, tMixData);
+		MixData tMixData; this.GetArray(index, tMixData);
 
-			return tMixData.minPlayers;
-		}
-
-		return 0;
+		return tMixData.minPlayers;
 	}
 
 	public int AbortDelay(int index)
 	{
-		if (this.Length > index)
-		{
-			MixData tMixData;
-			this.GetArray(index, tMixData);
+		MixData tMixData;
+		this.GetArray(index, tMixData);
 
-			return tMixData.abortDelay;
-		}
-
-		return 0;
+		return tMixData.abortDelay;
 	}
 }
 
 MixList
 	g_hMixList = null;
 
-enum struct PlayerInfo
-{
+enum struct PlayerInfo {
 	bool member;
 	int team;
 }
@@ -169,8 +146,8 @@ ConVar
 	g_hGameMode = null;
 
 GlobalForward
-	g_fOnMixSuccess,
-	g_fOnMixFailed;
+	g_fOnMixSuccess = null,
+	g_fOnMixFailed = null;
 
 
 /**
@@ -282,7 +259,7 @@ int Native_AddMix(Handle hPlugin, int iParams)
 	if (iMinPlayers > iMaxPlayers) {
 		ThrowNativeError(SP_ERROR_NATIVE, "Incorrect min players");
 	}
-	
+
 	int iAbortDelay = GetNativeCell(3);
 
 	if (iAbortDelay < 0) {
@@ -319,7 +296,6 @@ int Native_GetMixIndex(Handle hPlugin, int iParams) {
  * 
  * @param hPlugin       Handle to the plugin
  * @param iParams       Number of parameters
- * @return              Return 
  */
 int Native_AbortMix(Handle hPlugin, int iParams)
 {
@@ -336,7 +312,6 @@ int Native_AbortMix(Handle hPlugin, int iParams)
  * 
  * @param hPlugin       Handle to the plugin
  * @param iParams       Number of parameters
- * @return              Return
  */
 int Native_FinishMix(Handle hPlugin, int iParams)
 {
@@ -354,7 +329,7 @@ int Native_FinishMix(Handle hPlugin, int iParams)
  * 
  * @param hPlugin       Handle to the plugin
  * @param iParams       Number of parameters
- * @return              Return
+ * @return              Return true if member
  */
 int Native_IsMixMember(Handle hPlugin, int iParams)
 {
@@ -368,15 +343,11 @@ int Native_IsMixMember(Handle hPlugin, int iParams)
  * 
  * @param hPlugin       Handle to the plugin
  * @param iParams       Number of parameters
- * @return              Returns the command if the player was in the mix, otherwise -1
+ * @return              Return team
  */
 int Native_GetLastTeam(Handle hPlugin, int iParams)
 {
 	int iClient = GetNativeCell(1);
-
-	if (!g_tPlayers[iClient].member) {
-		return -1;
-	}
 
 	return g_tPlayers[iClient].team;
 }
@@ -449,10 +420,8 @@ public void OnPluginEnd()
 /**
  * Initializing the necessary cvars.
  */
-void InitCvars()
-{
-	g_hGameMode = FindConVar("mp_gamemode");
-	g_hGameMode.AddChangeHook(OnGamemodeChanged);
+void InitCvars() {
+	(g_hGameMode = FindConVar("mp_gamemode")).AddChangeHook(OnGamemodeChanged);
 }
 
 /**
@@ -514,7 +483,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 	if (!g_bReadyUpAvailable) {
 		g_bRoundIsLive = false;
 	}
-	
+
 	return Plugin_Continue;
 }
 
@@ -625,7 +594,7 @@ public Action Cmd_RunMix(int iClient, int iArgs)
 		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
 		return Plugin_Continue;
 	} 
-		
+
 	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
 	{
 		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
@@ -648,7 +617,7 @@ public Action Cmd_RunMix(int iClient, int iArgs)
 		CPrintExampleArguments(iClient);
 		return Plugin_Continue;
 	}
-	
+
 	int iMinPlayers = g_hMixList.GetMinPlayers(iMixIndex);
 	int iTotalPlayers = GetPlayerCount();
 
@@ -801,7 +770,7 @@ public void RunVoteMix(int iClient)
 
 	int iTotalPlayers, iTeam;
 	int[] iPlayers = new int[MaxClients];
-	
+
 	for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
 	{
 		if (!IsClientInGame(iPlayer) || IsFakeClient(iPlayer)) {
@@ -933,7 +902,7 @@ void RunMix()
 	if ((hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS)) == INVALID_FUNCTION) {
 		SetFailState("Failed to get the function id of " ... FORWARD_IN_PROGRESS);
 	}
-	
+
 	SetAllClientSpectator();
 
 	Action aReturn = Plugin_Continue;
@@ -1060,12 +1029,12 @@ bool IsEmptyString(const char[] sString)
 	
 	for (int i = 0; i < iLen; ++i)
 	{
-		if (IsCharSpace(sString[i]))
+		if (IsCharSpace(sString[i]) 
+		|| sString[i] == '\r' 
+		|| sString[i] == '\n') {
 			continue;
-		
-		if (sString[i] == '\r' || sString[i] == '\n')
-			continue;
-		
+		}
+
 		return false;
 	}
 	

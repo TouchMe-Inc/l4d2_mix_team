@@ -124,7 +124,7 @@ MixList
 
 enum struct PlayerInfo {
 	bool mixMember;
-	int team;
+	int lastTeam;
 }
 
 PlayerInfo
@@ -342,13 +342,13 @@ int Native_IsMixMember(Handle hPlugin, int iParams)
  * 
  * @param hPlugin       Handle to the plugin
  * @param iParams       Number of parameters
- * @return              Return team
+ * @return              Return lastTeam
  */
 int Native_GetLastTeam(Handle hPlugin, int iParams)
 {
 	int iClient = GetNativeCell(1);
 
-	return g_tPlayers[iClient].team;
+	return g_tPlayers[iClient].lastTeam;
 }
 
 /**
@@ -487,7 +487,8 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 }
 
 /**
- * Player change his team.
+ * Sends new players to the observer team.
+ * Called before player change his team.
  */
 public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcast)
 {
@@ -505,7 +506,6 @@ public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcas
 	&& iOldTeam == TEAM_NONE
 	&& iNewTeam != TEAM_SPECTATOR) {
 		CreateTimer(0.1, Timer_MoveClientToSpec, iClient);
-
 	}
 
 	return Plugin_Continue;
@@ -524,6 +524,7 @@ public Action Timer_MoveClientToSpec(Handle hTimer, int iClient)
 }
 
 /**
+ * Interrupting the mix if its participant leaves the game.
  * Called before client disconnected.
  */
 public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) 
@@ -796,7 +797,7 @@ public void RunVoteMix(int iClient)
 		{
 			iPlayers[iTotalPlayers++] = iPlayer;
 			g_tPlayers[iPlayer].mixMember = true;
-			g_tPlayers[iPlayer].team = iTeam;
+			g_tPlayers[iPlayer].lastTeam = iTeam;
 		}
 
 		else {
@@ -1010,7 +1011,7 @@ void RollbackPlayers()
 			continue;
 		}
 
-		SetupClientTeam(iClient, g_tPlayers[iClient].team);
+		SetupClientTeam(iClient, g_tPlayers[iClient].lastTeam);
 	}
 }
 

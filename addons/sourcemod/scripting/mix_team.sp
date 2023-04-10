@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Mixing players for versus mode",
-	version = "2.3.2",
+	version = "2.3.3",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -908,7 +908,7 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 					Call_PushCell(iPlayer);
 					Call_PushStringEx(sVoteEndMsg, sizeof(sVoteEndMsg), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
 					Call_Finish();
-								
+
 					hVote.DisplayPassCustomToOne(iPlayer, sVoteEndMsg);
 				}
 
@@ -935,7 +935,7 @@ void RunMix()
 	SetAllClientSpectator();
 
 	Action aReturn = Plugin_Continue;
-				
+
 	// call FORWARD_IN_PROGRESS
 	Call_StartFunction(hPlugin, hFunc);
 	Call_Finish(aReturn);
@@ -966,8 +966,8 @@ void FinishMix()
  */
 void AbortMix()
 {
-	if (NativeVotes_IsVoteInProgress()) {
-		NativeVotes_Cancel(); 
+	if (g_iMixState == STATE_VOTING) {
+		NativeVotes_Cancel();
 	}
 
 	RollbackPlayers();
@@ -1048,21 +1048,22 @@ void SetAllClientSpectator()
 /**
  * Checks if a string is empty.
  */
-bool IsEmptyString(const char[] str, int maxlength)
+bool IsEmptyString(const char[] sString, int iMaxLen)
 {
-	int len = strlen(str);
-	if (len == 0)
+	int iLen = strlen(sString);
+
+	if (iLen == 0)
 		return true;
+
+	if (iLen > iMaxLen)
+		iLen = iMaxLen;
 	
-	if (len > maxlength)
-		len = maxlength;
-	
-	for (int i = 0; i < len; ++i)
+	for (int i = 0; i < iLen; ++i)
 	{
-		if (IsCharSpace(str[i]))
+		if (IsCharSpace(sString[i]))
 			continue;
 		
-		if (str[i] == '\r' || str[i] == '\n')
+		if (sString[i] == '\r' || sString[i] == '\n')
 			continue;
 		
 		return false;

@@ -9,7 +9,7 @@ public Plugin myinfo = {
 	name = "MixTeamRandom",
 	author = "TouchMe",
 	description = "Adds random mix",
-	version = "2.0.6",
+	version = "build_0001",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -21,8 +21,6 @@ public Plugin myinfo = {
 
 /**
  * Loads dictionary files. On failure, stops the plugin execution.
- * 
- * @noreturn
  */
 void InitTranslations()
 {
@@ -38,15 +36,13 @@ void InitTranslations()
 
 /**
  * Called when the plugin is fully initialized and all known external references are resolved.
- * 
- * @noreturn
  */
 public void OnPluginStart() {
 	InitTranslations();
 }
 
 public void OnAllPluginsLoaded() {
-	AddMixType("random", MIN_PLAYERS, 0);
+	AddMix("random", MIN_PLAYERS, 0);
 }
 
 public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
@@ -59,8 +55,6 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
 
 /**
  * Starting the mix.
- * 
- * @noreturn
  */
 public Action OnMixInProgress()
 {

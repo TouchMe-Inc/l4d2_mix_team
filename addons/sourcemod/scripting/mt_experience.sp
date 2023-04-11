@@ -4,12 +4,8 @@
 #include <sourcemod>
 #include <colors>
 #include <mix_team>
-#include <ripext>
+#include <steamworks>
 
-
-#define VALVEURL "http://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?appid=550"
-
-char VALVEKEY[64];  //steam web api key
 enum struct Player{
     int id;
     int rankpoint;  // Unfortunately, it's zero here.
@@ -25,7 +21,7 @@ enum struct Player{
 ArrayList g_Lteam1, g_Lteam2, g_Lplayers;
 Player tempPlayer;
 ConVar temp_prp;
-ConVar not_allow_npublicinfo, g_team_allocation;
+ConVar g_team_allocation;
 Handle h_mixTimer;
 int g_iPlayerRP[MAXPLAYERS + 1] = {-1};
 int g_iTeamData[3];
@@ -81,10 +77,8 @@ void InitTranslations()
  */
 public void OnPluginStart() {
     InitTranslations();
-    GetKeyinFile();
     g_Lplayers = new ArrayList(sizeof(Player));
     temp_prp = CreateConVar("itemp_prp", "-1", "TempVariable");
-    not_allow_npublicinfo = CreateConVar("sm_mix_allow_hide_gameinfo", "1", "如果有玩家隐藏游戏信息，mix是否继续分队。隐藏的玩家将按一个固定值计算。1 - 继续分队。0 - 阻止继续");
     g_team_allocation = CreateConVar("sm_mix_exp_type", "1", "MIX的分队算法。1 - 平均分差最小。0 - 尽量2带2");
 
 }
@@ -428,156 +422,50 @@ void min_diff()
     }
 }
 
-/**
- * Retrieve the Steam API key from a file.
- * 
- * @noreturn
- */
-void GetKeyinFile()
-{
-    char sPath[PLATFORM_MAX_PATH];
-    BuildPath(Path_SM, sPath, sizeof(sPath),"configs/api_key.txt");
-
-    Handle file = OpenFile(sPath, "r");
-    if(file == INVALID_HANDLE)
-    {
-        SetFailState("file configs/api_key.txt doesn't exist!");
-        return;
-    }
-
-    char readData[256];
-    if(!IsEndOfFile(file) && ReadFileLine(file, readData, sizeof(readData)))
-    {
-        Format(VALVEKEY, sizeof(VALVEKEY), "%s", readData);
-    }
-}
-
 
 /**
  * Retrieve the player's experience rating and save it to the RP array, 
- * with a fixed value being set if it fails.
  * 
  * @param iClient player id
  * @return Client Rankpoint (The return value is highly likely to be -1, and it must be checked multiple times.)
  */
 int GetClientRP(int iClient)
 {
-    temp_prp.IntValue = -1;
     Player iPlayer;
     iPlayer.id = iClient;
-    // 获取信息
-    char URL[1024];
-    char id64[64];
-    GetClientAuthId(iPlayer.id,AuthId_SteamID64,id64,sizeof(id64));
-    if(StrEqual(id64,"STEAM_ID_STOP_IGNORING_RETVALS")){
-        iPlayer.gametime = 700;
-        iPlayer.tankrocks = 700;
-        iPlayer.winrounds = 0.5;
-        float rp = iPlayer.winrounds * (0.55 * float(iPlayer.gametime) + float(iPlayer.tankrocks) + 
-            100000.0*0.005*1.35);
-        iPlayer.rankpoint = RoundToNearest(rp);
-        temp_prp.IntValue = iPlayer.rankpoint;
-        PrintToConsoleAll("%N(X)  %i=%f*(0.55*%i*+%i*1+100000*0.005*(1+0.35))",iPlayer.id, iPlayer.rankpoint, iPlayer.winrounds ,iPlayer.gametime, iPlayer.tankrocks);
-        CPrintToChatAll("%t", "FAIL_CANT_GET_ID", iClient, temp_prp.IntValue);
-        return temp_prp.IntValue;
-    }
-    Format(URL,sizeof(URL),"%s&key=%s&steamid=%s",VALVEURL,VALVEKEY,id64);
-    HTTPRequest request = new HTTPRequest(URL);
-    request.Get(OnReceived, iClient);
-    PrintToServer("%s",URL);
-    return temp_prp.IntValue;    
-}
-
-/**
- * HTTP callback function for calculating the player's RP.
- * 
- * @param id player id
- * @noreturn The RP of the client will be saved in "temp_prp.IntValue".
- */
-public void OnReceived(HTTPResponse response, int id)
-{
-    Player iPlayer;
-    iPlayer.id = id;
-    char buff[50];
-    if ((response.Status) == HTTPStatus_Forbidden) {
-        PrintToChatAll("%t", "INVAILD_RESPONSE");
-        CallCancelMix();
-        OnMixFailed("");
-        return;
-    }
-    if (response.Data == null) {
-        PrintToServer("Invalid JSON response");
-        iPlayer.gametime = 700;
-        iPlayer.tankrocks = 700;
-        iPlayer.winrounds = 0.5;
-        float rp = iPlayer.winrounds * (0.55 * float(iPlayer.gametime) + float(iPlayer.tankrocks) + 
-            100000.0*0.005*1.35);
-        iPlayer.rankpoint = RoundToNearest(rp);
-        temp_prp.IntValue = iPlayer.rankpoint;
-        CPrintToChatAll("%t", "FAIL_CANT_GET_INFO", id, temp_prp.IntValue);
-        PrintToConsoleAll("%N(X)  %i=%f*(0.55*%i*+%i*1+100000*0.005*(1+0.35))",iPlayer.id, iPlayer.rankpoint, iPlayer.winrounds ,iPlayer.gametime, iPlayer.tankrocks);
-        return;  
-    }
-    JSONObject json = view_as<JSONObject>(response.Data);
-    if (json.HasKey("playerstats")){
-        json=view_as<JSONObject>(json.Get("playerstats"));
-    }
-    else
-    {
-        PrintToServer("JSON response dont have key `playerstats`");
-        iPlayer.gametime = 700;
-        iPlayer.tankrocks = 700;
-        iPlayer.winrounds = 0.5;
-        float rp = iPlayer.winrounds * (0.55 * float(iPlayer.gametime) + float(iPlayer.tankrocks) + 
-            100000.0*0.005*1.35);
-        iPlayer.rankpoint = RoundToNearest(rp);
-        temp_prp.IntValue = iPlayer.rankpoint;
-        if (not_allow_npublicinfo.IntValue > 0){
-            CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_CONTINUE", id, temp_prp.IntValue);
-            PrintToConsoleAll("%N  %i=%f*(0.55*%i*+%i*1+100000*0.005*(1+0.35))",iPlayer.id, iPlayer.rankpoint, iPlayer.winrounds ,iPlayer.gametime, iPlayer.tankrocks);
-            return;  
-        }else {
-            CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_STOP", id);
-            OnMixFailed("");
-        }
-    }
-    JSONArray jsonarray=view_as<JSONArray>(json.Get("stats"));
-    for(int j=0;j<jsonarray.Length;j++)
-    {
-        json=view_as<JSONObject>(jsonarray.Get(j));
-        json.GetString("name",buff,sizeof(buff));
-        if(StrEqual(buff,"Stat.TotalPlayTime.Total"))		
-        {
-            iPlayer.gametime = json.GetInt("value")/3600;
-        }else if(StrEqual(buff,"Stat.SpecAttack.Tank")){
-            iPlayer.tankrocks = json.GetInt("value");
-        }else if(StrEqual(buff,"Stat.GamesLost.Versus")){
-            iPlayer.versuslose = json.GetInt("value");
-        }else if(StrEqual(buff,"Stat.GamesWon.Versus")){
-            iPlayer.versuswin = json.GetInt("value");
-        }else if(StrEqual(buff,"Stat.smg_silenced.Kills.Total")){
-            iPlayer.smgkills += json.GetInt("value");
-        }else if(StrEqual(buff,"Stat.smg.Kills.Total")){
-            iPlayer.smgkills += json.GetInt("value");
-        }else if(StrEqual(buff,"Stat.shotgun_chrome.Kills.Total")){
-            iPlayer.shotgunkills += json.GetInt("value");
-        }else if(StrEqual(buff,"Stat.pumpshotgun.Kills.Total")){
-            iPlayer.shotgunkills += json.GetInt("value");
-        }
-    }
-    iPlayer.versustotal = iPlayer.versuswin + iPlayer.versuslose;
+    SteamWorks_RequestStats(iClient, 550/*APP L4D2*/);
+    SteamWorks_GetStatCell(iClient, "Stat.TotalPlayTime.Total", iPlayer.gametime);
+    iPlayer.gametime = iPlayer.gametime/3600;
+    SteamWorks_GetStatCell(iClient, "Stat.SpecAttack.Tank", iPlayer.tankrocks);
+    SteamWorks_GetStatCell(iClient, "Stat.GamesLost.Versus", iPlayer.versuslose);
+    SteamWorks_GetStatCell(iClient, "Stat.GamesWon.Versus", iPlayer.versuswin);
+    iPlayer.versustotal = iPlayer.versuslose + iPlayer.versuswin;
+    iPlayer.smgkills = 0;
+    int t_kills;
+    SteamWorks_GetStatCell(iClient, "Stat.smg_silenced.Kills.Total", t_kills);
+    iPlayer.smgkills += t_kills;
+    SteamWorks_GetStatCell(iClient, "Stat.smg.Kills.Total", t_kills);
+    iPlayer.smgkills += t_kills;
+    SteamWorks_GetStatCell(iClient, "Stat.shotgun_chrome.Kills.Total", t_kills);
+    iPlayer.shotgunkills += t_kills;
+    SteamWorks_GetStatCell(iClient, "Stat.pumpshotgun.Kills.Total", t_kills);
+    iPlayer.shotgunkills += t_kills;
     iPlayer.winrounds = float(iPlayer.versuswin) / float(iPlayer.versustotal);
-    if(iPlayer.versustotal < 700){
-        iPlayer.winrounds = 0.5;
-    }
-    int killtotal = iPlayer.smgkills + iPlayer.shotgunkills;
-    float shotgunperc = float(iPlayer.shotgunkills) / float(killtotal);
-    float rpm = float(iPlayer.tankrocks) / float(iPlayer.gametime);
-    float rp = iPlayer.winrounds * (0.55 * float(iPlayer.gametime) + float(iPlayer.tankrocks) * rpm + 
-        (killtotal) * 0.005 * (1.0 + shotgunperc));
-
-    iPlayer.rankpoint = RoundToNearest(rp);
+    if(iPlayer.versustotal < 700) iPlayer.winrounds = 0.5;
+    iPlayer.rankpoint = Calculate_RP(iPlayer);
     temp_prp.IntValue = iPlayer.rankpoint;
-    PrintToConsoleAll("%N  %i=%f*(0.55*%i*+%i*%f+%i*0.005*(1+%f))",iPlayer.id, iPlayer.rankpoint, iPlayer.winrounds ,iPlayer.gametime, iPlayer.tankrocks, rpm,
-        killtotal, shotgunperc);
 }
+
+int Calculate_RP(Player tPlayer)
+{
+    int killtotal = tPlayer.shotgunkills + tPlayer.smgkills;
+    float shotgunperc = float(tPlayer.shotgunkills) / float(killtotal);   
+    float rpm = float(tPlayer.tankrocks) / float(tPlayer.gametime);
+    float rp = tPlayer.winrounds * (0.55 * float(tPlayer.gametime) + float(tPlayer.tankrocks) * rpm + 
+        float(killtotal) * 0.005 * (1.0 + shotgunperc));
+    PrintToConsoleAll("%N  %f=%f*(0.55*%i*+%i*%f+%i*0.005*(1+%f))",tPlayer.id, rp, tPlayer.winrounds ,tPlayer.gametime, tPlayer.tankrocks, rpm,
+        killtotal, shotgunperc);
+
+    return RoundToNearest(rp);
+}
+

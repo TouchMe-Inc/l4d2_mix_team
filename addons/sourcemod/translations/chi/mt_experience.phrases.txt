@@ -83,8 +83,9 @@
         "chi"        "{red}{1} 未公开游戏详情，MIX停止。\n{default}[{green}!{default}] 请确保所有mix成员都已公开游戏信息。"
     }
 
-    "INVAILD_RESPONSE"
+    "FAIL_PLAYER_INFO_RETRY"
 	{
-		"chi"			"Steam返回了403，这可能是由于Key设置错误，请联系服务器所有者或插件开发者！"
+        "#format"       "{1:N},{2:i}"
+		"chi"		    "查询 {1} 的游戏信息失败，正在重试（剩余 {2} 次）"
 	}
 }

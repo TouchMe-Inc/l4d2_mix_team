@@ -21,7 +21,7 @@ enum struct Player{
 ArrayList g_Lteam1, g_Lteam2, g_Lplayers;
 Player tempPlayer;
 ConVar temp_prp;
-ConVar allow_notpublicinfo, g_team_allocation;
+ConVar g_team_allocation;
 Handle h_mixTimer;
 int g_iPlayerRP[MAXPLAYERS + 1] = {-1};
 int g_iTeamData[3];
@@ -39,7 +39,7 @@ public Plugin myinfo = {
     name = "MixTeamExperience",
     author = "SirP",
     description = "Adds mix team by game experience",
-    version = "1.0"
+    version = "1.1.0"
 };
 
 
@@ -80,7 +80,6 @@ public void OnPluginStart() {
     InitTranslations();
     g_Lplayers = new ArrayList(sizeof(Player));
     temp_prp = CreateConVar("itemp_prp", "-1", "TempVariable");
-    allow_notpublicinfo = CreateConVar("sm_mix_allow_hide_gameinfo", "1", "如果有玩家隐藏游戏信息，mix是否继续分队。隐藏的玩家将按一个固定值计算。1 - 继续分队。0 - 阻止继续");
     g_team_allocation = CreateConVar("sm_mix_exp_type", "1", "MIX的分队算法。1 - 平均分差最小。0 - 尽量2带2");
 
 }
@@ -101,9 +100,8 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
 
 
 /**
- * The entire process of mix execution, because the entire code will 
- * continue to execute when executing the callback function of request.Get(), 
- * so use timer to loop check the query results.
+ * The main process of MIX. 
+ * Although there may be more efficient ways to implement it, I don't want to change it XD
  * 
  * @noreturn    
  */
@@ -118,6 +116,7 @@ public Action TimerCallback(Handle timer)
         if (g_bchecking) break;
         if (!IsClientInGame(g_iCheckingClientRPid) || !IsMixMember(g_iCheckingClientRPid) || IsFakeClient(g_iCheckingClientRPid)) {
             g_iCheckingClientRPid++;
+            
         }
         else
         {
@@ -131,20 +130,11 @@ public Action TimerCallback(Handle timer)
         int res = GetClientRP(g_iCheckingClientRPid);
         if (res == -2){
             if (g_iMaxRetry > 0){
-                CPrintToChatAll("查询%N的数据信息失败，正在重试（剩余%i次）", g_iCheckingClientRPid, g_iMaxRetry);
+                CPrintToChatAll("%t", "FAIL_PLAYER_INFO_RETRY", g_iCheckingClientRPid, g_iMaxRetry);
                 temp_prp.IntValue = -1;
                 g_iMaxRetry--;
                 g_bchecking = false;
                 return Plugin_Continue;
-                /*
-                if (allow_notpublicinfo.IntValue){
-                    CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_CONTINUE", g_iCheckingClientRPid, temp_prp.IntValue);
-                } else {
-                    CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_STOP", g_iCheckingClientRPid);
-                    OnMixFailed("");
-                    CallCancelMix();
-                    return Plugin_Stop;  
-                }*/
             }
             else {
                 CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_STOP", g_iCheckingClientRPid);
@@ -176,6 +166,7 @@ public Action TimerCallback(Handle timer)
     CallEndMix();
     return Plugin_Stop;
 }
+
 /** 
  * Called when the mix operation fails.
  * 
@@ -315,7 +306,7 @@ int diff_sum(ArrayList array1, ArrayList array2)
 
 /**
  * Output the result when the mix is finished.
- * Retrieve the data from the global variable "data".
+ * Retrieve the data from the global variable "g_iTeamData".
  * 
  * g_iTeamData[0] - Survivors RP
  * g_iTeamData[1] - Infected RP
@@ -454,17 +445,14 @@ void min_diff()
  * Retrieve the player's experience rating and save it to the RP array, 
  * 
  * @param iClient player id
- * @return Client Rankpoint. if failed && !allow_notpublicinfo.IntValue return -2 else 880
+ * @return Client Rankpoint. if failed will return -2
  */
 int GetClientRP(int iClient)
 {
     Player iPlayer;
     iPlayer.id = iClient;
-    SteamWorks_RequestStats(iClient, 550/*APP L4D2*/);
-    bool status = SteamWorks_GetStatCell(iClient, "Stat.TotalPlayTime.Total", iPlayer.gametime);
-    if (!status){
-        return -2;
-    }
+    bool status = SteamWorks_RequestStats(iClient, 550/*APP L4D2*/);
+    SteamWorks_GetStatCell(iClient, "Stat.TotalPlayTime.Total", iPlayer.gametime);
     iPlayer.gametime = iPlayer.gametime/3600;
     SteamWorks_GetStatCell(iClient, "Stat.SpecAttack.Tank", iPlayer.tankrocks);
     SteamWorks_GetStatCell(iClient, "Stat.GamesLost.Versus", iPlayer.versuslose);
@@ -484,9 +472,18 @@ int GetClientRP(int iClient)
     if(iPlayer.versustotal < 700) iPlayer.winrounds = 0.5;
     iPlayer.rankpoint = Calculate_RP(iPlayer);
     temp_prp.IntValue = iPlayer.rankpoint;
+    if (!status){
+        return -2;
+    }
     return temp_prp.IntValue;
 }
 
+/**
+ * Calculate the player's RP
+ * 
+ * @param tPlayer A Player object
+ * @return tPlayer's RP
+ */
 int Calculate_RP(Player tPlayer)
 {
     int killtotal = tPlayer.shotgunkills + tPlayer.smgkills;

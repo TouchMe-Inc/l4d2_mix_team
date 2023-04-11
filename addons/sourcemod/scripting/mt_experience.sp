@@ -21,11 +21,12 @@ enum struct Player{
 ArrayList g_Lteam1, g_Lteam2, g_Lplayers;
 Player tempPlayer;
 ConVar temp_prp;
-ConVar g_team_allocation;
+ConVar allow_notpublicinfo, g_team_allocation;
 Handle h_mixTimer;
 int g_iPlayerRP[MAXPLAYERS + 1] = {-1};
 int g_iTeamData[3];
-int g_iCheckingClientRPid = 0;          
+int g_iCheckingClientRPid = 0;  
+int g_iMaxRetry = 5;        
 bool g_bchecking = false;               // Retrieve the RP status of a single player.
 bool g_bcheckfinished = false;          // All members of the mix have been checked.
 
@@ -79,6 +80,7 @@ public void OnPluginStart() {
     InitTranslations();
     g_Lplayers = new ArrayList(sizeof(Player));
     temp_prp = CreateConVar("itemp_prp", "-1", "TempVariable");
+    allow_notpublicinfo = CreateConVar("sm_mix_allow_hide_gameinfo", "1", "如果有玩家隐藏游戏信息，mix是否继续分队。隐藏的玩家将按一个固定值计算。1 - 继续分队。0 - 阻止继续");
     g_team_allocation = CreateConVar("sm_mix_exp_type", "1", "MIX的分队算法。1 - 平均分差最小。0 - 尽量2带2");
 
 }
@@ -105,6 +107,7 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
  * 
  * @noreturn    
  */
+
 public Action TimerCallback(Handle timer)
 {
     if (g_iCheckingClientRPid == 0){
@@ -113,7 +116,7 @@ public Action TimerCallback(Handle timer)
     }
     while (g_iCheckingClientRPid <= MaxClients){
         if (g_bchecking) break;
-        if (!IsClientInGame(g_iCheckingClientRPid) || !IsMixMember(g_iCheckingClientRPid)) {
+        if (!IsClientInGame(g_iCheckingClientRPid) || !IsMixMember(g_iCheckingClientRPid) || IsFakeClient(g_iCheckingClientRPid)) {
             g_iCheckingClientRPid++;
         }
         else
@@ -124,8 +127,34 @@ public Action TimerCallback(Handle timer)
     
     if(!g_bchecking){
         g_bchecking = true;
-        GetClientRP(g_iCheckingClientRPid);
+
+        int res = GetClientRP(g_iCheckingClientRPid);
+        if (res == -2){
+            if (g_iMaxRetry > 0){
+                CPrintToChatAll("查询%N的数据信息失败，正在重试（剩余%i次）", g_iCheckingClientRPid, g_iMaxRetry);
+                temp_prp.IntValue = -1;
+                g_iMaxRetry--;
+                g_bchecking = false;
+                return Plugin_Continue;
+                /*
+                if (allow_notpublicinfo.IntValue){
+                    CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_CONTINUE", g_iCheckingClientRPid, temp_prp.IntValue);
+                } else {
+                    CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_STOP", g_iCheckingClientRPid);
+                    OnMixFailed("");
+                    CallCancelMix();
+                    return Plugin_Stop;  
+                }*/
+            }
+            else {
+                CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_STOP", g_iCheckingClientRPid);
+                OnMixFailed("");
+                CallCancelMix();
+                return Plugin_Stop;  
+            }
+        }
     }
+    g_iMaxRetry = 5;
     if (g_iCheckingClientRPid > MaxClients) g_bcheckfinished = true;
     if (!g_bcheckfinished){
         if (temp_prp.IntValue == -1){
@@ -134,8 +163,6 @@ public Action TimerCallback(Handle timer)
             g_iPlayerRP[g_iCheckingClientRPid] = temp_prp.IntValue;
             g_bchecking = false;
         }
-        //TODO: Client index 1464813651 is invalid (arg 3)
-        //CPrintToChatAll("%t", "SHOW_ONE_RP", g_iCheckingClientRPid, g_iPlayerRP[g_iCheckingClientRPid]);
         g_bchecking = false;
 
         g_iCheckingClientRPid++;
@@ -427,14 +454,17 @@ void min_diff()
  * Retrieve the player's experience rating and save it to the RP array, 
  * 
  * @param iClient player id
- * @return Client Rankpoint (The return value is highly likely to be -1, and it must be checked multiple times.)
+ * @return Client Rankpoint. if failed && !allow_notpublicinfo.IntValue return -2 else 880
  */
 int GetClientRP(int iClient)
 {
     Player iPlayer;
     iPlayer.id = iClient;
     SteamWorks_RequestStats(iClient, 550/*APP L4D2*/);
-    SteamWorks_GetStatCell(iClient, "Stat.TotalPlayTime.Total", iPlayer.gametime);
+    bool status = SteamWorks_GetStatCell(iClient, "Stat.TotalPlayTime.Total", iPlayer.gametime);
+    if (!status){
+        return -2;
+    }
     iPlayer.gametime = iPlayer.gametime/3600;
     SteamWorks_GetStatCell(iClient, "Stat.SpecAttack.Tank", iPlayer.tankrocks);
     SteamWorks_GetStatCell(iClient, "Stat.GamesLost.Versus", iPlayer.versuslose);
@@ -454,6 +484,7 @@ int GetClientRP(int iClient)
     if(iPlayer.versustotal < 700) iPlayer.winrounds = 0.5;
     iPlayer.rankpoint = Calculate_RP(iPlayer);
     temp_prp.IntValue = iPlayer.rankpoint;
+    return temp_prp.IntValue;
 }
 
 int Calculate_RP(Player tPlayer)
@@ -465,7 +496,7 @@ int Calculate_RP(Player tPlayer)
         float(killtotal) * 0.005 * (1.0 + shotgunperc));
     PrintToConsoleAll("%N  %f=%f*(0.55*%i*+%i*%f+%i*0.005*(1+%f))",tPlayer.id, rp, tPlayer.winrounds ,tPlayer.gametime, tPlayer.tankrocks, rpm,
         killtotal, shotgunperc);
-
+    CPrintToChatAll("%t", "SHOW_ONE_RP", tPlayer.id, RoundToNearest(rp));
     return RoundToNearest(rp);
 }
 

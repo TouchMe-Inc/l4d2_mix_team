@@ -11,7 +11,7 @@ public Plugin myinfo = {
 	name = "MixTeamRank",
 	author = "TouchMe",
 	description = "Adds rank mix",
-	version = "2.0.1",
+	version = "build_0001",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -21,7 +21,7 @@ public Plugin myinfo = {
 #define MIN_PLAYERS             4
 
 
-enum struct Player {
+enum struct PlayerInfo {
 	int id;
 	int rank;
 }
@@ -29,8 +29,6 @@ enum struct Player {
 
 /**
  * Loads dictionary files. On failure, stops the plugin execution.
- * 
- * @noreturn
  */
 void InitTranslations()
 {
@@ -46,8 +44,6 @@ void InitTranslations()
 
 /**
  * Called when the plugin is fully initialized and all known external references are resolved.
- * 
- * @noreturn
  */
 public void OnPluginStart() {
 	InitTranslations();
@@ -56,8 +52,7 @@ public void OnPluginStart() {
 public void OnAllPluginsLoaded()
 {
 	int iCalcMinPlayers = (FindConVar("survivor_limit").IntValue * 2);
-
-	AddMixType("rank", (iCalcMinPlayers < MIN_PLAYERS) ? MIN_PLAYERS : iCalcMinPlayers, 0);
+	AddMix("rank", (iCalcMinPlayers < MIN_PLAYERS) ? MIN_PLAYERS : iCalcMinPlayers, 0);
 }
 
 public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
@@ -70,17 +65,15 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
 
 /**
  * Starting the mix.
- * 
- * @noreturn
  */
 public Action OnMixInProgress()
 {
-	Handle hPlayers = CreateArray(sizeof(Player));
-	Player tPlayer;
+	Handle hPlayers = CreateArray(sizeof(PlayerInfo));
+	PlayerInfo tPlayer;
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
-		if (!IsClientInGame(iClient) || !IsMixMember(iClient)) {
+		if (!IsClientInGame(iClient) || IsFakeClient(iClient) || !IsMixMember(iClient)) {
 			continue;
 		}
 
@@ -89,7 +82,7 @@ public Action OnMixInProgress()
 
 		if (!tPlayer.rank)
 		{
-			CallCancelMix();
+			Call_AbortMix();
 			CPrintToChatAll("%t", "NO_RANK", iClient);
 			return Plugin_Handled;
 		}
@@ -140,7 +133,7 @@ public Action OnMixInProgress()
   */
 int SortByRank(int indexFirst, int indexSecond, Handle hArrayList, Handle hndl)
 {
-	Player tPlayerFirst, tPlayerSecond;
+	PlayerInfo tPlayerFirst, tPlayerSecond;
 
 	GetArrayArray(hArrayList, indexFirst, tPlayerFirst);
 	GetArrayArray(hArrayList, indexSecond, tPlayerSecond);

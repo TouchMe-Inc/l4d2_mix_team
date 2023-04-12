@@ -113,15 +113,15 @@ native bool SetClientTeam(int iClient, int iTeam);
 
 /**
  * @brief Called when the mix completes successfully
- * @remarks The mix name is the same as the first argument AddMixType()
+ * @remarks The mix name is the same as the first argument AddMix()
  *
  * @param sType         Mix type name
  */
 forward void OnMixSuccess(const char[] sType);
 
 /**
- * @brief Called when the mix is ​​interrupted
- * @remarks The mix name is the same as the first argument AddMixType()
+ * @brief Called when the mix is interrupted
+ * @remarks The mix name is the same as the first argument AddMix()
  *
  * @param sType         Mix type name
  */

@@ -63,7 +63,11 @@ native void Call_FinishMix();
 /**
  * @brief Adds a mix to the voting list
  *
- * @return              MixList Index if success, otherwise -1
+ * @param sType         Mix type name (!mix <type>)
+ * @param iMinPlayers   Minimum number of players to mix
+ * @param iAbortDelay   Mix Interrupt Delay Time (!unmix)
+ *
+ * @return              MixList Index if success, otherwise throw error
  **/
 native int AddMix(char[] sType, int iMinPlayers, int iAbortDelay);
 
@@ -96,7 +100,7 @@ native bool IsMixMember(int iClient);
  *
  * @param iClient       Client ID
  *
- * @return              Returns the command if the player was in the mix, otherwise -1
+ * @return              Returns the player's last command before mixing
  **/
 native int GetLastTeam(int iClient);
 

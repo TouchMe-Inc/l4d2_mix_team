@@ -324,7 +324,7 @@ int Native_FinishMix(Handle hPlugin, int iParams)
 }
 
 /**
- * Native
+ * Returns whether the player is a member of the mix.
  * 
  * @param hPlugin       Handle to the plugin
  * @param iParams       Number of parameters

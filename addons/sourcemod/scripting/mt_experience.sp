@@ -130,7 +130,7 @@ public Action TimerCallback(Handle timer)
         int res = GetClientRP(g_iCheckingClientRPid);
         if (res == -2){
             if (g_iMaxRetry > 0){
-                CPrintToChatAll("%t", "FAIL_PLAYER_INFO_RETRY", g_iCheckingClientRPid, g_iMaxRetry);
+                //CPrintToConsoleAll("%t", "FAIL_PLAYER_INFO_RETRY", g_iCheckingClientRPid, g_iMaxRetry);
                 temp_prp.IntValue = -1;
                 g_iMaxRetry--;
                 g_bchecking = false;
@@ -246,7 +246,7 @@ public Action OnMixInProgress()
     g_iCheckingClientRPid = 0;
     g_bchecking = false;
     g_bcheckfinished = false;
-    h_mixTimer = CreateTimer(1.0, TimerCallback, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+    h_mixTimer = CreateTimer(0.5, TimerCallback, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
     return Plugin_Handled;
 }
 
@@ -451,8 +451,11 @@ int GetClientRP(int iClient)
 {
     Player iPlayer;
     iPlayer.id = iClient;
-    bool status = SteamWorks_RequestStats(iClient, 550/*APP L4D2*/);
-    SteamWorks_GetStatCell(iClient, "Stat.TotalPlayTime.Total", iPlayer.gametime);
+    SteamWorks_RequestStats(iClient, 550/*APP L4D2*/);
+    bool status = SteamWorks_GetStatCell(iClient, "Stat.TotalPlayTime.Total", iPlayer.gametime);
+    if (!status){
+        return -2;
+    }
     iPlayer.gametime = iPlayer.gametime/3600;
     SteamWorks_GetStatCell(iClient, "Stat.SpecAttack.Tank", iPlayer.tankrocks);
     SteamWorks_GetStatCell(iClient, "Stat.GamesLost.Versus", iPlayer.versuslose);
@@ -472,9 +475,7 @@ int GetClientRP(int iClient)
     if(iPlayer.versustotal < 700) iPlayer.winrounds = 0.5;
     iPlayer.rankpoint = Calculate_RP(iPlayer);
     temp_prp.IntValue = iPlayer.rankpoint;
-    if (!status){
-        return -2;
-    }
+
     return temp_prp.IntValue;
 }
 

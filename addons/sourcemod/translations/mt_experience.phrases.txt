@@ -80,7 +80,7 @@
     "FAIL_PLAYER_HIDE_INFO_STOP"
     {
         "#format"    "{1:N}"
-        "en"         "{red}{1} Undisclosed game details, mix rollback. \n{default}[{green}! {default}] Please make sure that all mix members have made the game details public."
+        "en"         "{red}{1} Failed to get game details, mix rollback. \n{default}[{green}! {default}] Please make sure that all mix members have made the game details public."
     }
 
 	"FAIL_PLAYER_INFO_RETRY"

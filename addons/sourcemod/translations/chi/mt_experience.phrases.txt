@@ -80,7 +80,7 @@
     "FAIL_PLAYER_HIDE_INFO_STOP"
     {
         "#format"    "{1:N}"
-        "chi"        "{red}{1} 未公开游戏详情，MIX停止。\n{default}[{green}!{default}] 请确保所有mix成员都已公开游戏信息。"
+        "chi"        "{red}{1} 游戏详情获取失败，MIX停止。\n{default}[{green}!{default}] 请确保所有mix成员都已公开游戏信息。"
     }
 
     "FAIL_PLAYER_INFO_RETRY"

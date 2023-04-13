@@ -52,7 +52,7 @@ public Plugin myinfo = {
 #define TEAM_SURVIVOR           2 
 #define TEAM_INFECTED           3
 
-#define MIN_PLAYERS             1
+#define MIN_PLAYERS             8
 
 // Macros
 #define IS_REAL_CLIENT(%1)      (IsClientInGame(%1) && !IsFakeClient(%1))
@@ -89,7 +89,7 @@ public void OnPluginStart() {
 }
 
 public void OnAllPluginsLoaded() {
-    AddMixType("exp", MIN_PLAYERS, 0);
+    AddMix("exp", MIN_PLAYERS, 0);
 }
 
 public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
@@ -143,7 +143,7 @@ public Action TimerCallback(Handle timer)
             else {
                 CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_STOP", g_iCheckingClientRPid);
                 OnMixFailed("");
-                CallCancelMix();
+                Call_AbortMix();
                 return Plugin_Stop;  
             }
         }
@@ -167,7 +167,7 @@ public Action TimerCallback(Handle timer)
     
     CPrintToChatAll("%t", "CHECK_DONE");
     MixMembers();
-    CallEndMix();
+    Call_FinishMix();
     return Plugin_Stop;
 }
 
@@ -380,7 +380,7 @@ void SelAndMix(){
         }
         if (!result){
             CPrintToChatAll("%t", "MIXMETHOD_FAIL");
-            CallCancelMix();
+            Call_AbortMix();
             OnMixFailed("");
         }
         else
@@ -412,12 +412,12 @@ bool slot_diff(){
                 p1 = true;
                 for (g = i+1; g < 4; g++){
                     g_Lplayers.GetArray(i, tempPlayer);
-                        if (tempPlayer.type == PTYPE_SHOTGUN){
-                            if (!p2){
-                                g_Lplayers.GetArray(i, Shotgun2);
-                                p2 = true;
-                            }
+                    if (tempPlayer.type == PTYPE_SHOTGUN){
+                        if (!p2){
+                            g_Lplayers.GetArray(i, Shotgun2);
+                            p2 = true;
                         }
+                    }
                 }
             }
         }

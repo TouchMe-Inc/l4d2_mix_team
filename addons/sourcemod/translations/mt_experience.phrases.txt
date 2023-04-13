@@ -89,5 +89,20 @@
 		"en"			"Querying {1}'s game information failed, retrying (remaining {2} times)"
 	}
 
-    
+    "MIXMETHOD_AVERAGE"
+    {
+        "en"    "[{green}MIX{default}] {olive}Team Mixing algorithm will ensure the smallest point difference between the two sides!"
+    }
+    "MIXMETHOD_BALANCE"
+    {
+        "en"    "[{green}MIX{default}] {olive}Team Mixing algorithm will ensure similar strength composition between the two sides!"
+    }
+    "MIXMETHOD_SLOT"
+    {
+        "en"    "[{green}MIX{default}] {olive}Team Mixing algorithm will ensure that at least one person is available for the designated role, while the rest are evenly distributed!"
+    }
+    "MIXMETHOD_FAIL"
+    {
+        "en"    "[{green}MIX{default}] {olive}The execution conditions for the MIX algorithm are not met, MIX terminated, please modify the cvar {green}sm_mix_exp_type{default}!"
+    }
 }   

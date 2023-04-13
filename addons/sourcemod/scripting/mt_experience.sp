@@ -17,6 +17,7 @@ enum struct Player{
     int versuslose;
     int smgkills;
     int shotgunkills;
+    int type;
 }
 ArrayList g_Lteam1, g_Lteam2, g_Lplayers;
 Player tempPlayer;
@@ -34,6 +35,9 @@ bool g_bcheckfinished = false;          // All members of the mix have been chec
 #define IS_REAL_CLIENT(%1)      (IsClientInGame(%1) && !IsFakeClient(%1))
 #define IS_SPECTATOR(%1)        (GetClientTeam(%1) == TEAM_SPECTATOR)
 #define IS_SURVIVOR(%1)         (GetClientTeam(%1) == TEAM_SURVIVOR)
+
+#define PTYPE_SMG 0
+#define PTYPE_SHOTGUN 1
 
 public Plugin myinfo = { 
     name = "MixTeamExperience",
@@ -80,7 +84,7 @@ public void OnPluginStart() {
     InitTranslations();
     g_Lplayers = new ArrayList(sizeof(Player));
     temp_prp = CreateConVar("itemp_prp", "-1", "TempVariable");
-    g_team_allocation = CreateConVar("sm_mix_exp_type", "1", "MIX的分队算法。1 - 平均分差最小。0 - 尽量2带2");
+    g_team_allocation = CreateConVar("sm_mix_exp_type", "1", "强制选择MIX的分队算法。0=自动选择 1=尽量平均(Average) 2=尽量平衡(Balance) 3=优先喷子(Slot)");
 
 }
 
@@ -198,20 +202,7 @@ void MixMembers(){
     g_Lplayers.SortCustom(SortByRank);
     int surrankpoint, infrankpoint = 0;
 
-    switch (g_team_allocation.IntValue){
-        case 0: 
-        {
-            balance_diff();
-        }
-        case 1: 
-        {
-            min_diff();
-        }
-        default:  
-        {
-            min_diff();
-        }
-    }
+    SelAndMix();
 
     PrintToConsoleAll("%t", "EXP_EQUATION");
     PrintToConsoleAll("-----------------------------------------------------------");
@@ -325,15 +316,186 @@ public Action PrintResult(Handle timer)
     return Plugin_Stop;
 }
 
+void PrintMixMethod(int type)
+{
+    switch (type){
+        case 1:
+        {
+            CPrintToChatAll("%t", "MIXMETHOD_AVERAGE");
+        }
+        case 2:
+        {
+            CPrintToChatAll("%t", "MIXMETHOD_BALANCE");
+        }
+        case 3:
+        {
+            CPrintToChatAll("%t", "MIXMETHOD_SLOT");
+        }
+        default:
+        {
+            CPrintToChatAll("%t", "MIXMETHOD_BALANCE");
+        }
+    }
+}
+
+/**
+ * Select a feasible mixing method.
+ * 
+ * Slot - Attempt to ensure that both parties have one shotgun player can each, 
+ *        and distribute the remaining cans equally among the other individuals.
+ * Average - Ensure that the scores of both parties are as evenly distributed as possible, 
+ *           but the score difference among all individuals cannot be greater than 2000.
+ * Balance - Both parties have similar overall strength and composition.
+ * 
+ * @noreturn
+ */
+void SelAndMix(){
+    bool result;
+    if (!g_team_allocation.IntValue){
+        if (slot_diff()){
+            PrintMixMethod(3);
+        }else if(min_diff()){
+            PrintMixMethod(1);
+        }else if(balance_diff()){
+            PrintMixMethod(2);
+        }
+    }else{
+        switch (g_team_allocation.IntValue){
+            case 1:
+            {
+                result = min_diff();
+            }
+            case 2:
+            {
+                result = balance_diff();
+            }
+            case 3:
+            {
+                result = slot_diff();
+            }
+            default:
+            {
+                result = balance_diff();
+            }
+        }
+        if (!result){
+            CPrintToChatAll("MIXMETHOD_FAIL");
+            CallCancelMix();
+            OnMixFailed("");
+        }
+        else
+        {
+            PrintMixMethod(g_team_allocation.IntValue);
+        }
+    }
+}
+
+/**
+ * Allocate based on the players' preferred weapons. 
+ * Prioritize ensuring that each team has one shotgun player (top 4 ranking), 
+ * and distribute the rest evenly among the remaining players.
+ * 
+ * @return true if the distribution can be completed smoothly, false otherwise.
+ */
+bool slot_diff(){
+    g_Lplayers.SortCustom(SortByRank);
+    ArrayList t_Lplayers = new ArrayList();
+    bool p1, p2 = false;
+    Player Shotgun1, Shotgun2;
+    int i, g;  //shotgun index
+    int maxdiff = 2147483647;
+    for (i = 0; i < 4; i++){
+        g_Lplayers.GetArray(i, tempPlayer);
+        if (tempPlayer.type == PTYPE_SHOTGUN){
+            if (!p1){
+                g_Lplayers.GetArray(i, Shotgun1);
+                p1 = true;
+                for (g = i+1; g < 4; g++){
+                    g_Lplayers.GetArray(i, tempPlayer);
+                        if (tempPlayer.type == PTYPE_SHOTGUN){
+                            if (!p2){
+                                g_Lplayers.GetArray(i, Shotgun2);
+                                p2 = true;
+                            }
+                        }
+                }
+            }
+        }
+    }
+    if (!(p1 && p2)) return false;
+    for (int n = 0; i < g_Lplayers.Length; i++){
+        if (n != i && n != g){
+            g_Lplayers.GetArray(n, tempPlayer);
+            t_Lplayers.PushArray(tempPlayer);
+        }
+    }
+    t_Lplayers.SortCustom(SortByRank);
+
+    for (int j = 0; j < t_Lplayers.Length - 2; j++)
+    {
+        for (int k = j + 1; k < t_Lplayers.Length - 1; k++)
+        {
+            for (int l = k + 1; l < t_Lplayers.Length; l++)
+            {
+                ArrayList group1 = new ArrayList();
+                group1.Resize(4);
+                t_Lplayers.GetArray(j, tempPlayer);  
+                group1.SetArray(1,tempPlayer);
+                t_Lplayers.GetArray(k, tempPlayer);  
+                group1.SetArray(2,tempPlayer);
+                t_Lplayers.GetArray(l, tempPlayer);  
+                group1.SetArray(3,tempPlayer);
+                int m, n, o;
+                for (m=0; m<t_Lplayers.Length; m++){
+                    if (m != j && m != k && m != l) break;
+                }
+                for (n=0; n<t_Lplayers.Length; n++){
+                    if ( n != j && n != k && n != l && n != m) break;
+                }
+                for (o=0; o<t_Lplayers.Length; o++){
+                    if ( o != j && o != k && o != l && o != m && o != n) break;
+                }
+               
+                
+                ArrayList group2 = new ArrayList();
+                group2.Resize(4);
+                t_Lplayers.GetArray(m, tempPlayer);  
+                group2.SetArray(0,tempPlayer);
+                t_Lplayers.GetArray(n, tempPlayer);  
+                group2.SetArray(1,tempPlayer);
+                t_Lplayers.GetArray(o, tempPlayer);  
+                group2.SetArray(2,tempPlayer);
+                int diff = diff_sum(group1, group2);
+                if (diff < maxdiff)
+                {
+                    maxdiff = diff;
+                    if (g_Lteam1 != INVALID_HANDLE){
+                        g_Lteam1.Resize(0);
+                    }
+                    if (g_Lteam2 != INVALID_HANDLE){
+                        g_Lteam2.Resize(0);
+                    }
+                    g_Lteam1 = group1.Clone();
+                    g_Lteam2 = group2.Clone();
+                }
+                delete group1;
+                delete group2;
+            }
+        }
+    }
+    g_Lteam1.PushArray(Shotgun1);
+    g_Lteam2.PushArray(Shotgun2);
+    return true;
+}
 
 /**
  * Simply balancing the team.
  * 1368 - 2457
  * This is suitable when at least 2/4 players' roleplaying abilities far surpass those of the remaining players.
  * 
- * @noreturn
+ * @return true
  */
-void balance_diff()
+bool balance_diff()
 {
     g_Lplayers.SortCustom(SortByRank);
     ArrayList group1 = new ArrayList();
@@ -360,6 +522,7 @@ void balance_diff()
 
     g_Lteam1 = group1.Clone();
     g_Lteam2 = group2.Clone();
+    return true;
 }
 
 /**
@@ -367,9 +530,9 @@ void balance_diff()
  * the corresponding groupings.
  * This is suitable when the overall skill gap is relatively small.
  * 
- * @noreturn
+ * @return true if the distribution can be completed smoothly, false otherwise.
  */
-void min_diff()
+bool min_diff()
 {
     g_Lplayers.SortCustom(SortByRank);
     int maxdiff = 2147483647;
@@ -438,6 +601,7 @@ void min_diff()
             }
         }
     }
+    return true;
 }
 
 
@@ -475,7 +639,11 @@ int GetClientRP(int iClient)
     if(iPlayer.versustotal < 700) iPlayer.winrounds = 0.5;
     iPlayer.rankpoint = Calculate_RP(iPlayer);
     temp_prp.IntValue = iPlayer.rankpoint;
-
+    if (iPlayer.shotgunkills > iPlayer.smgkills){
+        iPlayer.type = PTYPE_SHOTGUN;
+    }else{
+        iPlayer.type = PTYPE_SMG;
+    }
     return temp_prp.IntValue;
 }
 

@@ -88,4 +88,20 @@
         "#format"       "{1:N},{2:i}"
 		"chi"		    "查询 {1} 的游戏信息失败，正在重试（剩余 {2} 次）"
 	}
+    "MIXMETHOD_AVERAGE"
+    {
+        "chi"    "[{green}MIX{default}] {olive}分队算法将确保双方分差最小!"
+    }
+    "MIXMETHOD_BALANCE"
+    {
+        "chi"    "[{green}MIX{default}] {olive}分队算法将确保双方实力构成相似!"
+    }
+    "MIXMETHOD_SLOT"
+    {
+        "chi"    "[{green}MIX{default}] {olive}分队算法将确保双方至少有一个人可为喷子手，其他人将平均分配!"
+    }
+    "MIXMETHOD_FAIL"
+    {
+        "chi"    "[{green}MIX{default}] {olive}不符合MIX算法的执行条件, MIX终止, 请修改cvar {green}sm_mix_exp_type{default}!"
+    }
 }

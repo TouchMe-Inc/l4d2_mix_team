@@ -363,7 +363,7 @@ void SelAndMix(){
         switch (g_team_allocation.IntValue){
             case 1:
             {
-                result = min_diff();
+                result = min_diff(true);
             }
             case 2:
             {
@@ -532,22 +532,22 @@ bool balance_diff()
  * 
  * @return true if the distribution can be completed smoothly, false otherwise.
  */
-bool min_diff()
+bool min_diff(bool force = false)
 {
     g_Lplayers.SortCustom(SortByRank);
     int maxrp = 0;
     int minrp = 2147483647;
     for (int i = 0; i < g_Lplayers.Length; i++)
     {
-        array1.GetArray(i, tempPlayer);
+        g_Lplayers.GetArray(i, tempPlayer);
         if (g_iPlayerRP[tempPlayer.id] > maxrp){
-            maxrp = g_iPlayerRP[tempPlayer.id]
+            maxrp = g_iPlayerRP[tempPlayer.id];
         }
         if (g_iPlayerRP[tempPlayer.id] < minrp){
-            minrp = g_iPlayerRP[tempPlayer.id]
+            minrp = g_iPlayerRP[tempPlayer.id];
         }
     }
-    if (abs(maxrp - minrp) > 2500) return false;
+    if (abs(maxrp - minrp) > 2500 && !force) return false;
     int maxdiff = 2147483647;
 
     for (int i = 0; i < g_Lplayers.Length - 3; i++)

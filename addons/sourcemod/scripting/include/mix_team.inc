@@ -23,8 +23,8 @@
 #endif
 #define _mix_team_included_
 
-// Types
-#define TYPE_NONE               -1
+// Mixs
+#define INVALID_INDEX           -1
 
 // States
 #define STATE_NONE              -1
@@ -32,7 +32,7 @@
 #define STATE_IN_PROGRESS       1
 
 // Vote messages 
-#define MIX_NAME_SIZE           16
+#define MIX_TYPE_SIZE           16
 #define DISPLAY_MSG_SIZE        128
 #define VOTEEND_MSG_SIZE        128
 
@@ -48,16 +48,28 @@
 #define IS_INFECTED(%1)         (GetClientTeam(%1) == TEAM_INFECTED)
 
 
-native void CallCancelMix();
+/**
+ * @brief Forced end of the mix
+ * @remarks Use if Plugin_Handled is returned in OnMixInProgress
+ **/
+native void Call_AbortMix();
 
-native void CallEndMix();
+/**
+ * @brief End of the mix
+ * @remarks Use if Plugin_Handled is returned in OnMixInProgress
+ **/
+native void Call_FinishMix();
 
 /**
  * @brief Adds a mix to the voting list
  *
- * @return              TypeList Index if success, otherwise -1
+ * @param sType         Mix type name (!mix <type>)
+ * @param iMinPlayers   Minimum number of players to mix
+ * @param iAbortDelay   Mix Interrupt Delay Time (!unmix)
+ *
+ * @return              MixList Index if success, otherwise throw error
  **/
-native int AddMixType(char[] sName, int iMinPlayers, int iTimeout);
+native int AddMix(char[] sType, int iMinPlayers, int iAbortDelay);
 
 /**
  * @brief Returns the status of the mix
@@ -67,12 +79,12 @@ native int AddMixType(char[] sName, int iMinPlayers, int iTimeout);
 native int GetMixState();
 
 /**
- * @brief Returns the mix type
- * @remarks The mix type is equal to the index of the element in the TypeList
+ * @brief Returns current Mix Index
+ * @remarks The mix type is equal to the index of the element in the MixList
  *
- * @return              TypeList Index or TYPE_NONE
+ * @return              MixList Index or INVALID_INDEX
  **/
-native int GetMixType();
+native int GetMixIndex();
 
 /**
  * @brief Returns whether the player is a member of the mix
@@ -88,7 +100,7 @@ native bool IsMixMember(int iClient);
  *
  * @param iClient       Client ID
  *
- * @return              Returns the command if the player was in the mix, otherwise -1
+ * @return              Returns the player's last command before mixing
  **/
 native int GetLastTeam(int iClient);
 
@@ -105,23 +117,20 @@ native bool SetClientTeam(int iClient, int iTeam);
 
 /**
  * @brief Called when the mix completes successfully
- * @remarks The mix name is the same as the first argument AddMixType()
+ * @remarks The mix name is the same as the first argument AddMix()
  *
- * @param sMixName      Mix name
- *
- * @noreturn
+ * @param sType         Mix type name
  */
-forward void OnMixSuccess(const char[] sMixName);
+forward void OnMixSuccess(const char[] sType);
 
 /**
- * @brief Called when the mix is ​​interrupted
- * @remarks The mix name is the same as the first argument AddMixType()
+ * @brief Called when the mix is interrupted
+ * @remarks The mix name is the same as the first argument AddMix()
  *
- * @param sMixName      Mix name
- *
- * @noreturn
+ * @param sType         Mix type name
  */
-forward void OnMixFailed(const char[] sMixName);
+forward void OnMixFailed(const char[] sType);
+
 
 public SharedPlugin __pl_mix_team =
 {
@@ -137,11 +146,11 @@ public SharedPlugin __pl_mix_team =
 #if !defined REQUIRE_PLUGIN
 public void __pl_mix_team_SetNTVOptional()
 {
-	MarkNativeAsOptional("AddMixType");
+	MarkNativeAsOptional("Call_AbortMix");
+	MarkNativeAsOptional("Call_FinishMix");
+	MarkNativeAsOptional("AddMix");
 	MarkNativeAsOptional("GetMixState");
-	MarkNativeAsOptional("GetMixType");
-	MarkNativeAsOptional("CallCancelMix");
-	MarkNativeAsOptional("CallEndMix");
+	MarkNativeAsOptional("GetMixIndex");
 	MarkNativeAsOptional("IsMixMember");
 	MarkNativeAsOptional("GetLastTeam");
 	MarkNativeAsOptional("SetClientTeam");

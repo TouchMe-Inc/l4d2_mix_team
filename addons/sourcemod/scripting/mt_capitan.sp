@@ -10,7 +10,7 @@ public Plugin myinfo = {
 	name = "MixTeamCapitan",
 	author = "TouchMe",
 	description = "Adds capitan mix",
-	version = "2.0.8",
+	version = "build_0001",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -38,8 +38,6 @@ int
 
 /**
  * Loads dictionary files. On failure, stops the plugin execution.
- * 
- * @noreturn
  */
 void InitTranslations()
 {
@@ -55,8 +53,6 @@ void InitTranslations()
 
 /**
  * Called when the plugin is fully initialized and all known external references are resolved.
- * 
- * @noreturn
  */
 public void OnPluginStart() {
 	InitTranslations();
@@ -65,9 +61,7 @@ public void OnPluginStart() {
 public void OnAllPluginsLoaded()
 {
 	int iCalcMinPlayers = (FindConVar("survivor_limit").IntValue * 2);
-	
-	// fix for 1v1
-	AddMixType("capitan", (iCalcMinPlayers < MIN_PLAYERS) ? MIN_PLAYERS : iCalcMinPlayers, 60);
+	AddMix("capitan", (iCalcMinPlayers < MIN_PLAYERS) ? MIN_PLAYERS : iCalcMinPlayers, 60);
 }
 
 public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
@@ -80,8 +74,6 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
 
 /**
  * Starting the mix.
- * 
- * @noreturn
  */
 public Action OnMixInProgress() 
 {
@@ -92,8 +84,6 @@ public Action OnMixInProgress()
 
 /**
   * Builder menu.
-  *
-  * @noreturn
   */
 public int BuildMenu(Menu &hMenu, int iClient, int iStep)
 {
@@ -143,7 +133,6 @@ public int BuildMenu(Menu &hMenu, int iClient, int iStep)
  * @param iAction     Param description
  * @param iClient     Client index
  * @param iIndex      Item index
- * @return            Return description
  */
 public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 {
@@ -263,7 +252,7 @@ public void Flow(int iStep)
 					break;
 				}
 
-				CallEndMix(); // Required
+				Call_FinishMix(); // Required
 			}
 		}
 	}
@@ -310,8 +299,6 @@ bool DisplayMenuAll(int iStep, int iTime)
 
 /**
  * Resetting voting results.
- *
- * @noreturn
  */
 void ResetVoteCount()
 {

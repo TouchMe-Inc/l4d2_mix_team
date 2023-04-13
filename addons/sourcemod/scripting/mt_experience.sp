@@ -43,7 +43,7 @@ public Plugin myinfo = {
     name = "MixTeamExperience",
     author = "SirP",
     description = "Adds mix team by game experience",
-    version = "1.1.0"
+    version = "1.2.0"
 };
 
 
@@ -379,7 +379,7 @@ void SelAndMix(){
             }
         }
         if (!result){
-            CPrintToChatAll("MIXMETHOD_FAIL");
+            CPrintToChatAll("%t", "MIXMETHOD_FAIL");
             CallCancelMix();
             OnMixFailed("");
         }
@@ -535,6 +535,19 @@ bool balance_diff()
 bool min_diff()
 {
     g_Lplayers.SortCustom(SortByRank);
+    int maxrp = 0;
+    int minrp = 2147483647;
+    for (int i = 0; i < g_Lplayers.Length; i++)
+    {
+        array1.GetArray(i, tempPlayer);
+        if (g_iPlayerRP[tempPlayer.id] > maxrp){
+            maxrp = g_iPlayerRP[tempPlayer.id]
+        }
+        if (g_iPlayerRP[tempPlayer.id] < minrp){
+            minrp = g_iPlayerRP[tempPlayer.id]
+        }
+    }
+    if (abs(maxrp - minrp) > 2500) return false;
     int maxdiff = 2147483647;
 
     for (int i = 0; i < g_Lplayers.Length - 3; i++)

@@ -17,6 +17,7 @@ Plugin adds voting for mixing teams. The mix_team plugin itself does not impleme
 ## Require
 * Colors
 * [NativeVotes](https://github.com/sapphonie/sourcemod-nativevotes-updated)
+* [SteamWorks](https://github.com/hexa-core-eu/SteamWorks) for mt_exp
 
 ## Support
 * [ReadyUp](https://github.com/SirPlease/L4D2-Competitive-Rework/blob/master/addons/sourcemod/scripting/readyup.sp)

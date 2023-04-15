@@ -865,7 +865,9 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 
 		case MenuAction_VoteEnd:
 		{
-			if (iParam1 == NATIVEVOTES_VOTE_NO) {
+			if (iParam1 == NATIVEVOTES_VOTE_NO
+			|| (!g_bReadyUpAvailable && g_bRoundIsLive)
+			|| (g_bReadyUpAvailable && !IsInReady())) {
 				hVote.DisplayFail(NativeVotesFail_Loses);
 			}
 

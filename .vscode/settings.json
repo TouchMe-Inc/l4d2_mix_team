@@ -1,9 +1,0 @@
-{
-    "SourcePawnLanguageServer.mainPath": "e:\\GithubKu\\l4d2_mix_team\\addons\\sourcemod\\scripting\\mix_team.sp",
-    "files.exclude": {
-        "**/*.rpyc": true,
-        "**/*.rpa": true,
-        "**/*.rpymc": true,
-        "**/cache/": true
-    }
-}

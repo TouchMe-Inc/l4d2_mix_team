@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Adds an API for mix in versus mode",
-	version = "build_0002",
+	version = "build_0003",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -320,7 +320,6 @@ int Native_FinishMix(Handle hPlugin, int iParams)
 	}
 
 	FinishMix();
-
 	return 0;
 }
 
@@ -458,13 +457,15 @@ void InitEvents()
 /**
  * Round start event.
  */
-public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) 
+public Action Event_RoundStart(Event event, const char[] sName, bool bDontBroadcast) 
 {
 	if (!g_bReadyUpAvailable)
 	{
 		g_bRoundIsLive = true;
 
-		if (IsMix()) {
+		if (IsMix())
+		{
+			CPrintToChatAll("%t", "ROUND_LIVE");
 			AbortMix();
 		}
 	}
@@ -475,7 +476,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 /**
  * Round end event.
  */
-public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) 
+public Action Event_RoundEnd(Event event, const char[] sName, bool bDontBroadcast) 
 {
 	if (!g_bReadyUpAvailable) {
 		g_bRoundIsLive = false;
@@ -488,7 +489,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
  * Sends new players to the observer team.
  * Called before player change his team.
  */
-public Action Event_PlayerTeam(Event event, char[] event_name, bool dontBroadcast)
+public Action Event_PlayerTeam(Event event, char[] sName, bool bDontBroadcast)
 {
 	if (!IsMix()) {
 		return Plugin_Continue;
@@ -525,7 +526,7 @@ public Action Timer_MoveClientToSpec(Handle hTimer, int iClient)
  * Interrupting the mix if its participant leaves the game.
  * Called before client disconnected.
  */
-public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) 
+public Action Event_PlayerDisconnect(Event event, const char[] sName, bool bDontBroadcast) 
 {
 	if (!IsMix()) {
 		return Plugin_Continue;
@@ -537,8 +538,8 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 	&& !IsFakeClient(iClient)
 	&& g_tPlayers[iClient].mixMember)
 	{
-		AbortMix();
 		CPrintToChatAll("%t", "CLIENT_LEAVE", iClient);
+		AbortMix();
 	}
 
 	return Plugin_Continue;
@@ -549,7 +550,7 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
  */
 void InitCmds() 
 {
-	AddCommandListener(Cmd_OnPlayerJoinTeam, "jointeam");
+	AddCommandListener(Listener_OnPlayerJoinTeam, "jointeam");
 	RegConsoleCmd("sm_mix", Cmd_RunMix, "Start Team Mix Voting");
 	RegConsoleCmd("sm_unmix", Cmd_AbortMix, "Cancel the current Mix");
 	RegAdminCmd("sm_fmix", Cmd_ForceMix, ADMFLAG_BAN, "Run forced Mix");
@@ -563,7 +564,7 @@ void InitCmds()
  * @param iArgs       Number of parameters
  * @return            Plugin_Stop | Plugin_Continue
  */
-public Action Cmd_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
+public Action Listener_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
 {
 	if (IsMix())
 	{
@@ -582,39 +583,39 @@ public Action Cmd_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
  * @return            Plugin_Handled | Plugin_Continue
  */
 public Action Cmd_RunMix(int iClient, int iArgs)
-{	
+{
 	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient) || IS_SPECTATOR(iClient)) {
 		return Plugin_Handled;
 	}
 
-	if (!iArgs)
-	{
-		CPrintToChat(iClient, "%T", "NO_ARGUMENT", iClient);
-		CPrintExampleArguments(iClient);
-		return Plugin_Continue;
-	}
-
 	if (InSecondHalfOfRound())
 	{
-		CPrintToChat(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
+		CReplyToCommand(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
 		return Plugin_Continue;
 	}
 
 	if (g_bReadyUpAvailable && !IsInReady())
 	{
-		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
+		CReplyToCommand(iClient, "%T", "LEFT_READYUP", iClient);
 		return Plugin_Continue;
 	} 
 
 	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
 	{
-		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
+		CReplyToCommand(iClient, "%T", "ROUND_LIVE", iClient);
 		return Plugin_Continue;
 	}
 
 	if (IsMix()) 
 	{
-		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
+		CReplyToCommand(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
+		return Plugin_Continue;
+	}
+
+	if (!iArgs)
+	{
+		CReplyToCommand(iClient, "%T", "NO_ARGUMENT", iClient);
+		CPrintExampleArguments(iClient);
 		return Plugin_Continue;
 	}
 
@@ -624,7 +625,7 @@ public Action Cmd_RunMix(int iClient, int iArgs)
 
 	if (iMixIndex == INVALID_INDEX)
 	{
-		CPrintToChat(iClient, "%T", "BAD_ARGUMENT", iClient, sArg);
+		CReplyToCommand(iClient, "%T", "BAD_ARGUMENT", iClient, sArg);
 		CPrintExampleArguments(iClient);
 		return Plugin_Continue;
 	}
@@ -634,7 +635,7 @@ public Action Cmd_RunMix(int iClient, int iArgs)
 
 	if (iTotalPlayers < iMinPlayers)
 	{
-		CPrintToChat(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
+		CReplyToCommand(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
 		return Plugin_Continue;
 	}
 
@@ -669,7 +670,7 @@ public Action Cmd_AbortMix(int iClient, int iArgs)
 	} 
 
 	else {
-		CPrintToChat(iClient, "%T", "CANCEL_MIX_FAIL", iClient, iEndTime);
+		CReplyToCommand(iClient, "%T", "CANCEL_MIX_FAIL", iClient, iEndTime);
 	}
 
 	return Plugin_Continue;
@@ -687,34 +688,34 @@ public Action Cmd_ForceMix(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 
-	if (!iArgs)
-	{
-		CPrintToChat(iClient, "%T", "NO_ARGUMENT", iClient);
-		CPrintExampleArguments(iClient);
-		return Plugin_Continue;
-	}
-
 	if (InSecondHalfOfRound())
 	{
-		CPrintToChat(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
+		CReplyToCommand(iClient, "%T", "SECOND_HALF_OF_ROUND", iClient);
 		return Plugin_Continue;
 	}
 
 	if (g_bReadyUpAvailable && !IsInReady())
 	{
-		CPrintToChat(iClient, "%T", "LEFT_READYUP", iClient);
+		CReplyToCommand(iClient, "%T", "LEFT_READYUP", iClient);
 		return Plugin_Continue;
 	} 
 		
 	if (!g_bReadyUpAvailable && g_bRoundIsLive) 
 	{
-		CPrintToChat(iClient, "%T", "ROUND_LIVE", iClient);
+		CReplyToCommand(iClient, "%T", "ROUND_LIVE", iClient);
 		return Plugin_Continue;
 	}
 
 	if (IsMix()) 
 	{
-		CPrintToChat(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
+		CReplyToCommand(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
+		return Plugin_Continue;
+	}
+
+	if (!iArgs)
+	{
+		CReplyToCommand(iClient, "%T", "NO_ARGUMENT", iClient);
+		CPrintExampleArguments(iClient);
 		return Plugin_Continue;
 	}
 
@@ -724,7 +725,7 @@ public Action Cmd_ForceMix(int iClient, int iArgs)
 
 	if (iMixIndex == INVALID_INDEX)
 	{
-		CPrintToChat(iClient, "%T", "BAD_ARGUMENT", iClient, sArg);
+		CReplyToCommand(iClient, "%T", "BAD_ARGUMENT", iClient, sArg);
 		CPrintExampleArguments(iClient);
 		return Plugin_Continue;
 	}
@@ -734,7 +735,7 @@ public Action Cmd_ForceMix(int iClient, int iArgs)
 
 	if (iTotalPlayers < iMinPlayers)
 	{
-		CPrintToChat(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
+		CReplyToCommand(iClient, "%T", "BAD_TEAM_SIZE", iClient, iMinPlayers);
 		return Plugin_Continue;
 	}
 
@@ -763,13 +764,13 @@ public void RunVoteMix(int iClient)
 {
 	if (!NativeVotes_IsVoteTypeSupported(NativeVotesType_Custom_YesNo))
 	{
-		CPrintToChat(iClient, "%T", "UNSUPPORTED", iClient);
+		CReplyToCommand(iClient, "%T", "UNSUPPORTED", iClient);
 		return;
 	}
 
 	if (!NativeVotes_IsNewVoteAllowed())
 	{
-		CPrintToChat(iClient, "%T", "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
+		CReplyToCommand(iClient, "%T", "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
 		return;
 	}
 
@@ -1039,9 +1040,7 @@ bool IsEmptyString(const char[] sString)
 	
 	for (int i = 0; i < iLen; ++i)
 	{
-		if (IsCharSpace(sString[i]) 
-		|| sString[i] == '\r' 
-		|| sString[i] == '\n') {
+		if (IsCharSpace(sString[i]) || sString[i] == '\r' || sString[i] == '\n') {
 			continue;
 		}
 
@@ -1060,7 +1059,7 @@ void CPrintExampleArguments(int iClient)
 	for (int index = 0; index < g_hMixList.Length; index++)
 	{
 		g_hMixList.GetTypeByIndex(index, sType, MIX_TYPE_SIZE);
-		CPrintToChat(iClient, "%T", "ARGUMENT_EXAMPLE", iClient, sType);
+		CReplyToCommand(iClient, "%T", "ARGUMENT_EXAMPLE", iClient, sType);
 	}
 }
 

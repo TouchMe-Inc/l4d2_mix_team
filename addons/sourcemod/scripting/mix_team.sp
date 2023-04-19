@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Adds an API for mix in versus mode",
-	version = "build_0003",
+	version = "build_0004",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -28,12 +28,16 @@ public Plugin myinfo =
 #define LIB_READY               "readyup" 
 #define LIB_DHOOK               "left4dhooks"
 
+// Gamemode
+#define GAMEMODE_VERSUS         "versus"
+#define GAMEMODE_VERSUS_REALISM "mutation12"
+
 // Forwards
 #define FORWARD_DISPLAY_MSG     "GetVoteDisplayMessage"
 #define FORWARD_VOTEEND_MSG     "GetVoteEndMessage"
 #define FORWARD_IN_PROGRESS     "OnMixInProgress"
-#define FORWARD_ON_MIX_SUCCESS  "OnMixSuccess"
-#define FORWARD_ON_MIX_FAILED   "OnMixFailed"
+#define FORWARD_ON_MIX_FINISHED "OnMixSuccess"
+#define FORWARD_ON_MIX_ABORTED  "OnMixFailed"
 
 // Other
 #define TRANSLATIONS            "mix_team.phrases"
@@ -55,10 +59,10 @@ enum struct MixData {
 	int abortDelay;
 }
 
-methodmap MixList < ArrayList
+methodmap MixList < Handle
 {
 	public MixList() {
-		return view_as<MixList>(new ArrayList(sizeof(MixData)));
+		return view_as<MixList>(CreateArray(sizeof(MixData)));
 	}
 
 	public int Add(Handle hPlugin, const char[] sType, int iMinPlayers, int iAbortDelay)
@@ -70,49 +74,55 @@ methodmap MixList < ArrayList
 		item.minPlayers = iMinPlayers;
 		item.abortDelay = iAbortDelay;
 
-		return this.PushArray(item);
+		return PushArrayArray(this, item);
 	}
 
 	public int FindByType(const char[] sType)
 	{
 		MixData tMixData;
 
-		for (int index = 0; index < this.Length; index++)
+		int iSize = GetArraySize(this);
+
+		for (int iIndex = 0; iIndex < iSize; iIndex++)
 		{
-			this.GetArray(index, tMixData);
+			GetArrayArray(this, iIndex, tMixData);
 
 			if (StrEqual(tMixData.type, sType, false)) {
-				return index;
+				return iIndex;
 			}
 		}
 
 		return INVALID_INDEX;
 	}
 
-	public Handle GetPlugin(int index)
+	public Handle GetPlugin(int iIndex)
 	{
-		MixData tMixData; this.GetArray(index, tMixData);
+		MixData tMixData;
+		GetArrayArray(this, iIndex, tMixData);
 
 		return tMixData.plugin;
 	}
 
-	public void GetTypeByIndex(int index, char[] sType, int iLen)
+	public void GetTypeByIndex(int iIndex, char[] sType, int iLen)
 	{
-		MixData tMixData; this.GetArray(index, tMixData);
+		MixData tMixData;
+		GetArrayArray(this, iIndex, tMixData);
 
 		strcopy(sType, iLen, tMixData.type);
 	}
 
-	public int GetMinPlayers(int index)
+	public int GetMinPlayers(int iIndex)
 	{
-		MixData tMixData; this.GetArray(index, tMixData);
+		MixData tMixData;
+		GetArrayArray(this, iIndex, tMixData);
 
 		return tMixData.minPlayers;
 	}
 
-	public int AbortDelay(int index)
+	public int AbortDelay(int iIndex)
 	{
-		MixData tMixData; this.GetArray(index, tMixData);
+		MixData tMixData;
+		GetArrayArray(this, iIndex, tMixData);
 
 		return tMixData.abortDelay;
 	}
@@ -141,11 +151,11 @@ bool
 	g_bRoundIsLive = false;
 
 ConVar
-	g_hGameMode = null;
+	g_cvGameMode = null;
 
 GlobalForward
-	g_fOnMixSuccess = null,
-	g_fOnMixFailed = null;
+	g_gfOnMixFinished = null,
+	g_gfOnMixAborted = null;
 
 
 /**
@@ -215,7 +225,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
 	EngineVersion engine = GetEngineVersion();
 
-	if (engine != Engine_Left4Dead2) {
+	if (engine != Engine_Left4Dead2)
+	{
 		strcopy(error, err_max, "Plugin only supports Left 4 Dead 2.");
 		return APLRes_SilentFailure;
 	}
@@ -375,6 +386,7 @@ public void OnMapInit(const char[] sMapName)
 	g_bRoundIsLive = false;
 	g_iState = STATE_NONE;
 	g_iMixIndex = INVALID_INDEX;
+	g_iAbortDelay = 0;
 }
 
 /**
@@ -397,27 +409,44 @@ void InitTranslations()
  */
 public void OnPluginStart()
 {
-	g_hMixList = new MixList();
-
 	InitTranslations();
 	InitCvars();
 	InitEvents();
 	InitCmds();
 	InitForwards();
+
+	g_hMixList = new MixList();
 }
 
 /**
  * Called when the plugin is about to be unloaded.
  */
-public void OnPluginEnd() {
-	delete g_hMixList;
+public void OnPluginEnd()
+{
+	if (g_hMixList != null)
+	{
+		CloseHandle(g_hMixList);
+		g_hMixList = null;
+	}
+
+	if (g_gfOnMixFinished != null)
+	{
+		CloseHandle(g_gfOnMixFinished);
+		g_gfOnMixFinished = null;
+	}
+
+	if (g_gfOnMixAborted != null)
+	{
+		CloseHandle(g_gfOnMixAborted);
+		g_gfOnMixAborted = null;
+	}
 }
 
 /**
  * Initializing the necessary cvars.
  */
 void InitCvars() {
-	(g_hGameMode = FindConVar("mp_gamemode")).AddChangeHook(OnGamemodeChanged);
+	(g_cvGameMode = FindConVar("mp_gamemode")).AddChangeHook(OnGamemodeChanged);
 }
 
 /**
@@ -438,7 +467,7 @@ public void OnGamemodeChanged(ConVar convar, const char[] sOldGameMode, const ch
 public void OnConfigsExecuted() 
 {
 	char sGameMode[16];
-	GetConVarString(g_hGameMode, sGameMode, sizeof(sGameMode));
+	GetConVarString(g_cvGameMode, sGameMode, sizeof(sGameMode));
 	g_bGamemodeAvailable = IsVersusMode(sGameMode);
 }
 
@@ -750,8 +779,8 @@ public Action Cmd_ForceMix(int iClient, int iArgs)
  */
 void InitForwards() 
 {
-	g_fOnMixSuccess = new GlobalForward(FORWARD_ON_MIX_SUCCESS, ET_Ignore, Param_String);
-	g_fOnMixFailed = new GlobalForward(FORWARD_ON_MIX_FAILED, ET_Ignore, Param_String);
+	g_gfOnMixFinished = new GlobalForward(FORWARD_ON_MIX_FINISHED, ET_Ignore, Param_String);
+	g_gfOnMixAborted = new GlobalForward(FORWARD_ON_MIX_ABORTED, ET_Ignore, Param_String);
 }
 
 /**
@@ -814,7 +843,7 @@ public void RunVoteMix(int iClient)
   *
   * @param hVote 			Voting ID.
   * @param iAction 			Current action.
-  * @param iParam1 		    Client index | Vote status.
+  * @param iParam1 		    Client index | Vote reason.
   */
 public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iParam2)
 {
@@ -829,7 +858,7 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 			hVote.Close();
 		}
 
-		case MenuAction_Display:
+		case MenuAction_Display: // (iParam1=client, iParam2=item)
 		{
 			char sVoteDisplayMessage[DISPLAY_MSG_SIZE];
 
@@ -851,31 +880,31 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 			return view_as<int>(Plugin_Changed);
 		}
 
-		case MenuAction_VoteCancel:
+		case MenuAction_VoteCancel: // (iParam1=reason)
 		{
-			if (iParam1 == VoteCancel_NoVotes) {
-				hVote.DisplayFail(NativeVotesFail_NotEnoughVotes);
-			}
-
-			else {
-				hVote.DisplayFail(NativeVotesFail_Generic);
-			}
+			hVote.DisplayFail(iParam1 == VoteCancel_NoVotes ? NativeVotesFail_NotEnoughVotes : NativeVotesFail_Generic);
 		}
 
-		case MenuAction_VoteEnd:
+		case MenuAction_VoteEnd: // (iParam1=reason)
 		{
-			if (iParam1 == NATIVEVOTES_VOTE_NO || g_iState != STATE_VOTING
-			|| (!g_bReadyUpAvailable && g_bRoundIsLive)
-			|| (g_bReadyUpAvailable && !IsInReady())) {
+			if (
+				iParam1 != NATIVEVOTES_VOTE_YES
+				|| g_iState != STATE_VOTING
+				|| (!g_bReadyUpAvailable && g_bRoundIsLive)
+				|| (g_bReadyUpAvailable && !IsInReady())
+			)
+			{
+				g_iState = STATE_NONE;
+				g_iMixIndex = INVALID_INDEX;
 				hVote.DisplayFail(NativeVotesFail_Loses);
 			}
 
 			else
 			{
-				Function hFunc;
 				Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
+				Function hFunc = GetFunctionByName(hPlugin, FORWARD_VOTEEND_MSG);
 
-				if ((hFunc = GetFunctionByName(hPlugin, FORWARD_VOTEEND_MSG)) == INVALID_FUNCTION) {
+				if (hFunc == INVALID_FUNCTION) {
 					SetFailState("Failed to get the function id of " ... FORWARD_VOTEEND_MSG);
 				}
 
@@ -910,11 +939,11 @@ void RunMix()
 {
 	g_iState = STATE_IN_PROGRESS;
 	g_iAbortDelay = GetTime() + g_hMixList.AbortDelay(g_iMixIndex);
-
-	Function hFunc;
+	
 	Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
+	Function hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS);
 
-	if ((hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS)) == INVALID_FUNCTION) {
+	if (hFunc == INVALID_FUNCTION) {
 		SetFailState("Failed to get the function id of " ... FORWARD_IN_PROGRESS);
 	}
 
@@ -939,7 +968,7 @@ void FinishMix()
 	char sType[MIX_TYPE_SIZE];
 	g_hMixList.GetTypeByIndex(g_iMixIndex, sType, MIX_TYPE_SIZE);
 
-	Call_StartForward(g_fOnMixSuccess);
+	Call_StartForward(g_gfOnMixFinished);
 	Call_PushString(sType);
 	Call_Finish();
 
@@ -957,7 +986,7 @@ void AbortMix()
 	char sType[MIX_TYPE_SIZE];
 	g_hMixList.GetTypeByIndex(g_iMixIndex, sType, MIX_TYPE_SIZE);
 
-	Call_StartForward(g_fOnMixFailed);
+	Call_StartForward(g_gfOnMixAborted);
 	Call_PushString(sType);
 	Call_Finish();
 
@@ -1056,9 +1085,11 @@ bool IsEmptyString(const char[] sString)
 void CPrintExampleArguments(int iClient)
 {
 	char sType[MIX_TYPE_SIZE];
-	for (int index = 0; index < g_hMixList.Length; index++)
+	int iSize = GetArraySize(g_hMixList);
+
+	for (int index = 0; index < iSize; index++)
 	{
-		g_hMixList.GetTypeByIndex(index, sType, MIX_TYPE_SIZE);
+		g_hMixList.GetTypeByIndex(index, sType, sizeof(sType));
 		CReplyToCommand(iClient, "%T", "ARGUMENT_EXAMPLE", iClient, sType);
 	}
 }
@@ -1149,5 +1180,5 @@ int FindSurvivorBot()
  * @return              Returns true if verus, otherwise false
  */
 bool IsVersusMode(const char[] sGameMode) {
-	return (StrEqual(sGameMode, "versus", false) || StrEqual(sGameMode, "mutation12", false));
+	return (StrEqual(sGameMode, GAMEMODE_VERSUS, false) || StrEqual(sGameMode, GAMEMODE_VERSUS_REALISM, false));
 }

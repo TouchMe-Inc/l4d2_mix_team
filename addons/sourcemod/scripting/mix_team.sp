@@ -387,6 +387,11 @@ public void OnMapInit(const char[] sMapName)
 	g_iState = STATE_NONE;
 	g_iMixIndex = INVALID_INDEX;
 	g_iAbortDelay = 0;
+
+	for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
+	{
+		g_tPlayers[iPlayer].mixMember = false;
+	}
 }
 
 /**
@@ -614,7 +619,7 @@ public Action Listener_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArg
 public Action Cmd_RunMix(int iClient, int iArgs)
 {
 	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient) || IS_SPECTATOR(iClient)) {
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 
 	if (InSecondHalfOfRound())
@@ -682,11 +687,10 @@ public Action Cmd_RunMix(int iClient, int iArgs)
  */
 public Action Cmd_AbortMix(int iClient, int iArgs)
 {
-	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient) || !g_tPlayers[iClient].mixMember) {
-		return Plugin_Handled;
-	}
-
-	if (!IsMix()) {
+	if (!g_bGamemodeAvailable 
+	|| !IS_VALID_CLIENT(iClient) 
+	|| !g_tPlayers[iClient].mixMember
+	|| !IsMix()) {
 		return Plugin_Continue;
 	}
 
@@ -714,7 +718,7 @@ public Action Cmd_AbortMix(int iClient, int iArgs)
 public Action Cmd_ForceMix(int iClient, int iArgs)
 {	
 	if (!g_bGamemodeAvailable || !IS_VALID_CLIENT(iClient)) {
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 
 	if (InSecondHalfOfRound())

@@ -117,6 +117,8 @@ public Action OnMixInProgress()
 		GetArrayArray(hPlayers, iHalfPlayers - 1, tPlayer);
 		SetClientTeam(tPlayer.id, (iPlayers % 4 != 0) ? TEAM_SURVIVOR : TEAM_INFECTED);
 	}
+	
+	CloseHandle(hPlayers);
 
 	return Plugin_Continue;
 }

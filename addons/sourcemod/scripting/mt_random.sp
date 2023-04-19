@@ -9,7 +9,7 @@ public Plugin myinfo = {
 	name = "MixTeamRandom",
 	author = "TouchMe",
 	description = "Adds random mix",
-	version = "build_0001",
+	version = "build_0002",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -58,83 +58,30 @@ public void GetVoteEndMessage(int iClient, char[] sMsg) {
  */
 public Action OnMixInProgress()
 {
-	// save current player / team setup
-	int g_iPreviousCount[4];
-	int g_iPreviousTeams[4][MAXPLAYERS + 1];
+	Handle hPlayers = CreateArray();
 
-	for (int iClient = 1, iTeam; iClient <= MaxClients; iClient++)
+	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
 		if (!IsClientInGame(iClient) || IsFakeClient(iClient) || !IsMixMember(iClient)) {
 			continue;
 		}
 
-		iTeam = GetLastTeam(iClient);
-
-		g_iPreviousTeams[iTeam][g_iPreviousCount[iTeam]] = iClient;
-		g_iPreviousCount[iTeam]++;
+		PushArrayCell(hPlayers, iClient);
 	}
-
-	// if there are uneven players, move one to the other
-	if ((g_iPreviousCount[TEAM_SURVIVOR] + g_iPreviousCount[TEAM_INFECTED]) < (2 * MIN_PLAYERS))
+	
+	for (int iPlayers, iIndex, iClient;;)
 	{
-		int tmpDif = g_iPreviousCount[TEAM_SURVIVOR] - g_iPreviousCount[TEAM_INFECTED];
-		int iTeamA, iTeamB;
+		iPlayers = GetArraySize(hPlayers);
 
-		while (tmpDif > 1 || tmpDif < -1) 
-		{
-			if (tmpDif > 1) {
-				iTeamA = TEAM_SURVIVOR;
-				iTeamB = TEAM_INFECTED;	
-			}
-			else if (tmpDif < -1) {
-				iTeamA = TEAM_INFECTED;
-				iTeamB = TEAM_SURVIVOR;	
-			}
-
-			g_iPreviousCount[iTeamA]--;
-			g_iPreviousTeams[iTeamB][g_iPreviousCount[iTeamB]] = g_iPreviousTeams[iTeamA][g_iPreviousCount[iTeamA]];
-			g_iPreviousCount[iTeamB]++;
-
-			tmpDif = g_iPreviousCount[TEAM_SURVIVOR] - g_iPreviousCount[TEAM_INFECTED];
-		}
-	}
-
-	// do shuffle: swap at least teamsize/2 rounded up players
-	bool bShuffled[MAXPLAYERS + 1];
-	int iShuffleCount = RoundToCeil(float(g_iPreviousCount[TEAM_INFECTED] > g_iPreviousCount[TEAM_SURVIVOR] ? g_iPreviousCount[TEAM_INFECTED] : g_iPreviousCount[TEAM_SURVIVOR]) / 2.0);
-
-	int pickA, pickB;
-	int spotA, spotB;
-
-	for (int j = 0; j < iShuffleCount; j++ )
-	{
-		pickA = -1;
-		pickB = -1;
-
-		while (pickA == -1 || bShuffled[pickA]) {
-			spotA = GetRandomInt(0, g_iPreviousCount[TEAM_SURVIVOR] - 1);
-			pickA = g_iPreviousTeams[TEAM_SURVIVOR][spotA];
+		if (!iPlayers) {
+			break;
 		}
 
-		while (pickB == -1 || bShuffled[pickB]) {
-			spotB = GetRandomInt(0, g_iPreviousCount[TEAM_INFECTED] - 1);
-			pickB = g_iPreviousTeams[TEAM_INFECTED][spotB];
-		}
+		iIndex = GetRandomInt(0, iPlayers - 1);
+		iClient = GetArrayCell(hPlayers, iIndex);
 
-		bShuffled[pickA] = true;
-		bShuffled[pickB] = true;
-
-		g_iPreviousTeams[TEAM_SURVIVOR][spotA] = pickB;
-		g_iPreviousTeams[TEAM_INFECTED][spotB] = pickA;
-	}
-
-	// now place all the players in the teams according to previousteams (silly name now, but ok)
-	for (int iTeam = TEAM_SURVIVOR, iPrevious; iTeam <= TEAM_INFECTED; iTeam++)
-	{
-		for (iPrevious = 0; iPrevious < g_iPreviousCount[iTeam]; iPrevious++)
-		{
-			SetClientTeam(g_iPreviousTeams[iTeam][iPrevious], iTeam);
-		}
+		SetClientTeam(iClient, iPlayers % 2 == 0 ? TEAM_INFECTED : TEAM_SURVIVOR);
+		RemoveFromArray(hPlayers, iIndex);
 	}
 
 	return Plugin_Continue;

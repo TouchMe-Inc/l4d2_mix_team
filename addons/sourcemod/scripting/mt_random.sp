@@ -9,7 +9,7 @@ public Plugin myinfo = {
 	name = "MixTeamRandom",
 	author = "TouchMe",
 	description = "Adds random mix",
-	version = "build_0002",
+	version = "build_0003",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -83,6 +83,8 @@ public Action OnMixInProgress()
 		SetClientTeam(iClient, iPlayers % 2 == 0 ? TEAM_INFECTED : TEAM_SURVIVOR);
 		RemoveFromArray(hPlayers, iIndex);
 	}
+
+	CloseHandle(hPlayers);
 
 	return Plugin_Continue;
 }

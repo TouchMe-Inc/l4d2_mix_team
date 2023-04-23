@@ -3,7 +3,7 @@
 
 #include <sourcemod>
 #include <sdktools>
-#include <nativevotes>
+#include <nativevotes_rework>
 #include <colors>
 
 #undef REQUIRE_PLUGIN
@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Adds an API for mix in versus mode",
-	version = "build_0004",
+	version = "build_0005",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -205,7 +205,7 @@ public void OnLibraryAdded(const char[] sName)
   */
 public void OnRoundIsLive() 
 {
-	if (IsMix()) 
+	if (IsMixInProgress()) 
 	{
 		CPrintToChatAll("%t", "LEFT_READYUP");
 		AbortMix();
@@ -310,7 +310,7 @@ int Native_GetMixIndex(Handle hPlugin, int iParams) {
  */
 int Native_AbortMix(Handle hPlugin, int iParams)
 {
-	if (!IsMix()) {
+	if (!IsMixInProgress()) {
 		ThrowNativeError(SP_ERROR_NATIVE, "Call native without mix");
 	}
 
@@ -326,7 +326,7 @@ int Native_AbortMix(Handle hPlugin, int iParams)
  */
 int Native_FinishMix(Handle hPlugin, int iParams)
 {
-	if (!IsMix()) {
+	if (!IsMixInProgress()) {
 		ThrowNativeError(SP_ERROR_NATIVE, "Call native without mix");
 	}
 
@@ -469,7 +469,7 @@ public void OnGamemodeChanged(ConVar convar, const char[] sOldGameMode, const ch
  * Called when the map has loaded, servercfgfile (server.cfg) has been executed, and all plugin configs are done executing.
  * This will always be called once and only once per map. It will be called after OnMapStart().
 */
-public void OnConfigsExecuted() 
+public void OnConfigsExecuted()
 {
 	char sGameMode[16];
 	GetConVarString(g_cvGameMode, sGameMode, sizeof(sGameMode));
@@ -491,13 +491,13 @@ void InitEvents()
 /**
  * Round start event.
  */
-public Action Event_RoundStart(Event event, const char[] sName, bool bDontBroadcast) 
+public Action Event_RoundStart(Event event, const char[] sName, bool bDontBroadcast)
 {
 	if (!g_bReadyUpAvailable)
 	{
 		g_bRoundIsLive = true;
 
-		if (IsMix())
+		if (IsMixInProgress())
 		{
 			CPrintToChatAll("%t", "ROUND_LIVE");
 			AbortMix();
@@ -510,7 +510,7 @@ public Action Event_RoundStart(Event event, const char[] sName, bool bDontBroadc
 /**
  * Round end event.
  */
-public Action Event_RoundEnd(Event event, const char[] sName, bool bDontBroadcast) 
+public Action Event_RoundEnd(Event event, const char[] sName, bool bDontBroadcast)
 {
 	if (!g_bReadyUpAvailable) {
 		g_bRoundIsLive = false;
@@ -525,21 +525,17 @@ public Action Event_RoundEnd(Event event, const char[] sName, bool bDontBroadcas
  */
 public Action Event_PlayerTeam(Event event, char[] sName, bool bDontBroadcast)
 {
-	if (!IsMix()) {
+	if (!IsMixInProgress()) {
 		return Plugin_Continue;
 	}
 
 	int iClient = GetClientOfUserId(event.GetInt("userid"));
-	int iOldTeam = event.GetInt("oldteam");
-	int iNewTeam = event.GetInt("team");
 
-	if (IS_VALID_CLIENT(iClient)
-	&& !IsFakeClient(iClient)
-	&& !g_tPlayers[iClient].mixMember
-	&& iOldTeam == TEAM_NONE
-	&& iNewTeam != TEAM_SPECTATOR) {
-		CreateTimer(0.1, Timer_MoveClientToSpec, iClient);
+	if (!IS_VALID_CLIENT(iClient) || IsFakeClient(iClient) || g_tPlayers[iClient].mixMember) {
+		return Plugin_Continue;
 	}
+
+	CreateTimer(1.0, Timer_MoveClientToSpec, iClient);
 
 	return Plugin_Continue;
 }
@@ -549,7 +545,7 @@ public Action Event_PlayerTeam(Event event, char[] sName, bool bDontBroadcast)
  */
 public Action Timer_MoveClientToSpec(Handle hTimer, int iClient)
 {
-	if (IS_REAL_CLIENT(iClient)) {
+	if (IsClientInGame(iClient) && GetClientTeam(iClient) != TEAM_SPECTATOR) {
 		SetupClientTeam(iClient, TEAM_SPECTATOR);
 	}
 
@@ -560,21 +556,20 @@ public Action Timer_MoveClientToSpec(Handle hTimer, int iClient)
  * Interrupting the mix if its participant leaves the game.
  * Called before client disconnected.
  */
-public Action Event_PlayerDisconnect(Event event, const char[] sName, bool bDontBroadcast) 
+public Action Event_PlayerDisconnect(Event event, const char[] sName, bool bDontBroadcast)
 {
-	if (!IsMix()) {
+	if (!IsMixInProgress()) {
 		return Plugin_Continue;
 	}
 
 	int iClient = GetClientOfUserId(event.GetInt("userid"));
 
-	if (IS_VALID_CLIENT(iClient)
-	&& !IsFakeClient(iClient)
-	&& g_tPlayers[iClient].mixMember)
-	{
-		CPrintToChatAll("%t", "CLIENT_LEAVE", iClient);
-		AbortMix();
+	if (!IS_VALID_CLIENT(iClient) || IsFakeClient(iClient) || !g_tPlayers[iClient].mixMember) {
+		return Plugin_Continue;
 	}
+
+	CPrintToChatAll("%t", "CLIENT_LEAVE", iClient);
+	AbortMix();
 
 	return Plugin_Continue;
 }
@@ -582,7 +577,7 @@ public Action Event_PlayerDisconnect(Event event, const char[] sName, bool bDont
 /**
  * Command interception initialization.
  */
-void InitCmds() 
+void InitCmds()
 {
 	AddCommandListener(Listener_OnPlayerJoinTeam, "jointeam");
 	RegConsoleCmd("sm_mix", Cmd_RunMix, "Start Team Mix Voting");
@@ -600,7 +595,7 @@ void InitCmds()
  */
 public Action Listener_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
 {
-	if (IsMix())
+	if (IsMixInProgress())
 	{
 		CPrintToChat(iClient, "%T", "CANT_CHANGE_TEAM", iClient);
 		return Plugin_Stop;
@@ -640,7 +635,7 @@ public Action Cmd_RunMix(int iClient, int iArgs)
 		return Plugin_Continue;
 	}
 
-	if (IsMix()) 
+	if (IsMixInProgress()) 
 	{
 		CReplyToCommand(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
 		return Plugin_Continue;
@@ -690,7 +685,7 @@ public Action Cmd_AbortMix(int iClient, int iArgs)
 	if (!g_bGamemodeAvailable 
 	|| !IS_VALID_CLIENT(iClient) 
 	|| !g_tPlayers[iClient].mixMember
-	|| !IsMix()) {
+	|| !IsMixInProgress()) {
 		return Plugin_Continue;
 	}
 
@@ -739,7 +734,7 @@ public Action Cmd_ForceMix(int iClient, int iArgs)
 		return Plugin_Continue;
 	}
 
-	if (IsMix()) 
+	if (IsMixInProgress()) 
 	{
 		CReplyToCommand(iClient, "%T", "ALREADY_IN_PROGRESS", iClient);
 		return Plugin_Continue;
@@ -795,12 +790,6 @@ void InitForwards()
  */
 public void RunVoteMix(int iClient) 
 {
-	if (!NativeVotes_IsVoteTypeSupported(NativeVotesType_Custom_YesNo))
-	{
-		CReplyToCommand(iClient, "%T", "UNSUPPORTED", iClient);
-		return;
-	}
-
 	if (!NativeVotes_IsNewVoteAllowed())
 	{
 		CReplyToCommand(iClient, "%T", "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
@@ -818,8 +807,9 @@ public void RunVoteMix(int iClient)
 
 	for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
 	{
+		g_tPlayers[iPlayer].mixMember = false;
+
 		if (!IsClientInGame(iPlayer) || IsFakeClient(iPlayer)) {
-			g_tPlayers[iPlayer].mixMember = false;
 			continue;
 		}
 
@@ -831,13 +821,9 @@ public void RunVoteMix(int iClient)
 			g_tPlayers[iPlayer].mixMember = true;
 			g_tPlayers[iPlayer].lastTeam = iTeam;
 		}
-
-		else {
-			g_tPlayers[iPlayer].mixMember = false;
-		}
 	}
 
-	NativeVote hVote = new NativeVote(HandlerVote, NativeVotesType_Custom_YesNo, NATIVEVOTES_ACTIONS_DEFAULT|MenuAction_Display);
+	NativeVote hVote = new NativeVote(HandlerVote, NativeVotesType_Custom_YesNo);
 	hVote.Initiator = iClient;
 	hVote.DisplayVote(iPlayers, iTotalPlayers, VOTE_TIME);
 }
@@ -849,11 +835,11 @@ public void RunVoteMix(int iClient)
   * @param iAction 			Current action.
   * @param iParam1 		    Client index | Vote reason.
   */
-public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iParam2)
+public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int iParam2)
 {
 	switch (iAction)
 	{
-		case MenuAction_End:
+		case VoteAction_End:
 		{
 			if (g_bReadyUpAvailable) {
 				ToggleReadyPanel(true);
@@ -862,7 +848,7 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 			hVote.Close();
 		}
 
-		case MenuAction_Display: // (iParam1=client, iParam2=item)
+		case VoteAction_Display:
 		{
 			char sVoteDisplayMessage[DISPLAY_MSG_SIZE];
 
@@ -879,17 +865,16 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 			Call_PushStringEx(sVoteDisplayMessage, sizeof(sVoteDisplayMessage), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
 			Call_Finish();
 
-			NativeVotes_RedrawVoteTitle(sVoteDisplayMessage);
+			hVote.SetDetails(sVoteDisplayMessage);
 
-			return view_as<int>(Plugin_Changed);
+			return Plugin_Changed;
 		}
 
-		case MenuAction_VoteCancel: // (iParam1=reason)
-		{
-			hVote.DisplayFail(iParam1 == VoteCancel_NoVotes ? NativeVotesFail_NotEnoughVotes : NativeVotesFail_Generic);
+		case VoteAction_Cancel: {
+			hVote.DisplayFail();
 		}
 
-		case MenuAction_VoteEnd: // (iParam1=reason)
+		case VoteAction_Finish:
 		{
 			if (
 				iParam1 != NATIVEVOTES_VOTE_YES
@@ -900,7 +885,7 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 			{
 				g_iState = STATE_NONE;
 				g_iMixIndex = INVALID_INDEX;
-				hVote.DisplayFail(NativeVotesFail_Loses);
+				hVote.DisplayFail();
 			}
 
 			else
@@ -920,8 +905,6 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 						continue;
 					}
 
-					SetGlobalTransTarget(iPlayer);
-
 					// call FORWARD_VOTEEND_MSG
 					Call_StartFunction(hPlugin, hFunc);
 					Call_PushCell(iPlayer);
@@ -936,7 +919,7 @@ public int HandlerVote(NativeVote hVote, MenuAction iAction, int iParam1, int iP
 		}
 	}
 	
-	return 0;
+	return Plugin_Continue;
 }
 
 void RunMix()
@@ -1003,7 +986,7 @@ void AbortMix()
  *
  * @return             Returns true if a mix is ​​currently in progress, otherwise false
  */
-bool IsMix() {
+bool IsMixInProgress() {
 	return g_iState != STATE_NONE;
 }
 
@@ -1035,7 +1018,7 @@ void RollbackPlayers()
 {
 	SetAllClientSpectator();
 
-	for (int iClient = 1; iClient <= MaxClients; iClient++) 
+	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
 		if (!IS_REAL_CLIENT(iClient) || !g_tPlayers[iClient].mixMember) {
 			continue;

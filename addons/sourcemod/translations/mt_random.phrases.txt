@@ -4,9 +4,4 @@
 	{
 		"en"			"Start command mix randomly"
 	}
-
-	"VOTE_END_MSG"
-	{
-		"en"			"Random command mixing in progress"
-	}
 }

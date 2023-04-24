@@ -23,11 +23,6 @@
 		"en"			"Start mix with captains"
 	}
 
-	"VOTE_END_MSG"
-	{
-		"en"			"Team mixing with captains in progress"
-	}
-
 	"MENU_TITLE_FIRST_CAPITAN"
 	{
 		"en"			"Choose a first team captain"

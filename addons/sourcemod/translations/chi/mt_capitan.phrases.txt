@@ -23,11 +23,6 @@
 		"chi"			"开始进行mix（队长选人）"
 	}
 
-	"VOTE_END_MSG"
-	{
-		"chi"			"即将开始mix..."
-	}
-
 	"MENU_TITLE_FIRST_CAPITAN"
 	{
 		"chi"			"选择第一个队长"

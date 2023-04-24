@@ -71,9 +71,4 @@
     {
         "chi"           "{default}[{green}!{default}] 已经有一个mix在进行中！"
     }
-
-    "UNSUPPORTED"
-    {
-        "chi"           "{default}[{green}!{default}] 不支持此投票类型！"
-    }
 }

@@ -18,7 +18,7 @@ public Plugin myinfo = {
 
 #define TRANSLATIONS            "mt_rank.phrases"
 
-#define MIN_PLAYERS             4
+#define MIN_PLAYERS             6
 
 
 enum struct PlayerInfo {
@@ -57,10 +57,6 @@ public void OnAllPluginsLoaded()
 
 public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
 	Format(sTitle, DISPLAY_MSG_SIZE, "%T", "VOTE_DISPLAY_MSG", iClient);
-}
-
-public void GetVoteEndMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTEEND_MSG_SIZE, "%T", "VOTE_END_MSG", iClient);
 }
 
 /**
@@ -117,7 +113,7 @@ public Action OnMixInProgress()
 		GetArrayArray(hPlayers, iHalfPlayers - 1, tPlayer);
 		SetClientTeam(tPlayer.id, (iPlayers % 4 != 0) ? TEAM_SURVIVOR : TEAM_INFECTED);
 	}
-	
+
 	CloseHandle(hPlayers);
 
 	return Plugin_Continue;

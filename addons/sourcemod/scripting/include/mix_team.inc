@@ -34,7 +34,6 @@
 // Vote messages 
 #define MIX_TYPE_SIZE           16
 #define DISPLAY_MSG_SIZE        128
-#define VOTEEND_MSG_SIZE        128
 
 // Teams
 #define TEAM_NONE               0

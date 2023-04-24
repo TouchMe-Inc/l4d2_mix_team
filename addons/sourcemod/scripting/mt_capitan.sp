@@ -27,7 +27,7 @@ public Plugin myinfo = {
 #define LAST_PICK               0
 #define CURRENT_PICK            1
 
-#define MIN_PLAYERS             4
+#define MIN_PLAYERS             6
 
 
 int
@@ -66,10 +66,6 @@ public void OnAllPluginsLoaded()
 
 public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
 	Format(sTitle, DISPLAY_MSG_SIZE, "%T", "VOTE_DISPLAY_MSG", iClient);
-}
-
-public void GetVoteEndMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTEEND_MSG_SIZE, "%T", "VOTE_END_MSG", iClient);
 }
 
 /**

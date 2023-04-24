@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Adds an API for mix in versus mode",
-	version = "build_0005",
+	version = "build_0006",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -34,7 +34,6 @@ public Plugin myinfo =
 
 // Forwards
 #define FORWARD_DISPLAY_MSG     "GetVoteDisplayMessage"
-#define FORWARD_VOTEEND_MSG     "GetVoteEndMessage"
 #define FORWARD_IN_PROGRESS     "OnMixInProgress"
 #define FORWARD_ON_MIX_FINISHED "OnMixSuccess"
 #define FORWARD_ON_MIX_ABORTED  "OnMixFailed"
@@ -876,43 +875,20 @@ public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int
 
 		case VoteAction_Finish:
 		{
-			if (
-				iParam1 != NATIVEVOTES_VOTE_YES
-				|| g_iState != STATE_VOTING
-				|| (!g_bReadyUpAvailable && g_bRoundIsLive)
-				|| (g_bReadyUpAvailable && !IsInReady())
-			)
+			if (iParam1 != NATIVEVOTES_VOTE_YES)
 			{
-				g_iState = STATE_NONE;
-				g_iMixIndex = INVALID_INDEX;
+				if (g_iState != STATE_VOTING || (!g_bReadyUpAvailable && g_bRoundIsLive) || (g_bReadyUpAvailable && !IsInReady())) 
+				{
+					g_iState = STATE_NONE;
+					g_iMixIndex = INVALID_INDEX;
+				}
+
 				hVote.DisplayFail();
 			}
 
 			else
 			{
-				Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
-				Function hFunc = GetFunctionByName(hPlugin, FORWARD_VOTEEND_MSG);
-
-				if (hFunc == INVALID_FUNCTION) {
-					SetFailState("Failed to get the function id of " ... FORWARD_VOTEEND_MSG);
-				}
-
-				char sVoteEndMsg[VOTEEND_MSG_SIZE];
-
-				for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
-				{
-					if (!IsClientInGame(iPlayer) || IsFakeClient(iPlayer) || IS_SPECTATOR(iPlayer)) {
-						continue;
-					}
-
-					// call FORWARD_VOTEEND_MSG
-					Call_StartFunction(hPlugin, hFunc);
-					Call_PushCell(iPlayer);
-					Call_PushStringEx(sVoteEndMsg, sizeof(sVoteEndMsg), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
-					Call_Finish();
-
-					hVote.DisplayPassCustomToOne(iPlayer, sVoteEndMsg);
-				}
+				hVote.DisplayPass();
 
 				RunMix();
 			}

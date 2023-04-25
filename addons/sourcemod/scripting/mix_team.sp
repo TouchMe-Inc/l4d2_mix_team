@@ -213,12 +213,12 @@ public void OnRoundIsLive()
 
 /**
  * Called before OnPluginStart.
- * 
- * @param myself      Handle to the plugin
- * @param late        Whether or not the plugin was loaded "late" (after map load)
- * @param error       Error message buffer in case load failed
- * @param err_max     Maximum number of characters for error message buffer
- * @return            APLRes_Success | APLRes_SilentFailure 
+ *
+ * @param myself            Handle to the plugin.
+ * @param late              Whether or not the plugin was loaded "late" (after map load).
+ * @param error             Error message buffer in case load failed.
+ * @param err_max           Maximum number of characters for error message buffer.
+ * @return                  APLRes_Success | APLRes_SilentFailure.
  */
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
@@ -247,9 +247,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 /**
  * Adds a mix to the system.
  * 
- * @param hPlugin       Handle to the plugin
- * @param iParams       Number of parameters
- * @return              Return index
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
+ * @return                  Return index.
  */
 int Native_AddMix(Handle hPlugin, int iParams)
 {
@@ -282,9 +282,9 @@ int Native_AddMix(Handle hPlugin, int iParams)
 /**
  * Returns the status of the mix.
  * 
- * @param hPlugin       Handle to the plugin
- * @param iParams       Number of parameters
- * @return              Return g_iState
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
+ * @return                  Return g_iState.
  */
 int Native_GetMixState(Handle hPlugin, int iParams) {
 	return g_iState;
@@ -293,9 +293,9 @@ int Native_GetMixState(Handle hPlugin, int iParams) {
 /**
  * Returns current Mix Index.
  * 
- * @param hPlugin       Handle to the plugin
- * @param iParams       Number of parameters
- * @return              Return g_iMixIndex
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
+ * @return                  Return g_iMixIndex.
  */
 int Native_GetMixIndex(Handle hPlugin, int iParams) {
 	return g_iMixIndex;
@@ -304,8 +304,8 @@ int Native_GetMixIndex(Handle hPlugin, int iParams) {
 /**
  * Forces the mix to stop.
  * 
- * @param hPlugin       Handle to the plugin
- * @param iParams       Number of parameters
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
  */
 int Native_AbortMix(Handle hPlugin, int iParams)
 {
@@ -320,8 +320,8 @@ int Native_AbortMix(Handle hPlugin, int iParams)
 /**
  * Forcibly ends the mix.
  * 
- * @param hPlugin       Handle to the plugin
- * @param iParams       Number of parameters
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
  */
 int Native_FinishMix(Handle hPlugin, int iParams)
 {
@@ -336,9 +336,9 @@ int Native_FinishMix(Handle hPlugin, int iParams)
 /**
  * Returns whether the player is a member of the mix.
  * 
- * @param hPlugin       Handle to the plugin
- * @param iParams       Number of parameters
- * @return              Return true if member
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
+ * @return                  Return true if member.
  */
 int Native_IsMixMember(Handle hPlugin, int iParams)
 {
@@ -350,9 +350,9 @@ int Native_IsMixMember(Handle hPlugin, int iParams)
 /**
  * Returns the team the player was on after voting for the mix.
  * 
- * @param hPlugin       Handle to the plugin
- * @param iParams       Number of parameters
- * @return              Return lastTeam
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
+ * @return                  Return client team berfore mix.
  */
 int Native_GetLastTeam(Handle hPlugin, int iParams)
 {
@@ -363,10 +363,10 @@ int Native_GetLastTeam(Handle hPlugin, int iParams)
 
 /**
  * Sets a command to a player.
- * 
- * @param hPlugin       Handle to the plugin
- * @param iParams       Number of parameters
- * @return              Return
+ *
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
+ * @return                  Return true if success.
  */
 int Native_SetClientTeam(Handle hPlugin, int iParams)
 {
@@ -456,17 +456,18 @@ void InitCvars() {
 /**
  * Called when a console variable value is changed.
  * 
- * @param convar       Handle to the convar that was changed
- * @param oldValue     String containing the value of the convar before it was changed
- * @param newValue     String containing the new value of the convar
+ * @param convar            Ignored.
+ * @param sOldGameMode      Ignored.
+ * @param sNewGameMode      String containing new gamemode.
  */
-public void OnGamemodeChanged(ConVar convar, const char[] sOldGameMode, const char[] sNewGameMode) {
+public void OnGamemodeChanged(ConVar hConVar, const char[] sOldGameMode, const char[] sNewGameMode) {
 	g_bGamemodeAvailable = IsVersusMode(sNewGameMode);
 }
 
 /**
- * Called when the map has loaded, servercfgfile (server.cfg) has been executed, and all plugin configs are done executing.
- * This will always be called once and only once per map. It will be called after OnMapStart().
+ * Called when the map has loaded, servercfgfile (server.cfg) has been executed, and all
+ * plugin configs are done executing. This will always be called once and only once per map.
+ * It will be called after OnMapStart().
 */
 public void OnConfigsExecuted()
 {
@@ -587,10 +588,9 @@ void InitCmds()
 /**
  * Blocking a team change if there is a mix of teams now.
  *
- * @param iClient     Client index
- * @param sCmd        No desc
- * @param iArgs       Number of parameters
- * @return            Plugin_Stop | Plugin_Continue
+ * @param iClient           Client index.
+ * @param sCmd              Ignored.
+ * @param iArgs             Ignored.
  */
 public Action Listener_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArgs)
 {
@@ -606,9 +606,8 @@ public Action Listener_OnPlayerJoinTeam(int iClient, const char[] sCmd, int iArg
 /**
  * Action on command input at the start of the mix.
  *
- * @param iClient     Client index
- * @param iArgs       Number of parameters
- * @return            Plugin_Handled | Plugin_Continue
+ * @param iClient           Client index.
+ * @param iArgs             Number of parameters.
  */
 public Action Cmd_RunMix(int iClient, int iArgs)
 {
@@ -676,8 +675,8 @@ public Action Cmd_RunMix(int iClient, int iArgs)
 /**
  * Abort the mix before it's finished.
  *
- * @param iClient     Client index
- * @param iArgs       Number of parameters
+ * @param iClient           Client index.
+ * @param iArgs             Number of parameters.
  */
 public Action Cmd_AbortMix(int iClient, int iArgs)
 {
@@ -706,8 +705,8 @@ public Action Cmd_AbortMix(int iClient, int iArgs)
 /**
  * Action on command input at the start of the mix.
  *
- * @param iClient     Client index
- * @param iArgs       Number of parameters
+ * @param iClient           Client index.
+ * @param iArgs             Number of parameters.
  */
 public Action Cmd_ForceMix(int iClient, int iArgs)
 {	
@@ -783,9 +782,8 @@ void InitForwards()
 
 /**
  * Start voting.
- * 
- * @param iClient     Client index
- * @return            Return description
+ *
+ * @param iClient           Client index.
  */
 public void RunVoteMix(int iClient) 
 {
@@ -824,15 +822,16 @@ public void RunVoteMix(int iClient)
 }
 
 /**
-  * Callback when voting is over and results are available.
-  *
-  * @param hVote 			Voting ID.
-  * @param iAction 			Current action.
-  * @param iParam1 		    Client index | Vote reason.
-  */
-public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int iParam2)
+ * Called when a vote action is completed.
+ *
+ * @param hVote             The vote being acted upon.
+ * @param tAction           The action of the vote.
+ * @param iParam1           First action parameter.
+ * @param iParam2           Second action parameter.
+ */
+public Action HandlerVote(NativeVote hVote, VoteAction tAction, int iParam1, int iParam2)
 {
-	switch (iAction)
+	switch (tAction)
 	{
 		case VoteAction_Start:
 		{
@@ -845,7 +844,7 @@ public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int
 		{
 			Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
 			Function hFunc = GetFunctionByName(hPlugin, FORWARD_DISPLAY_MSG);
-		
+
 			if (hFunc == INVALID_FUNCTION) {
 				SetFailState("Failed to get the function id of " ... FORWARD_DISPLAY_MSG);
 			}
@@ -883,10 +882,10 @@ public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int
 
 			if (iParam1 == NATIVEVOTES_VOTE_NO)
 			{
+				hVote.DisplayFail();
+
 				g_iState = STATE_NONE;
 				g_iMixIndex = INVALID_INDEX;
-
-				hVote.DisplayFail();
 			}
 
 			else
@@ -906,7 +905,7 @@ public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int
 			hVote.Close();
 		}
 	}
-	
+
 	return Plugin_Continue;
 }
 
@@ -914,7 +913,7 @@ void RunMix()
 {
 	g_iState = STATE_IN_PROGRESS;
 	g_iAbortDelay = GetTime() + g_hMixList.AbortDelay(g_iMixIndex);
-	
+
 	Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
 	Function hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS);
 
@@ -972,7 +971,8 @@ void AbortMix()
 /**
  * Checks if a mix is ​​currently running.
  *
- * @return             Returns true if a mix is ​​currently in progress, otherwise false
+ * @return                  Returns true if a mix is ​​currently.
+ *                          in progress, otherwise false.
  */
 bool IsMixInProgress() {
 	return g_iState != STATE_NONE;
@@ -981,7 +981,7 @@ bool IsMixInProgress() {
 /**
  * Returns the number of players in the game.
  * 
- * @return             Client count
+ * @return                  Client count.
  */
 int GetPlayerCount() 
 {
@@ -1072,7 +1072,7 @@ void CPrintExampleArguments(int iClient)
 /**
  * Checks if the current round is the second.
  *
- * @return            Returns true if is second round, otherwise false
+ * @return                  Returns true if is second round, otherwise false.
  */
 bool InSecondHalfOfRound() {
 	return view_as<bool>(GameRules_GetProp("m_bInSecondHalfOfRound"));
@@ -1080,10 +1080,10 @@ bool InSecondHalfOfRound() {
 
 /**
  * Sets the client team.
- * 
- * @param iClient     Client index
- * @param iTeam       Param description
- * @return            true if success
+ *
+ * @param iClient           Client index.
+ * @param iTeam             Client team.
+ * @return                  Returns true if success.
  */
 bool SetupClientTeam(int iClient, int iTeam)
 {
@@ -1130,8 +1130,8 @@ void CheatCommand(int iClient, const char[] sCmd, const char[] sArgs = "")
 
 /**
  * Finds a free bot.
- * 
- * @return     Bot index or -1
+ *
+ * @return                  Bot index, otherwise -1.
  */
 int FindSurvivorBot()
 {
@@ -1150,9 +1150,9 @@ int FindSurvivorBot()
 /**
  * Is the game mode versus.
  *
- * @param sGameMode     A string containing the name of the game mode
+ * @param sGameMode         A string containing the name of the game mode.
  *
- * @return              Returns true if verus, otherwise false
+ * @return                  Returns true if verus, otherwise false.
  */
 bool IsVersusMode(const char[] sGameMode) {
 	return (StrEqual(sGameMode, GAMEMODE_VERSUS, false) || StrEqual(sGameMode, GAMEMODE_VERSUS_REALISM, false));

@@ -797,10 +797,6 @@ public void RunVoteMix(int iClient)
 
 	g_iState = STATE_VOTING;
 
-	if (g_bReadyUpAvailable) {
-		ToggleReadyPanel(false);
-	}
-
 	int iTotalPlayers, iTeam;
 	int[] iPlayers = new int[MaxClients];
 
@@ -838,25 +834,23 @@ public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int
 {
 	switch (iAction)
 	{
-		case VoteAction_End:
+		case VoteAction_Start:
 		{
 			if (g_bReadyUpAvailable) {
-				ToggleReadyPanel(true);
+				ToggleReadyPanel(false);
 			}
-
-			hVote.Close();
 		}
 
 		case VoteAction_Display:
 		{
-			char sVoteDisplayMessage[DISPLAY_MSG_SIZE];
-
 			Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
 			Function hFunc = GetFunctionByName(hPlugin, FORWARD_DISPLAY_MSG);
 		
 			if (hFunc == INVALID_FUNCTION) {
 				SetFailState("Failed to get the function id of " ... FORWARD_DISPLAY_MSG);
 			}
+
+			char sVoteDisplayMessage[DISPLAY_MSG_SIZE];
 
 			// call FORWARD_DISPLAY_MSG
 			Call_StartFunction(hPlugin, hFunc);
@@ -875,14 +869,19 @@ public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int
 
 		case VoteAction_Finish:
 		{
-			if (iParam1 != NATIVEVOTES_VOTE_YES)
+			if (g_iState != STATE_VOTING
+				|| (!g_bReadyUpAvailable && g_bRoundIsLive) 
+				|| (g_bReadyUpAvailable && !IsInReady()))
 			{
-				if (g_iState != STATE_VOTING || (!g_bReadyUpAvailable && g_bRoundIsLive) || (g_bReadyUpAvailable && !IsInReady())) 
-				{
-					g_iState = STATE_NONE;
-					g_iMixIndex = INVALID_INDEX;
-				}
+				hVote.DisplayFail();
 
+				g_iState = STATE_NONE;
+				g_iMixIndex = INVALID_INDEX;
+
+				return Plugin_Continue;
+			}
+
+			if (iParam1 == NATIVEVOTES_VOTE_NO) {
 				hVote.DisplayFail();
 			}
 
@@ -892,6 +891,15 @@ public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int
 
 				RunMix();
 			}
+		}
+
+		case VoteAction_End:
+		{
+			if (g_bReadyUpAvailable) {
+				ToggleReadyPanel(true);
+			}
+
+			hVote.Close();
 		}
 	}
 	

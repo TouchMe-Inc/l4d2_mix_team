@@ -881,7 +881,11 @@ public Action HandlerVote(NativeVote hVote, VoteAction iAction, int iParam1, int
 				return Plugin_Continue;
 			}
 
-			if (iParam1 == NATIVEVOTES_VOTE_NO) {
+			if (iParam1 == NATIVEVOTES_VOTE_NO)
+			{
+				g_iState = STATE_NONE;
+				g_iMixIndex = INVALID_INDEX;
+
 				hVote.DisplayFail();
 			}
 

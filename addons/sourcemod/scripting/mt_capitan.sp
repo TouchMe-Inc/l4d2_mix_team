@@ -52,7 +52,8 @@ void InitTranslations()
 }
 
 /**
- * Called when the plugin is fully initialized and all known external references are resolved.
+ * Called when the plugin is fully initialized 
+ * and all known external references are resolved.
  */
 public void OnPluginStart() {
 	InitTranslations();
@@ -160,7 +161,7 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 				if (bIsOrderPickFirstCapitan && IsFirstCapitan(iClient))
 				{
 					SetClientTeam(iTarget, TEAM_SURVIVOR);	
-					CPrintToChatAll("%t", "PICK_TEAM", iClient, iTarget);
+					CPrintToChatAll("%t", "PICK_SURVIVOR_TEAM", iClient, iTarget);
 
 					g_iOrderPickPlayer++;
 				}
@@ -168,7 +169,7 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 				else if (!bIsOrderPickFirstCapitan && IsSecondCapitan(iClient))
 				{
 					SetClientTeam(iTarget, TEAM_INFECTED);	
-					CPrintToChatAll("%t", "PICK_TEAM", iClient, iTarget);
+					CPrintToChatAll("%t", "PICK_INFECTED_TEAM", iClient, iTarget);
 
 					g_iOrderPickPlayer++;
 				}

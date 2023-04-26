@@ -126,35 +126,31 @@ public int BuildMenu(Menu &hMenu, int iClient, int iStep)
 /**
  * Menu item selection handler.
  * 
- * @param hMenu       Menu ID
- * @param iAction     Param description
- * @param iClient     Client index
- * @param iIndex      Item index
+ * @param hMenu       Menu ID.
+ * @param iAction     Param description.
+ * @param iClient     Client index.
+ * @param iIndex      Item index.
  */
 public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 {
-	if (iAction == MenuAction_End) {
-		delete hMenu;
-	}
-
-	else if (iAction == MenuAction_Select)
+	switch(iAction)
 	{
-		char sInfo[6];
-		hMenu.GetItem(iIndex, sInfo, sizeof(sInfo));
-
-		char sStep[2], sClient[3];
-		BreakString(sInfo[BreakString(sInfo, sStep, sizeof(sStep))], sClient, sizeof(sClient));
-
-		int iStep = StringToInt(sStep);
-		int iTarget = StringToInt(sClient);
-
-		switch(iStep)
+		case MenuAction_Select:
 		{
-			case STEP_FIRST_CAPITAN, STEP_SECOND_CAPITAN: {
+			char sInfo[6];
+			hMenu.GetItem(iIndex, sInfo, sizeof(sInfo));
+
+			char sStep[2], sClient[3];
+			BreakString(sInfo[BreakString(sInfo, sStep, sizeof(sStep))], sClient, sizeof(sClient));
+
+			int iStep = StringToInt(sStep);
+			int iTarget = StringToInt(sClient);
+
+			if (iStep == STEP_FIRST_CAPITAN || iStep == STEP_SECOND_CAPITAN) {
 				g_iVoteCount[iTarget] ++;
 			}
 
-			case STEP_PICK_PLAYER: 
+			if (iStep == STEP_PICK_PLAYER)
 			{
 				bool bIsOrderPickFirstCapitan = !(g_iOrderPickPlayer & 2);
 
@@ -174,6 +170,10 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 					g_iOrderPickPlayer++;
 				}
 			}
+		}
+
+		case MenuAction_End: {
+			delete hMenu;
 		}
 	}
 

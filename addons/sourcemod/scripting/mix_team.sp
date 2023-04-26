@@ -689,7 +689,7 @@ public Action Cmd_AbortMix(int iClient, int iArgs)
 
 	int iEndTime = g_iAbortDelay - GetTime();
 
-	if (iEndTime < 0)
+	if (iEndTime <= 0)
 	{
 		AbortMix();
 		CPrintToChatAll("%t", "CANCEL_MIX_SUCCESS", iClient);

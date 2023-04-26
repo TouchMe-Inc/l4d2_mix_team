@@ -12,7 +12,13 @@
 		"chi"			"[{green}!{default}] {olive}感染者 {olive}队长 {green}{1} {default}({2} 票)"
 	}
 
-	"PICK_TEAM"
+	"PICK_SURVIVOR_TEAM"
+	{
+		"#format"		"{1:N},{2:N}"
+		"chi"			"[{green}!{default}] 队长 {olive}{1} {default}选择了玩家 {green}{2}"
+	}
+
+	"PICK_INFECTED_TEAM"
 	{
 		"#format"		"{1:N},{2:N}"
 		"chi"			"[{green}!{default}] 队长 {olive}{1} {default}选择了玩家 {green}{2}"

@@ -3,19 +3,25 @@
 	"NEW_FIRST_CAPITAN"
 	{
 		"#format"		"{1:N},{2:d}"
-		"ru"			"Капитан команды {olive}выживших {green}{1} {default}(Голосов {2})"
+		"ru"			"Капитан команды {blue}выживших {green}{1} {default}(Голосов {2})"
 	}
 
 	"NEW_SECOND_CAPITAN"
 	{
 		"#format"		"{1:N},{2:d}"
-		"ru"			"Капитан команды {olive}заражённых {green}{1} {default}(Голосов {2})"
+		"ru"			"Капитан команды {red}заражённых {green}{1} {default}(Голосов {2})"
 	}
 
-	"PICK_TEAM"
+	"PICK_SURVIVOR_TEAM"
 	{
 		"#format"		"{1:N},{2:N}"
-		"ru"			"Капитан {olive}{1} {default}выбрал игрока {green}{2}"
+		"ru"			"Капитан выживших {blue}{1} {default}выбрал игрока {green}{2}"
+	}
+
+	"PICK_INFECTED_TEAM"
+	{
+		"#format"		"{1:N},{2:N}"
+		"ru"			"Капитан заражённых {red}{1} {default}выбрал игрока {green}{2}"
 	}
 
 	"VOTE_DISPLAY_MSG"

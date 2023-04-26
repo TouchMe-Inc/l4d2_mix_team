@@ -3,19 +3,25 @@
 	"NEW_FIRST_CAPITAN"
 	{
 		"#format"		"{1:N},{2:d}"
-		"en"			"Team {olive}survivors {default}captain {green}{1} {default}(votes {2})"
+		"en"			"Team {blue}survivors {default}captain {green}{1} {default}(votes {2})"
 	}
 
 	"NEW_SECOND_CAPITAN"
 	{
 		"#format"		"{1:N},{2:d}"
-		"en"			"Team {olive}infected {olive}captain {green}{1} {default}(votes {2})"
+		"en"			"Team {red}infected {olive}captain {green}{1} {default}(votes {2})"
 	}
 
-	"PICK_TEAM"
+	"PICK_SURVIVOR_TEAM"
 	{
 		"#format"		"{1:N},{2:N}"
-		"en"			"The capitan {olive}{1} {default}chose the player {green}{2}"
+		"en"			"The capitan {blue}{1} {default}chose the player {green}{2}"
+	}
+
+	"PICK_INFECTED_TEAM"
+	{
+		"#format"		"{1:N},{2:N}"
+		"en"			"The capitan {red}{1} {default}chose the player {green}{2}"
 	}
 
 	"VOTE_DISPLAY_MSG"

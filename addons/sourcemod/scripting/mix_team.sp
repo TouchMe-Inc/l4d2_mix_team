@@ -683,7 +683,7 @@ public Action Cmd_AbortMix(int iClient, int iArgs)
 	if (!g_bGamemodeAvailable 
 	|| !IS_VALID_CLIENT(iClient) 
 	|| !g_tPlayers[iClient].mixMember
-	|| !IsMixInProgress()) {
+	|| g_iState != STATE_IN_PROGRESS) {
 		return Plugin_Continue;
 	}
 

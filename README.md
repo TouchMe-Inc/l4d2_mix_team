@@ -15,8 +15,8 @@ Plugin adds voting for mixing teams. The mix_team plugin itself does not impleme
 [How to create mix type?](https://github.com/TouchMe-Inc/l4d2_mix_team/wiki/How-to-create-mix-type%3F)
 
 ## Require
-* Colors (Available in the /includes directory)
-* [NativeVotes](https://github.com/sapphonie/sourcemod-nativevotes-updated)
+* Colors
+* [NativeVotesRework](https://github.com/TouchMe-Inc/l4d2_nativevotes_rework)
 * [SteamWorks](https://github.com/hexa-core-eu/SteamWorks) for mt_exp
 
 ## Support

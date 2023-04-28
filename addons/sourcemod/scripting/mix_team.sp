@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "MixTeam",
 	author = "TouchMe",
 	description = "Adds an API for mix in versus mode",
-	version = "build_0006",
+	version = "build_0007",
 	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 

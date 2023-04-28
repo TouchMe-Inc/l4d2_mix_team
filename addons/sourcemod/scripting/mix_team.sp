@@ -51,8 +51,11 @@ public Plugin myinfo =
 #define TakeOverBot             L4D_TakeOverBot
 
 
-enum struct MixData {
+enum struct MixData
+{
 	Handle plugin;
+	Function onMixInProgress;
+	Function getVoteDisplayMessage;
 	char type[MIX_TYPE_SIZE];
 	int minPlayers;
 	int abortDelay;
@@ -64,16 +67,8 @@ methodmap MixList < Handle
 		return view_as<MixList>(CreateArray(sizeof(MixData)));
 	}
 
-	public int Add(Handle hPlugin, const char[] sType, int iMinPlayers, int iAbortDelay)
-	{
-		MixData item;
-
-		item.plugin = hPlugin;
-		strcopy(item.type, sizeof(item.type), sType);
-		item.minPlayers = iMinPlayers;
-		item.abortDelay = iAbortDelay;
-
-		return PushArrayArray(this, item);
+	public int Add(MixData tMixData) {
+		return PushArrayArray(this, tMixData);
 	}
 
 	public int FindByType(const char[] sType)
@@ -100,6 +95,22 @@ methodmap MixList < Handle
 		GetArrayArray(this, iIndex, tMixData);
 
 		return tMixData.plugin;
+	}
+
+	public Function GetVoteDisplayMessage(int iIndex)
+	{
+		MixData tMixData;
+		GetArrayArray(this, iIndex, tMixData);
+
+		return tMixData.getVoteDisplayMessage;
+	}
+
+	public Function OnMixInProgress(int iIndex)
+	{
+		MixData tMixData;
+		GetArrayArray(this, iIndex, tMixData);
+
+		return tMixData.onMixInProgress;
 	}
 
 	public void GetTypeByIndex(int iIndex, char[] sType, int iLen)
@@ -257,26 +268,31 @@ int Native_AddMix(Handle hPlugin, int iParams)
 		ThrowNativeError(SP_ERROR_NATIVE, "Call native without required params");
 	}
 
-	char sType[MIX_TYPE_SIZE];
+	MixData tMixData;
 
-	if (GetNativeString(1, sType, sizeof(sType)) != SP_ERROR_NONE || IsEmptyString(sType)) {
+	tMixData.plugin = hPlugin;
+
+	tMixData.onMixInProgress = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS);
+
+	if (tMixData.onMixInProgress == INVALID_FUNCTION) {
+		ThrowNativeError(SP_ERROR_NATIVE, "Failed to get the function id of " ... FORWARD_IN_PROGRESS);
+	}
+
+	tMixData.getVoteDisplayMessage = GetFunctionByName(hPlugin, FORWARD_DISPLAY_MSG);
+
+	if (tMixData.getVoteDisplayMessage == INVALID_FUNCTION) {
+		ThrowNativeError(SP_ERROR_NATIVE, "Failed to get the function id of " ... FORWARD_DISPLAY_MSG);
+	}
+
+	if (GetNativeString(1, tMixData.type, sizeof(tMixData.type)) != SP_ERROR_NONE) {
 		ThrowNativeError(SP_ERROR_NATIVE, "Incorrect type");
 	}
 
-	int iMinPlayers = GetNativeCell(2);
-	int iMaxPlayers = (FindConVar("survivor_limit").IntValue * 2);
+	tMixData.minPlayers = GetNativeCell(2);
 
-	if (iMinPlayers > iMaxPlayers) {
-		ThrowNativeError(SP_ERROR_NATIVE, "Incorrect min players");
-	}
+	tMixData.abortDelay  = GetNativeCell(3);
 
-	int iAbortDelay = GetNativeCell(3);
-
-	if (iAbortDelay < 0) {
-		ThrowNativeError(SP_ERROR_NATIVE, "Incorrect abort delay");
-	}
-
-	return g_hMixList.Add(hPlugin, sType, iMinPlayers, iAbortDelay);
+	return g_hMixList.Add(tMixData);
 }
 
 /**
@@ -666,7 +682,14 @@ public Action Cmd_RunMix(int iClient, int iArgs)
 		return Plugin_Continue;
 	}
 
+	if (!NativeVotes_IsNewVoteAllowed())
+	{
+		CReplyToCommand(iClient, "%T", "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
+		return Plugin_Continue;
+	}
+
 	g_iMixIndex = iMixIndex;
+	PreparePlayers();
 	RunVoteMix(iClient);
 
 	return Plugin_Continue;
@@ -683,7 +706,7 @@ public Action Cmd_AbortMix(int iClient, int iArgs)
 	if (!g_bGamemodeAvailable 
 	|| !IS_VALID_CLIENT(iClient) 
 	|| !g_tPlayers[iClient].mixMember
-	|| g_iState != STATE_IN_PROGRESS) {
+	|| !IsMixInProgress()) {
 		return Plugin_Continue;
 	}
 
@@ -766,6 +789,7 @@ public Action Cmd_ForceMix(int iClient, int iArgs)
 	}
 
 	g_iMixIndex = iMixIndex;
+	PreparePlayers();
 	RunMix();
 
 	return Plugin_Continue;
@@ -787,32 +811,21 @@ void InitForwards()
  */
 public void RunVoteMix(int iClient) 
 {
-	if (!NativeVotes_IsNewVoteAllowed())
-	{
-		CReplyToCommand(iClient, "%T", "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
-		return;
-	}
-
 	g_iState = STATE_VOTING;
 
-	int iTotalPlayers, iTeam;
+	int iTotalPlayers;
 	int[] iPlayers = new int[MaxClients];
 
 	for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
 	{
-		g_tPlayers[iPlayer].mixMember = false;
-
 		if (!IsClientInGame(iPlayer) || IsFakeClient(iPlayer)) {
 			continue;
 		}
 
-		iTeam = GetClientTeam(iPlayer);
+		int iTeam = GetClientTeam(iPlayer);
 
-		if (iTeam == TEAM_INFECTED || iTeam == TEAM_SURVIVOR)
-		{
+		if (iTeam == TEAM_INFECTED || iTeam == TEAM_SURVIVOR) {
 			iPlayers[iTotalPlayers++] = iPlayer;
-			g_tPlayers[iPlayer].mixMember = true;
-			g_tPlayers[iPlayer].lastTeam = iTeam;
 		}
 	}
 
@@ -842,17 +855,13 @@ public Action HandlerVote(NativeVote hVote, VoteAction tAction, int iParam1, int
 
 		case VoteAction_Display:
 		{
-			Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
-			Function hFunc = GetFunctionByName(hPlugin, FORWARD_DISPLAY_MSG);
-
-			if (hFunc == INVALID_FUNCTION) {
-				SetFailState("Failed to get the function id of " ... FORWARD_DISPLAY_MSG);
-			}
-
 			char sVoteDisplayMessage[DISPLAY_MSG_SIZE];
 
 			// call FORWARD_DISPLAY_MSG
-			Call_StartFunction(hPlugin, hFunc);
+			Call_StartFunction(
+				.plugin = g_hMixList.GetPlugin(g_iMixIndex), 
+				.func = g_hMixList.GetVoteDisplayMessage(g_iMixIndex)
+			);
 			Call_PushCell(iParam1);
 			Call_PushStringEx(sVoteDisplayMessage, sizeof(sVoteDisplayMessage), SM_PARAM_STRING_COPY|SM_PARAM_STRING_UTF8, SM_PARAM_COPYBACK);
 			Call_Finish();
@@ -916,29 +925,18 @@ void RunMix()
 
 	SetAllClientSpectator();
 
-	CreateTimer(0.1, Timer_CallOnMixProgress);
-}
-
-public Action Timer_CallOnMixProgress(Handle hTimer)
-{
-	Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
-	Function hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS);
-
-	if (hFunc == INVALID_FUNCTION) {
-		SetFailState("Failed to get the function id of " ... FORWARD_IN_PROGRESS);
-	}
-
 	Action aReturn = Plugin_Continue;
 
 	// call FORWARD_IN_PROGRESS
-	Call_StartFunction(hPlugin, hFunc);
+	Call_StartFunction(
+		.plugin = g_hMixList.GetPlugin(g_iMixIndex), 
+		.func = g_hMixList.OnMixInProgress(g_iMixIndex)
+	);
 	Call_Finish(aReturn);
 
 	if (aReturn == Plugin_Continue) {
 		FinishMix();
 	}
-
-	return Plugin_Stop;
 }
 
 /**
@@ -1023,6 +1021,26 @@ void RollbackPlayers()
 	}
 }
 
+void PreparePlayers()
+{
+	for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
+	{
+		g_tPlayers[iPlayer].mixMember = false;
+
+		if (!IsClientInGame(iPlayer) || IsFakeClient(iPlayer)) {
+			continue;
+		}
+
+		int iTeam = GetClientTeam(iPlayer);
+
+		if (iTeam == TEAM_INFECTED || iTeam == TEAM_SURVIVOR)
+		{
+			g_tPlayers[iPlayer].mixMember = true;
+			g_tPlayers[iPlayer].lastTeam = iTeam;
+		}
+	}
+}
+
 /**
  * Sets everyone to spectator team.
  */
@@ -1036,29 +1054,6 @@ void SetAllClientSpectator()
 
 		SetupClientTeam(iClient, TEAM_SPECTATOR);
 	}
-}
-
-/**
- * Checks if a string is empty.
- */
-bool IsEmptyString(const char[] sString)
-{
-	int iLen = strlen(sString);
-
-	if (iLen == 0) {
-		return true;
-	}
-	
-	for (int i = 0; i < iLen; ++i)
-	{
-		if (IsCharSpace(sString[i]) || sString[i] == '\r' || sString[i] == '\n') {
-			continue;
-		}
-
-		return false;
-	}
-	
-	return true;
 }
 
 /**

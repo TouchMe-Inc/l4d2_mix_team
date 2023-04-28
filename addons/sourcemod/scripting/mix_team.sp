@@ -914,14 +914,19 @@ void RunMix()
 	g_iState = STATE_IN_PROGRESS;
 	g_iAbortDelay = GetTime() + g_hMixList.AbortDelay(g_iMixIndex);
 
+	SetAllClientSpectator();
+
+	CreateTimer(0.1, Timer_CallOnMixProgress);
+}
+
+public Action Timer_CallOnMixProgress(Handle hTimer)
+{
 	Handle hPlugin = g_hMixList.GetPlugin(g_iMixIndex);
 	Function hFunc = GetFunctionByName(hPlugin, FORWARD_IN_PROGRESS);
 
 	if (hFunc == INVALID_FUNCTION) {
 		SetFailState("Failed to get the function id of " ... FORWARD_IN_PROGRESS);
 	}
-
-	SetAllClientSpectator();
 
 	Action aReturn = Plugin_Continue;
 
@@ -932,6 +937,8 @@ void RunMix()
 	if (aReturn == Plugin_Continue) {
 		FinishMix();
 	}
+
+	return Plugin_Stop;
 }
 
 /**

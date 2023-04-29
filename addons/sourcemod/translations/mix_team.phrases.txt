@@ -71,9 +71,4 @@
 	{
 		"en"			"A mix session is in progress!"
 	}
-
-	"UNSUPPORTED"
-	{
-		"en" 			"This poll type is not supported!"
-	}
 }

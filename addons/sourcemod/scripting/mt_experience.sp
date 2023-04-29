@@ -16,7 +16,7 @@ public Plugin myinfo = {
 
 #define TRANSLATIONS            "mt_experience.phrases"
 
-#define MIN_PLAYERS             4
+#define MIN_PLAYERS             6
 
 // Other
 #define APP_L4D2                550
@@ -71,10 +71,6 @@ public void OnAllPluginsLoaded() {
 
 public void GetVoteDisplayMessage(int iClient, char[] sDisplayMsg) {
 	Format(sDisplayMsg, DISPLAY_MSG_SIZE, "%T", "VOTE_DISPLAY_MSG", iClient);
-}
-
-public void GetVoteEndMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTEEND_MSG_SIZE, "%T", "VOTE_END_MSG", iClient);
 }
 
 /**

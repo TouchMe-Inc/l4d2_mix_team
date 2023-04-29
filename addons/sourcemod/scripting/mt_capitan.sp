@@ -27,7 +27,7 @@ public Plugin myinfo = {
 #define LAST_PICK               0
 #define CURRENT_PICK            1
 
-#define MIN_PLAYERS             4
+#define MIN_PLAYERS             6
 
 
 int
@@ -52,7 +52,8 @@ void InitTranslations()
 }
 
 /**
- * Called when the plugin is fully initialized and all known external references are resolved.
+ * Called when the plugin is fully initialized 
+ * and all known external references are resolved.
  */
 public void OnPluginStart() {
 	InitTranslations();
@@ -66,10 +67,6 @@ public void OnAllPluginsLoaded()
 
 public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
 	Format(sTitle, DISPLAY_MSG_SIZE, "%T", "VOTE_DISPLAY_MSG", iClient);
-}
-
-public void GetVoteEndMessage(int iClient, char[] sMsg) {
-	Format(sMsg, VOTEEND_MSG_SIZE, "%T", "VOTE_END_MSG", iClient);
 }
 
 /**
@@ -129,42 +126,38 @@ public int BuildMenu(Menu &hMenu, int iClient, int iStep)
 /**
  * Menu item selection handler.
  * 
- * @param hMenu       Menu ID
- * @param iAction     Param description
- * @param iClient     Client index
- * @param iIndex      Item index
+ * @param hMenu       Menu ID.
+ * @param iAction     Param description.
+ * @param iClient     Client index.
+ * @param iIndex      Item index.
  */
 public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 {
-	if (iAction == MenuAction_End) {
-		delete hMenu;
-	}
-
-	else if (iAction == MenuAction_Select)
+	switch(iAction)
 	{
-		char sInfo[6];
-		hMenu.GetItem(iIndex, sInfo, sizeof(sInfo));
-
-		char sStep[2], sClient[3];
-		BreakString(sInfo[BreakString(sInfo, sStep, sizeof(sStep))], sClient, sizeof(sClient));
-
-		int iStep = StringToInt(sStep);
-		int iTarget = StringToInt(sClient);
-
-		switch(iStep)
+		case MenuAction_Select:
 		{
-			case STEP_FIRST_CAPITAN, STEP_SECOND_CAPITAN: {
+			char sInfo[6];
+			hMenu.GetItem(iIndex, sInfo, sizeof(sInfo));
+
+			char sStep[2], sClient[3];
+			BreakString(sInfo[BreakString(sInfo, sStep, sizeof(sStep))], sClient, sizeof(sClient));
+
+			int iStep = StringToInt(sStep);
+			int iTarget = StringToInt(sClient);
+
+			if (iStep == STEP_FIRST_CAPITAN || iStep == STEP_SECOND_CAPITAN) {
 				g_iVoteCount[iTarget] ++;
 			}
 
-			case STEP_PICK_PLAYER: 
+			if (iStep == STEP_PICK_PLAYER)
 			{
 				bool bIsOrderPickFirstCapitan = !(g_iOrderPickPlayer & 2);
 
 				if (bIsOrderPickFirstCapitan && IsFirstCapitan(iClient))
 				{
 					SetClientTeam(iTarget, TEAM_SURVIVOR);	
-					CPrintToChatAll("%t", "PICK_TEAM", iClient, iTarget);
+					CPrintToChatAll("%t", "PICK_SURVIVOR_TEAM", iClient, iTarget);
 
 					g_iOrderPickPlayer++;
 				}
@@ -172,11 +165,15 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 				else if (!bIsOrderPickFirstCapitan && IsSecondCapitan(iClient))
 				{
 					SetClientTeam(iTarget, TEAM_INFECTED);	
-					CPrintToChatAll("%t", "PICK_TEAM", iClient, iTarget);
+					CPrintToChatAll("%t", "PICK_INFECTED_TEAM", iClient, iTarget);
 
 					g_iOrderPickPlayer++;
 				}
 			}
+		}
+
+		case MenuAction_End: {
+			delete hMenu;
 		}
 	}
 

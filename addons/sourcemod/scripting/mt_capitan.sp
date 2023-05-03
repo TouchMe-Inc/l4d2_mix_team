@@ -91,15 +91,15 @@ public int BuildMenu(Menu &hMenu, int iClient, int iStep)
 	switch(iStep)
 	{
 		case STEP_FIRST_CAPITAN: {
-			Format(sMenuTitle, MENU_TITTLE_SIZE, "%t", "MENU_TITLE_FIRST_CAPITAN");
+			Format(sMenuTitle, MENU_TITTLE_SIZE, "%T", "MENU_TITLE_FIRST_CAPITAN", iClient);
 		}
 
 		case STEP_SECOND_CAPITAN: {
-			Format(sMenuTitle, MENU_TITTLE_SIZE, "%t", "MENU_TITLE_SECOND_CAPITAN");
+			Format(sMenuTitle, MENU_TITTLE_SIZE, "%T", "MENU_TITLE_SECOND_CAPITAN", iClient);
 		}
 
 		case STEP_PICK_PLAYER: {
-			Format(sMenuTitle, MENU_TITTLE_SIZE, "%t", "MENU_TITLE_PICK_TEAMS");
+			Format(sMenuTitle, MENU_TITTLE_SIZE, "%T", "MENU_TITLE_PICK_TEAMS", iClient);
 		}
 	}
 

@@ -551,7 +551,7 @@ public Action Event_PlayerTeam(Event event, char[] sName, bool bDontBroadcast)
 		return Plugin_Continue;
 	}
 
-	CreateTimer(1.0, Timer_MoveClientToSpec, iClient);
+	CreateTimer(0.1, Timer_MoveClientToSpec, iClient);
 
 	return Plugin_Continue;
 }

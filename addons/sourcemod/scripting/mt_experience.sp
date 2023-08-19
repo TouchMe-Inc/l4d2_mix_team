@@ -44,25 +44,10 @@ enum struct PlayerStats {
 
 
 /**
- * Loads dictionary files. On failure, stops the plugin execution.
- */
-void InitTranslations()
-{
-	char sPath[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, sPath, PLATFORM_MAX_PATH, "translations/" ... TRANSLATIONS ... ".txt");
-
-	if (FileExists(sPath)) {
-		LoadTranslations(TRANSLATIONS);
-	} else {
-		SetFailState("Path %s not found", sPath);
-	}
-}
-
-/**
  * Called when the plugin is fully initialized and all known external references are resolved.
  */
 public void OnPluginStart() {
-	InitTranslations();
+	LoadTranslations(TRANSLATIONS);
 }
 
 public void OnAllPluginsLoaded() {
@@ -136,7 +121,7 @@ public void SteamWorks_OnValidateClient(int iOwnerAuthId, int iAuthId)
 {
 	int iClient = GetClientFromSteamID(iAuthId);
 
-	if(IS_VALID_CLIENT(iClient)) {
+	if(IS_VALID_CLIENT(iClient) && !IsFakeClient(iClient)) {
 		SteamWorks_RequestStats(iClient, APP_L4D2);
 	}
 }

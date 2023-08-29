@@ -21,5 +21,5 @@ Plugin adds voting for mixing teams. The mix_team plugin itself does not impleme
 * [SteamWorks](https://github.com/hexa-core-eu/SteamWorks) for [mt_experience](/addons/sourcemod/scripting/mt_experience.sp)
 
 ## Support
-* [ReadyUp](https://github.com/SirPlease/L4D2-Competitive-Rework/blob/master/addons/sourcemod/scripting/readyup.sp)
+* ReadyUp
 * [Left4DHooks](https://github.com/SilvDev/Left4DHooks)

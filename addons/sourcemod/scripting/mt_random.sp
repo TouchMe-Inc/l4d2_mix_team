@@ -6,54 +6,66 @@
 
 
 public Plugin myinfo = { 
-	name = "MixTeamRandom",
-	author = "TouchMe",
+	name =        "MixTeamRandom",
+	author =      "TouchMe",
 	description = "Adds random mix",
-	version = "build_0004",
-	url = "https://github.com/TouchMe-Inc/l4d2_mix_team"
+	version =     "build_0005",
+	url =         "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
 
 #define TRANSLATIONS            "mt_random.phrases"
 
+#define TEAM_SURVIVOR           2
+#define TEAM_INFECTED           3
+
 #define MIN_PLAYERS             4
 
 
-/**
- * Loads dictionary files. On failure, stops the plugin execution.
- */
-void InitTranslations()
-{
-	char sPath[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, sPath, PLATFORM_MAX_PATH, "translations/" ... TRANSLATIONS ... ".txt");
-
-	if (FileExists(sPath)) {
-		LoadTranslations(TRANSLATIONS);
-	} else {
-		SetFailState("Path %s not found", sPath);
-	}
-}
+int g_iThisMixIndex = -1;
 
 /**
  * Called when the plugin is fully initialized and all known external references are resolved.
  */
 public void OnPluginStart() {
-	InitTranslations();
+	LoadTranslations(TRANSLATIONS);
 }
 
 public void OnAllPluginsLoaded() {
-	AddMix("random", MIN_PLAYERS, 0);
+	g_iThisMixIndex = AddMix(MIN_PLAYERS, 0);
 }
 
-public void GetVoteDisplayMessage(int iClient, char[] sTitle) {
-	Format(sTitle, DISPLAY_MSG_SIZE, "%T", "VOTE_DISPLAY_MSG", iClient);
+public Action OnDrawVoteTitle(int iMixIndex, int iClient, char[] sTitle, int iLength)
+{
+	if (iMixIndex != g_iThisMixIndex) {
+		return Plugin_Continue;
+	}
+
+	Format(sTitle, iLength, "%T", "VOTE_TITLE", iClient);
+
+	return Plugin_Stop;
+}
+
+public Action OnDrawMenuItem(int iMixIndex, int iClient, char[] sTitle, int iLength)
+{
+	if (iMixIndex != g_iThisMixIndex) {
+		return Plugin_Continue;
+	}
+	
+	Format(sTitle, iLength, "%T", "MENU_ITEM", iClient);
+
+	return Plugin_Stop;
 }
 
 /**
  * Starting the mix.
  */
-public Action OnMixInProgress()
+public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewState, bool bIsFail)
 {
+	if (iMixIndex != g_iThisMixIndex || eNewState != MixState_InProgress) {
+		return Plugin_Continue;
+	}
+
 	Handle hPlayers = CreateArray();
 
 	for (int iClient = 1; iClient <= MaxClients; iClient++)

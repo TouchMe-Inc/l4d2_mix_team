@@ -2,16 +2,17 @@
 #pragma newdecls                required
 
 #include <sourcemod>
-#include <colors>
 #include <mix_team>
 #include <steamworks>
+#include <colors>
 
 
 public Plugin myinfo = { 
-	name = "MixTeamExperience",
-	author = "SirP, TouchMe",
+	name =        "MixTeamExperience",
+	author =      "SirP, TouchMe",
 	description = "Adds mix team by game experience",
-	version = "build_0001"
+	version =     "build_0002",
+	url =         "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
 #define TRANSLATIONS            "mt_experience.phrases"
@@ -21,10 +22,6 @@ public Plugin myinfo = {
 // Other
 #define APP_L4D2                550
 
-// Macros
-#define IS_VALID_CLIENT(%1)     (%1 > 0 && %1 <= MaxClients)
-#define IS_REAL_CLIENT(%1)      (IsClientInGame(%1) && !IsFakeClient(%1))
-
 
 enum struct PlayerInfo {
 	int id;
@@ -33,7 +30,6 @@ enum struct PlayerInfo {
 
 enum struct PlayerStats {
 	int playedTime;
-	int tankRocks;
 	int gamesWon;
 	int gamesLost;
 	int killBySilenced;
@@ -41,6 +37,8 @@ enum struct PlayerStats {
 	int killByChrome;
 	int killByPump;
 }
+
+int g_iThisMixIndex = -1;
 
 
 /**
@@ -51,18 +49,40 @@ public void OnPluginStart() {
 }
 
 public void OnAllPluginsLoaded() {
-	AddMix("exp", MIN_PLAYERS, 0);
+	g_iThisMixIndex = AddMix(MIN_PLAYERS, 0);
 }
 
-public void GetVoteDisplayMessage(int iClient, char[] sDisplayMsg) {
-	Format(sDisplayMsg, DISPLAY_MSG_SIZE, "%T", "VOTE_DISPLAY_MSG", iClient);
+public Action OnDrawVoteTitle(int iMixIndex, int iClient, char[] sTitle, int iLength)
+{
+	if (iMixIndex != g_iThisMixIndex) {
+		return Plugin_Continue;
+	}
+
+	Format(sTitle, iLength, "%T", "VOTE_TITLE", iClient);
+
+	return Plugin_Stop;
+}
+
+public Action OnDrawMenuItem(int iMixIndex, int iClient, char[] sTitle, int iLength)
+{
+	if (iMixIndex != g_iThisMixIndex) {
+		return Plugin_Continue;
+	}
+
+	Format(sTitle, iLength, "%T", "MENU_ITEM", iClient);
+
+	return Plugin_Stop;
 }
 
 /**
  * Starting the mix.
  */
-public Action OnMixInProgress()
+public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewState, bool bIsFail)
 {
+	if (iMixIndex != g_iThisMixIndex || eNewState != MixState_InProgress) {
+		return Plugin_Continue;
+	}
+
 	Handle hPlayers = CreateArray(sizeof(PlayerInfo));
 	PlayerInfo tPlayer;
 
@@ -77,7 +97,7 @@ public Action OnMixInProgress()
 
 		if (tPlayer.rating <= 0.0)
 		{
-			CPrintToChatAll("%t", "FAIL_PLAYER_HIDE_INFO_STOP", iClient);
+			CPrintToChatAll("%t", "PLAYER_UNKNOWN_RATING", iClient);
 			Call_AbortMix();
 			return Plugin_Handled;
 		}
@@ -117,13 +137,19 @@ public Action OnMixInProgress()
 	return Plugin_Continue;
 }
 
-public void SteamWorks_OnValidateClient(int iOwnerAuthId, int iAuthId)
+/**
+ *
+ */
+public void OnClientAuthorized(int iClient, const char[] sAuthId)
 {
-	int iClient = GetClientFromSteamID(iAuthId);
-
-	if(IS_VALID_CLIENT(iClient) && !IsFakeClient(iClient)) {
-		SteamWorks_RequestStats(iClient, APP_L4D2);
+	if (sAuthId[0] == 'B' || sAuthId[9] == 'L') {
+		return;
 	}
+
+	/*
+	 * Get player stats.
+	 */
+	SteamWorks_RequestStats(iClient, APP_L4D2);
 }
 
 any[] GetPlayerStats(int iClient)
@@ -131,7 +157,6 @@ any[] GetPlayerStats(int iClient)
 	PlayerStats tPlayerStats;
 
 	SteamWorks_GetStatCell(iClient, "Stat.TotalPlayTime.Total", tPlayerStats.playedTime);
-	SteamWorks_GetStatCell(iClient, "Stat.SpecAttack.Tank", tPlayerStats.tankRocks);
 	SteamWorks_GetStatCell(iClient, "Stat.GamesWon.Versus", tPlayerStats.gamesWon);
 	SteamWorks_GetStatCell(iClient, "Stat.GamesLost.Versus", tPlayerStats.gamesLost);
 	SteamWorks_GetStatCell(iClient, "Stat.smg_silenced.Kills.Total", tPlayerStats.killBySilenced);
@@ -144,14 +169,13 @@ any[] GetPlayerStats(int iClient)
 
 float CalculatePlayerRating(PlayerStats tPlayerStats)
 {
-	float fPlayedHours = SecToHours(tPlayerStats.playedTime);
+	float fPlayedHours = float(tPlayerStats.playedTime) / 3600.0;
 
 	if (fPlayedHours <= 0.0) {
 		return 0.0;
 	}
 
 	int iKillTotal = tPlayerStats.killByChrome + tPlayerStats.killByPump + tPlayerStats.killBySilenced + tPlayerStats.killBySmg;
-	float fRockPerHours = float(tPlayerStats.tankRocks) / fPlayedHours;
 	int iVersusGame = tPlayerStats.gamesWon + tPlayerStats.gamesLost;
 	float fWinRounds = 0.5;
 
@@ -159,7 +183,7 @@ float CalculatePlayerRating(PlayerStats tPlayerStats)
 		fWinRounds = float(tPlayerStats.gamesWon) / float(iVersusGame);
 	}
 
-	return fWinRounds * (0.55 * fPlayedHours + fRockPerHours + float(iKillTotal) * 0.005);
+	return fWinRounds * (0.55 * fPlayedHours + float(iKillTotal) * 0.005);
 }
 
 /**
@@ -188,22 +212,4 @@ int SortPlayerByRating(int indexFirst, int indexSecond, Handle hArrayList, Handl
 	}
 
 	return 0;
-}
-
-float SecToHours(int iSeconds) {
-	return float(iSeconds) / 3600.0;
-}
-
-int GetClientFromSteamID(int authid)
-{
-	for(int iClient = 1; iClient <= MaxClients; iClient++)
-	{
-		if(!IsClientConnected(iClient) || GetSteamAccountID(iClient) != authid) {
-			continue;
-		}
-
-		return iClient;
-	}
-
-	return -1;
 }

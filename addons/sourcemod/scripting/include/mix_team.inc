@@ -23,28 +23,13 @@
 #endif
 #define _mix_team_included_
 
-// Mixs
-#define INVALID_INDEX           -1
 
-// States
-#define STATE_NONE              0
-#define STATE_VOTING            1
-#define STATE_IN_PROGRESS       2
-
-// Vote messages 
-#define MIX_TYPE_SIZE           16
-#define DISPLAY_MSG_SIZE        128
-
-// Teams
-#define TEAM_NONE               0
-#define TEAM_SPECTATOR          1
-#define TEAM_SURVIVOR           2
-#define TEAM_INFECTED           3
-
-// Macros
-#define IS_SURVIVOR(%1)         (GetClientTeam(%1) == TEAM_SURVIVOR)
-#define IS_SPECTATOR(%1)        (GetClientTeam(%1) == TEAM_SPECTATOR)
-#define IS_INFECTED(%1)         (GetClientTeam(%1) == TEAM_INFECTED)
+enum MixState
+{
+	MixState_None = 0,
+	MixState_Voting,
+	MixState_InProgress
+}
 
 
 /**
@@ -62,20 +47,19 @@ native void Call_FinishMix();
 /**
  * @brief Adds a mix to the voting list.
  *
- * @param sType         Mix type name (!mix <type>).
  * @param iMinPlayers   Minimum number of players to mix.
  * @param iAbortDelay   Mix Interrupt Delay Time (!unmix).
  *
  * @return              MixList Index if success, otherwise throw error.
  **/
-native int AddMix(char[] sType, int iMinPlayers, int iAbortDelay);
+native int AddMix(int iMinPlayers, int iAbortDelay);
 
 /**
  * @brief Returns the status of the mix.
  *
- * @return              STATE_NONE | STATE_VOTING | STATE_IN_PROGRESS.
+ * @return              MixState_*.
  **/
-native int GetMixState();
+native MixState GetMixState();
 
 /**
  * @brief Returns current Mix Index
@@ -115,20 +99,19 @@ native bool SetClientTeam(int iClient, int iTeam);
 
 
 /**
- * @brief Called when the mix completes successfully.
- * @remarks The mix name is the same as the first argument AddMix().
  *
- * @param sType         Mix type name.
  */
-forward void OnMixSuccess(const char[] sType);
+forward Action OnDrawMenuName(int iMixIndex, int iClient, char[] sName, int iLength);
 
 /**
- * @brief Called when the mix is interrupted.
- * @remarks The mix name is the same as the first argument AddMix().
  *
- * @param sType         Mix type name.
  */
-forward void OnMixFailed(const char[] sType);
+forward Action OnDrawVoteTitle(int iMixIndex, int iClient, char[] sTitle, int iLength);
+
+/**
+ *
+ */
+forward Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewState, bool bIsFail);
 
 
 public SharedPlugin __pl_mix_team =

@@ -1,0 +1,51 @@
+"Phrases"
+{
+    "VOTE_TITLE"
+    {
+        "ru"			"Выбрать капитанов для смешивания команд?"
+    }
+
+    "MENU_ITEM"
+    {
+        "ru"			"Смешать команды выбором капитанов"
+    }
+
+    "NEW_FIRST_CAPITAN"
+    {
+        "#format"		"{1:N},{2:d}"
+        "ru"			"Капитаном команды {blue}выживших {default} выбран {green}{1} {default}(Голосов {2})"
+    }
+
+    "NEW_SECOND_CAPITAN"
+    {
+        "#format"		"{1:N},{2:d}"
+        "ru"			"Капитаном команды {red}заражённых{default} выбран {green}{1} {default}(Голосов {2})"
+    }
+
+    "PICK_SURVIVOR_TEAM"
+    {
+        "#format"		"{1:N},{2:N}"
+        "ru"			"Капитан {blue}{1} {default}выбрал {green}{2}"
+    }
+
+    "PICK_INFECTED_TEAM"
+    {
+        "#format"		"{1:N},{2:N}"
+        "ru"			"Капитан {red}{1} {default}выбрал {green}{2}"
+    }
+
+    "MENU_TITLE_FIRST_CAPITAN"
+    {
+        "ru"			"Выберите капитана первой команды:"
+    }
+
+    "MENU_TITLE_SECOND_CAPITAN"
+    {
+        "ru"			"Выберите капитана второй команды:"
+    }
+
+    "MENU_TITLE_PICK_TEAMS"
+    {
+        "ru"			"Выберите союзника:"
+    }
+}

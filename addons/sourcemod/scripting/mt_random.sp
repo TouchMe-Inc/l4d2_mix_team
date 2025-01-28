@@ -5,12 +5,12 @@
 #include <mix_team>
 
 
-public Plugin myinfo = { 
-	name =        "MixTeamRandom",
-	author =      "TouchMe",
-	description = "Adds random mix",
-	version =     "build_0005",
-	url =         "https://github.com/TouchMe-Inc/l4d2_mix_team"
+public Plugin myinfo = {
+    name        = "MixTeamRandom",
+    author      = "TouchMe",
+    description = "Adds random mix",
+    version     = "build_0005",
+    url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
 
@@ -28,33 +28,33 @@ int g_iThisMixIndex = -1;
  * Called when the plugin is fully initialized and all known external references are resolved.
  */
 public void OnPluginStart() {
-	LoadTranslations(TRANSLATIONS);
+    LoadTranslations(TRANSLATIONS);
 }
 
 public void OnAllPluginsLoaded() {
-	g_iThisMixIndex = AddMix(MIN_PLAYERS, 0);
+    g_iThisMixIndex = AddMix(MIN_PLAYERS, 0);
 }
 
 public Action OnDrawVoteTitle(int iMixIndex, int iClient, char[] sTitle, int iLength)
 {
-	if (iMixIndex != g_iThisMixIndex) {
-		return Plugin_Continue;
-	}
+    if (iMixIndex != g_iThisMixIndex) {
+        return Plugin_Continue;
+    }
 
-	Format(sTitle, iLength, "%T", "VOTE_TITLE", iClient);
+    Format(sTitle, iLength, "%T", "VOTE_TITLE", iClient);
 
-	return Plugin_Stop;
+    return Plugin_Stop;
 }
 
 public Action OnDrawMenuItem(int iMixIndex, int iClient, char[] sTitle, int iLength)
 {
-	if (iMixIndex != g_iThisMixIndex) {
-		return Plugin_Continue;
-	}
-	
-	Format(sTitle, iLength, "%T", "MENU_ITEM", iClient);
+    if (iMixIndex != g_iThisMixIndex) {
+        return Plugin_Continue;
+    }
 
-	return Plugin_Stop;
+    Format(sTitle, iLength, "%T", "MENU_ITEM", iClient);
+
+    return Plugin_Stop;
 }
 
 /**
@@ -62,37 +62,37 @@ public Action OnDrawMenuItem(int iMixIndex, int iClient, char[] sTitle, int iLen
  */
 public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewState, bool bIsFail)
 {
-	if (iMixIndex != g_iThisMixIndex || eNewState != MixState_InProgress) {
-		return Plugin_Continue;
-	}
+    if (iMixIndex != g_iThisMixIndex || eNewState != MixState_InProgress) {
+        return Plugin_Continue;
+    }
 
-	Handle hPlayers = CreateArray();
+    Handle hPlayers = CreateArray();
 
-	for (int iClient = 1; iClient <= MaxClients; iClient++)
-	{
-		if (!IsClientInGame(iClient) || IsFakeClient(iClient) || !IsMixMember(iClient)) {
-			continue;
-		}
+    for (int iClient = 1; iClient <= MaxClients; iClient++)
+    {
+        if (!IsClientInGame(iClient) || IsFakeClient(iClient) || !IsMixMember(iClient)) {
+            continue;
+        }
 
-		PushArrayCell(hPlayers, iClient);
-	}
-	
-	for (int iPlayers, iIndex, iClient;;)
-	{
-		iPlayers = GetArraySize(hPlayers);
+        PushArrayCell(hPlayers, iClient);
+    }
 
-		if (!iPlayers) {
-			break;
-		}
+    for (int iPlayers, iIndex, iClient;;)
+    {
+        iPlayers = GetArraySize(hPlayers);
 
-		iIndex = GetRandomInt(0, iPlayers - 1);
-		iClient = GetArrayCell(hPlayers, iIndex);
+        if (!iPlayers) {
+            break;
+        }
 
-		SetClientTeam(iClient, iPlayers % 2 == 0 ? TEAM_INFECTED : TEAM_SURVIVOR);
-		RemoveFromArray(hPlayers, iIndex);
-	}
+        iIndex = GetRandomInt(0, iPlayers - 1);
+        iClient = GetArrayCell(hPlayers, iIndex);
 
-	CloseHandle(hPlayers);
+        SetClientTeam(iClient, iPlayers % 2 == 0 ? TEAM_INFECTED : TEAM_SURVIVOR);
+        RemoveFromArray(hPlayers, iIndex);
+    }
 
-	return Plugin_Continue;
+    CloseHandle(hPlayers);
+
+    return Plugin_Continue;
 }

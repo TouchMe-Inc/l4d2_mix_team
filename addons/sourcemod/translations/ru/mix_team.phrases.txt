@@ -7,19 +7,19 @@
 
     "CANT_CHANGE_TEAM"
     {
-        "ru"			"You cannot change the team {olive}during the mix"
+        "ru"			"Нельзя менять команду {olive}во время микса"
     }
 
     "VOTE_COULDOWN"
     {
         "#format"		"{1:d}"
-        "ru"			"A vote cannot be called at this moment, try again in a {1} second"
+        "ru"			"Нельзя запустить микс в данный момент, подождите {1} сек"
     }
 
     "NOT_ENOUGH_PLAYERS"
     {
         "#format"		"{1:d}"
-        "ru"			"There are not enough players in the game ({olive}Need {1} players{default})"
+        "ru"			"Не хватает игроков для микса ({olive}Нужно {1} игрок(ов){default})"
     }
 
     "SECOND_HALF_OF_ROUND"
@@ -46,13 +46,13 @@
     "ABORT_MIX_SUCCESS"
     {
         "#format"		"{1:N}"
-        "ru"			"Микс отменён: участник {olive}{1} {default}прервал микс"
+        "ru"			"Микс отменён: участник {olive}{1}{default} прервал микс"
     }
 
     "ABORT_MIX_FAIL"
     {
         "#format"		"{1:d}"
-        "ru"			"Микс нельзя прервать сейчас, попробуйте через {1} сек."
+        "ru"			"Микс нельзя прервать сейчас, попробуйте через {1} сек"
     }
 
     "ALREADY_IN_PROGRESS"

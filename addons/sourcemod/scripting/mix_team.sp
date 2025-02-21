@@ -30,6 +30,7 @@ public Plugin myinfo = {
  */
 #define GAMEMODE_VERSUS         "versus"
 #define GAMEMODE_VERSUS_REALISM "mutation12"
+#define GAMEMODE_SCAVENGE "scavenge"
 
 // Other
 #define TRANSLATIONS            "mix_team.phrases"
@@ -277,7 +278,7 @@ public void OnPluginStart()
     // Check Gamemode.
     HookConVarChange(g_cvGameMode = FindConVar("mp_gamemode"), OnGamemodeChanged);
     char sGameMode[16]; GetConVarString(g_cvGameMode, sGameMode, sizeof(sGameMode));
-    g_bGamemodeAvailable = IsVersusMode(sGameMode);
+    g_bGamemodeAvailable = IsAvaibleMode(sGameMode);
 
     // Events.
     HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
@@ -304,7 +305,7 @@ public void OnPluginStart()
  * @param sNewGameMode      String containing new gamemode.
  */
 void OnGamemodeChanged(ConVar hConVar, const char[] sOldGameMode, const char[] sNewGameMode) {
-    g_bGamemodeAvailable = IsVersusMode(sNewGameMode);
+    g_bGamemodeAvailable = IsAvaibleMode(sNewGameMode);
 }
 
 /**
@@ -315,7 +316,7 @@ void OnGamemodeChanged(ConVar hConVar, const char[] sOldGameMode, const char[] s
 public void OnConfigsExecuted()
 {
     char sGameMode[16]; GetConVarString(g_cvGameMode, sGameMode, sizeof(sGameMode));
-    g_bGamemodeAvailable = IsVersusMode(sGameMode);
+    g_bGamemodeAvailable = IsAvaibleMode(sGameMode);
 }
 
 /**
@@ -1020,14 +1021,15 @@ bool IsClientSurvivor(int iClient) {
 }
 
 /**
- * Is the game mode versus.
+ * Is the game mode versus or scavenge.
  *
  * @param sGameMode         A string containing the name of the game mode.
  *
  * @return                  Returns true if verus, otherwise false.
  */
-bool IsVersusMode(const char[] sGameMode)
+bool IsAvaibleMode(const char[] sGameMode)
 {
-    return (StrEqual(sGameMode, GAMEMODE_VERSUS, false)
-    || StrEqual(sGameMode, GAMEMODE_VERSUS_REALISM, false));
+    return StrEqual(sGameMode, GAMEMODE_VERSUS, false)
+    || StrEqual(sGameMode, GAMEMODE_VERSUS_REALISM, false)
+    || StrEqual(sGameMode, GAMEMODE_SCAVENGE, false)
 }

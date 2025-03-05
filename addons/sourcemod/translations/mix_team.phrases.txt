@@ -62,11 +62,16 @@
 
 	"MENU_TITLE"
 	{
-		"en"			"Start voting for the mix:"
+		"en"			"Start voting for the mix:\n "
 	}
 
 	"MENU_TITLE_FORCE"
 	{
-		"en"			"Start mix:"
+		"en"			"Start mix:\n "
+	}
+
+	"MENU_ABORT"
+	{
+		"en"            "Abort mix\n "
 	}
 }

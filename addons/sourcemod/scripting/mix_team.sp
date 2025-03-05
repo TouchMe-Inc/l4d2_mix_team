@@ -298,25 +298,10 @@ public void OnPluginStart()
 }
 
 /**
- * Called when a console variable value is changed.
- *
- * @param convar            Ignored.
- * @param sOldGameMode      Ignored.
- * @param sNewGameMode      String containing new gamemode.
+ * Called when a gamemode variable value is changed.
  */
-void OnGamemodeChanged(ConVar hConVar, const char[] sOldGameMode, const char[] sNewGameMode) {
-    g_bGamemodeAvailable = IsAvaibleMode(sNewGameMode);
-}
-
-/**
- * Called when the map has loaded, servercfgfile (server.cfg) has been executed, and all
- * plugin configs are done executing. This will always be called once and only once per map.
- * It will be called after OnMapStart().
-*/
-public void OnConfigsExecuted()
-{
-    char sGameMode[16]; GetConVarString(g_cvGameMode, sGameMode, sizeof(sGameMode));
-    g_bGamemodeAvailable = IsAvaibleMode(sGameMode);
+void OnGamemodeChanged(ConVar cv, const char[] szOldGameMode, const char[] szNewGameMode) {
+    g_bGamemodeAvailable = IsAvaibleMode(szNewGameMode);
 }
 
 /**

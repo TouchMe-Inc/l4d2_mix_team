@@ -11,12 +11,12 @@ Plugin adds voting for mixing teams. The mix_team plugin itself does not impleme
 ## Available mix types:
 * `random` - plugin [mt_random](/addons/sourcemod/scripting/mt_random.sp) - Shuffle players with random order.
 * `capitan` - plugin [mt_capitan](/addons/sourcemod/scripting/mt_capitan.sp) - Mix with captains.
-* `exp` - plugin [mt_experience](/addons/sourcemod/scripting/mt_experience.sp) - Mix based on steam stats. (not work)
+* (not work) `exp` - plugin [mt_experience](/addons/sourcemod/scripting/mt_experience.sp) - Mix based on steam stats. 
 
 ## Require
 * Colors
 * [NativeVotesRework](https://github.com/TouchMe-Inc/l4d2_nativevotes_rework)
-* [SteamWorks](https://github.com/hexa-core-eu/SteamWorks) for [mt_experience](/addons/sourcemod/scripting/mt_experience.sp)
+* (Optional. Only for [mt_experience](/addons/sourcemod/scripting/mt_experience.sp)) [SteamWorks](https://github.com/hexa-core-eu/SteamWorks) 
 
 ## Support
 * [Left4DHooks](https://github.com/SilvDev/Left4DHooks)

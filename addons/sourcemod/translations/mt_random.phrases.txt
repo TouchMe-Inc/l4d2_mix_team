@@ -1,0 +1,12 @@
+"Phrases"
+{
+	"VOTE_TITLE"
+	{
+		"en"			"Start randomly mixing teams"
+	}
+
+	"MENU_ITEM"
+	{
+		"en"			"Random mixing of teams"
+	}
+}

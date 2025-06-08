@@ -1,0 +1,77 @@
+"Phrases"
+{
+    "TAG"
+    {
+        "ru"			"<{green}Mix Team{default}> "
+    }
+
+    "CANT_CHANGE_TEAM"
+    {
+        "ru"			"Нельзя менять команду {olive}во время микса"
+    }
+
+    "VOTE_COULDOWN"
+    {
+        "#format"		"{1:d}"
+        "ru"			"Нельзя запустить микс в данный момент, подождите {1} сек"
+    }
+
+    "NOT_ENOUGH_PLAYERS"
+    {
+        "#format"		"{1:d}"
+        "ru"			"Не хватает игроков для микса ({olive}Нужно {1} игрок(ов){default})"
+    }
+
+    "SECOND_HALF_OF_ROUND"
+    {
+        "ru"			"Невозможно запустить микс: доступно в первом раунде"
+    }
+
+    "ROUND_STARTED"
+    {
+        "ru"			"Невозможно запустить микс: раунд уже начался"
+    }
+
+    "PLAYER_DISCONNECTED"
+    {
+        "ru"			"Микс отменён: участник покинул игру"
+    }
+
+    "PLAYER_CHANGED_TEAM"
+    {
+        "#format"		"{1:N}"
+        "ru"			"Микс отменён: участник {olive}{1}{default} сменил команду"
+    }
+
+    "ABORT_MIX_SUCCESS"
+    {
+        "#format"		"{1:N}"
+        "ru"			"Микс отменён: участник {olive}{1}{default} прервал микс"
+    }
+
+    "ABORT_MIX_FAIL"
+    {
+        "#format"		"{1:d}"
+        "ru"			"Микс нельзя прервать сейчас, попробуйте через {1} сек"
+    }
+
+    "ALREADY_IN_PROGRESS"
+    {
+        "ru"			"Микс игроков уже запущено!"
+    }
+
+    "MENU_TITLE"
+    {
+        "ru"			"Начать голосование за:\n "
+    }
+
+    "MENU_TITLE_FORCE"
+    {
+        "ru"			"Запустить микс:\n "
+    }
+
+    "MENU_ABORT"
+    {
+        "ru"			"Прервать микс\n "
+    }
+}

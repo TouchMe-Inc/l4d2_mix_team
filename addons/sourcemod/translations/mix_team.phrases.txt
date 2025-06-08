@@ -1,0 +1,77 @@
+"Phrases"
+{
+	"TAG"
+	{
+		"en"			"<{green}Mix Team{default}> "
+	}
+
+	"CANT_CHANGE_TEAM"
+	{
+		"en"			"You cannot change the team {olive}during the mix"
+	}
+
+	"VOTE_COULDOWN"
+	{
+		"#format"		"{1:d}"
+		"en"			"A vote cannot be called at this moment, try again in a {1} second"
+	}
+	
+	"NOT_ENOUGH_PLAYERS"
+	{
+		"#format"		"{1:d}"
+		"en"			"There are not enough players in the game ({olive}Need {1} players{default})"
+	}
+
+	"SECOND_HALF_OF_ROUND"
+	{
+		"en"			"Impossible to mix: now the second half of the round"
+	}
+
+	"ROUND_STARTED"
+	{
+		"en"			"Impossible to mix: the round has already begun"
+	}
+
+	"PLAYER_DISCONNECTED"
+	{
+		"en"			"Mix rollback: mix member left"
+	}
+
+	"PLAYER_CHANGED_TEAM"
+	{
+		"#format"		"{1:N}"
+		"en"			"Mix rollback: mix member {olive}{1}{default} changed team"
+	}
+
+	"ABORT_MIX_SUCCESS"
+	{
+		"#format"		"{1:N}"
+		"en"			"Mix rollback: mix member {olive}{1} {default}interrupted the mix"
+	}
+
+	"ABORT_MIX_FAIL"
+	{
+		"#format"		"{1:d}"
+		"en"			"The mix cannot be interrupted at at this moment, try again in {1} seconds"
+	}
+
+	"ALREADY_IN_PROGRESS"
+	{
+		"en"			"A mix session is in progress!"
+	}
+
+	"MENU_TITLE"
+	{
+		"en"			"Start voting for the mix:\n "
+	}
+
+	"MENU_TITLE_FORCE"
+	{
+		"en"			"Start mix:\n "
+	}
+
+	"MENU_ABORT"
+	{
+		"en"            "Abort mix\n "
+	}
+}

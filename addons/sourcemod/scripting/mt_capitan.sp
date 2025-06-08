@@ -10,7 +10,7 @@ public Plugin myinfo = {
     name        = "MixTeamCapitan",
     author      = "TouchMe",
     description = "Adds capitan mix",
-    version     = "build_0003",
+    version     = "build_0004",
     url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -25,29 +25,40 @@ public Plugin myinfo = {
 #define TEAM_SURVIVOR           2
 #define TEAM_INFECTED           3
 
-#define STEP_INIT               0
-#define STEP_FIRST_CAPITAN      1
-#define STEP_SECOND_CAPITAN     2
-#define STEP_PICK_PLAYER        3
+/**
+ * Mix flow staps.
+ */
+#define STEP_SELECTION_SURVIVOR_CAPTAIN 1
+#define STEP_SET_SURVIVOR_CAPTAIN 2
+#define STEP_SELECTION_INFECTED_CAPTAIN 3
+#define STEP_SET_INFECTED_CAPTAIN 4
+#define STEP_PICK_PLAYER 5
 
 #define MIN_PLAYERS             6
 
+#define CAPTAIN_SURVIVOR 0
+#define CAPTAIN_INFECTED 1
 
 int
     g_iFirstCapitan = 0,
     g_iSecondCapitan = 0,
-    g_iVoteCount[MAXPLAYERS + 1] = {0, ...},
+    g_iVotesForCaptain[MAXPLAYERS + 1][2],
     g_iOrderPickPlayer = 0
 ;
 
 int g_iThisMixIndex = -1;
 
+ArrayList g_aPlayerPool = null;
+
 /**
  * Called when the plugin is fully initialized
  * and all known external references are resolved.
  */
-public void OnPluginStart() {
+public void OnPluginStart()
+{
     LoadTranslations(TRANSLATIONS);
+
+    g_aPlayerPool = new ArrayList();
 }
 
 public void OnAllPluginsLoaded()
@@ -83,51 +94,140 @@ public Action OnDrawMenuItem(int iMixIndex, int iClient, char[] sTitle, int iLen
  */
 public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewState, bool bIsFail)
 {
-    if (iMixIndex != g_iThisMixIndex || eNewState != MixState_InProgress) {
+    if (iMixIndex != g_iThisMixIndex) {
         return Plugin_Continue;
     }
 
-    Flow(STEP_INIT);
+    if (eNewState == MixState_InProgress)
+    {
+        g_iOrderPickPlayer = 1;
 
-    return Plugin_Stop;
+        g_aPlayerPool.Clear();
+
+        ResetVotesForCaptain();
+
+        for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
+        {
+            if (!IsClientInGame(iPlayer) || !IsMixMember(iPlayer)) {
+                continue;
+            }
+
+            g_aPlayerPool.Push(iPlayer);
+        }
+
+        Flow(STEP_SELECTION_SURVIVOR_CAPTAIN);
+
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
+}
+
+void Flow(int iStep)
+{
+    if (GetMixState() != MixState_InProgress) {
+        return;
+    }
+
+    switch (iStep)
+    {
+        case STEP_SELECTION_SURVIVOR_CAPTAIN:
+        {
+            ShowSelectionCaptainMenu(STEP_SELECTION_SURVIVOR_CAPTAIN, 10);
+            FlowWithDelay(STEP_SET_SURVIVOR_CAPTAIN, 11.0);
+        }
+
+        case STEP_SET_SURVIVOR_CAPTAIN:
+        {
+            g_iFirstCapitan = GetMostVotes(CAPTAIN_SURVIVOR);
+
+            g_aPlayerPool.Erase(g_aPlayerPool.FindValue(g_iFirstCapitan));
+
+            SetClientTeam(g_iFirstCapitan, TEAM_SURVIVOR);
+
+            CPrintToChatAll("%t", "SET_SURVIVOR_CAPTAIN", g_iFirstCapitan, g_iVotesForCaptain[g_iFirstCapitan]);
+
+            Flow(STEP_SELECTION_INFECTED_CAPTAIN);
+        }
+
+        case STEP_SELECTION_INFECTED_CAPTAIN:
+        {
+            ShowSelectionCaptainMenu(STEP_SELECTION_INFECTED_CAPTAIN, 10);
+            FlowWithDelay(STEP_SET_INFECTED_CAPTAIN, 11.0);
+        }
+
+        case STEP_SET_INFECTED_CAPTAIN:
+        {
+            g_iSecondCapitan = GetMostVotes(CAPTAIN_INFECTED);
+
+            g_aPlayerPool.Erase(g_aPlayerPool.FindValue(g_iSecondCapitan));
+
+            SetClientTeam(g_iSecondCapitan, TEAM_INFECTED);
+
+            CPrintToChatAll("%t", "SET_INFECTED_CAPTAIN", g_iSecondCapitan, g_iVotesForCaptain[g_iSecondCapitan]);
+
+            Flow(STEP_PICK_PLAYER);
+        }
+
+        case STEP_PICK_PLAYER:
+        {
+            int iCaptain = (g_iOrderPickPlayer & 2) ? g_iSecondCapitan : g_iFirstCapitan;
+
+            Menu hMenu = null;
+
+            int iSize = g_aPlayerPool.Length;
+
+            if (iSize > 1)
+            {
+                BuildPickPlayersMenu(hMenu, iCaptain);
+                DisplayMenu(hMenu, iCaptain, 1);
+                FlowWithDelay(STEP_PICK_PLAYER, 1.0);
+            }
+
+            else
+            {
+                int iPlayer = g_aPlayerPool.Get(0);
+
+                SetClientTeam(iPlayer, FindSurvivorBot() != -1 ? TEAM_SURVIVOR : TEAM_INFECTED);
+
+                Call_FinishMix();
+            }
+        }
+    }
+}
+
+void FlowWithDelay(int iStep, float fDelay)
+{
+    CreateTimer(fDelay, Timer_NextStep, iStep, .flags = TIMER_FLAG_NO_MAPCHANGE);
 }
 
 /**
   * Builder menu.
   */
-int BuildMenu(Menu &hMenu, int iClient, int iStep)
+void BuildSelectionCaptainMenu(Menu &hMenu, int iClient, int iCaptain)
 {
-    hMenu = CreateMenu(HandleMenu, MenuAction_Select|MenuAction_End);
+    hMenu = CreateMenu(HandleSelectionCaptainMenu, MenuAction_Select|MenuAction_End);
 
-    char sMenuTitle[64];
-
-    switch(iStep)
+    switch (iCaptain)
     {
-        case STEP_FIRST_CAPITAN: FormatEx(sMenuTitle, sizeof(sMenuTitle), "%T", "MENU_TITLE_FIRST_CAPITAN", iClient);
-
-        case STEP_SECOND_CAPITAN: FormatEx(sMenuTitle, sizeof(sMenuTitle), "%T", "MENU_TITLE_SECOND_CAPITAN", iClient);
-
-        case STEP_PICK_PLAYER: FormatEx(sMenuTitle, sizeof(sMenuTitle), "%T", "MENU_TITLE_PICK_TEAMS", iClient);
+        case CAPTAIN_SURVIVOR: hMenu.SetTitle("%T", "MENU_SURVIVOR_CAPTAIN_TITLE", iClient);
+        case CAPTAIN_INFECTED: hMenu.SetTitle("%T", "MENU_INFECTED_CAPTAIN_TITLE", iClient);
     }
 
-    hMenu.SetTitle(sMenuTitle);
+    int iSize = g_aPlayerPool.Length;
+    char szPlayerInfo[6], szPlayerName[32];
 
-    char sPlayerInfo[6], sPlayerName[32];
-    for (int iPlayer = 1; iPlayer <= MaxClients; iPlayer++)
+    for (int i = 0; i < iSize; i++)
     {
-        if (!IsClientInGame(iPlayer) || !IsClientSpectator(iPlayer) || !IsMixMember(iPlayer) || iClient == iPlayer) {
-            continue;
-        }
+        int iPlayer = g_aPlayerPool.Get(i);
 
-        FormatEx(sPlayerInfo, sizeof(sPlayerInfo), "%d %d", iStep, iPlayer);
-        GetClientName(iPlayer, sPlayerName, sizeof(sPlayerName));
+        FormatEx(szPlayerInfo, sizeof(szPlayerInfo), "%d %d", iCaptain, iPlayer);
+        GetClientName(iPlayer, szPlayerName, sizeof(szPlayerName));
 
-        AddMenuItem(hMenu, sPlayerInfo, sPlayerName);
+        AddMenuItem(hMenu, szPlayerInfo, szPlayerName);
     }
 
     SetMenuExitButton(hMenu, false);
-
-    return hMenu.ItemCount;
 }
 
 /**
@@ -138,41 +238,109 @@ int BuildMenu(Menu &hMenu, int iClient, int iStep)
  * @param iClient     Client index.
  * @param iIndex      Item index.
  */
-public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
+public int HandleSelectionCaptainMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
 {
-    switch(iAction)
+    switch (iAction)
     {
-        case MenuAction_End: CloseHandle(hMenu);
+        case MenuAction_End: delete hMenu;
 
         case MenuAction_Select:
         {
-            char sInfo[6];
-            hMenu.GetItem(iIndex, sInfo, sizeof(sInfo));
+            char szInfo[6];
+            hMenu.GetItem(iIndex, szInfo, sizeof(szInfo));
 
-            char sStep[2], sClient[3];
-            BreakString(sInfo[BreakString(sInfo, sStep, sizeof(sStep))], sClient, sizeof(sClient));
+            char szCaptain[2], szClient[3];
+            BreakString(szInfo[BreakString(szInfo, szCaptain, sizeof(szCaptain))], szClient, sizeof(szClient));
 
-            int iStep = StringToInt(sStep);
-            int iTarget = StringToInt(sClient);
+            int iTarget = StringToInt(szClient);
+            int iCaptain = StringToInt(szCaptain);
 
-            if (iStep == STEP_FIRST_CAPITAN || iStep == STEP_SECOND_CAPITAN) {
-                g_iVoteCount[iTarget] ++;
-            }
+            g_iVotesForCaptain[iTarget][iCaptain] ++;
+        }
+    }
 
-            if (iStep == STEP_PICK_PLAYER)
+    return 0;
+}
+
+/**
+  * Builder menu.
+  */
+void BuildPickPlayersMenu(Menu &hMenu, int iClient)
+{
+    hMenu = CreateMenu(HandleickPlayersMenu, MenuAction_Select|MenuAction_End);
+
+    hMenu.SetTitle("%T", "MENU_PICK_PLAYERS_TITLE", iClient);
+
+    int iSize = g_aPlayerPool.Length;
+    char szPlayerInfo[6], szPlayerName[32];
+
+    for (int i = 0; i < iSize; i++)
+    {
+        int iPlayer = g_aPlayerPool.Get(i);
+
+        FormatEx(szPlayerInfo, sizeof(szPlayerInfo), "%d", iPlayer);
+        GetClientName(iPlayer, szPlayerName, sizeof(szPlayerName));
+
+        AddMenuItem(hMenu, szPlayerInfo, szPlayerName);
+    }
+
+    SetMenuExitButton(hMenu, false);
+}
+
+/**
+ * Menu item selection handler.
+ *
+ * @param hMenu       Menu ID.
+ * @param iAction     Param description.
+ * @param iClient     Client index.
+ * @param iIndex      Item index.
+ */
+public int HandleickPlayersMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
+{
+    switch(iAction)
+    {
+        case MenuAction_End: delete hMenu;
+
+        case MenuAction_Select:
+        {
+            char szInfo[6];
+            hMenu.GetItem(iIndex, szInfo, sizeof(szInfo));
+
+            char szStep[2], szClient[3];
+            BreakString(szInfo[BreakString(szInfo, szStep, sizeof(szStep))], szClient, sizeof(szClient));
+
+            int iTarget = StringToInt(szClient);
+
+            int iPlayerPoolIdx = g_aPlayerPool.FindValue(iTarget);
+
+            switch (!(g_iOrderPickPlayer & 2) ? CAPTAIN_INFECTED : CAPTAIN_SURVIVOR)
             {
-                bool bIsOrderPickFirstCapitan = !(g_iOrderPickPlayer & 2);
-
-                if (bIsOrderPickFirstCapitan && IsFirstCapitan(iClient))
+                case CAPTAIN_SURVIVOR:
                 {
+                    if (!IsSurvivorCapitan(iClient)) {
+                        return 0;
+                    }
+
+                    if (iPlayerPoolIdx != -1) {
+                        g_aPlayerPool.Erase(iIndex);
+                    }
+
                     SetClientTeam(iTarget, TEAM_SURVIVOR);
                     CPrintToChatAll("%t", "PICK_SURVIVOR_TEAM", iClient, iTarget);
 
                     g_iOrderPickPlayer ++;
                 }
 
-                else if (!bIsOrderPickFirstCapitan && IsSecondCapitan(iClient))
+                case CAPTAIN_INFECTED:
                 {
+                    if (!IsInfectedCapitan(iClient)) {
+                        return 0;
+                    }
+
+                    if (iPlayerPoolIdx != -1) {
+                        g_aPlayerPool.Erase(iIndex);
+                    }
+
                     SetClientTeam(iTarget, TEAM_INFECTED);
                     CPrintToChatAll("%t", "PICK_INFECTED_TEAM", iClient, iTarget);
 
@@ -185,129 +353,41 @@ public int HandleMenu(Menu hMenu, MenuAction iAction, int iClient, int iIndex)
     return 0;
 }
 
-void Flow(int iStep)
-{
-    switch(iStep)
-    {
-        case STEP_INIT:
-        {
-            g_iOrderPickPlayer = 1;
-
-            ResetVoteCount();
-            DisplayMenuAll(STEP_FIRST_CAPITAN, 10);
-
-            CreateTimer(11.0, NextStepTimer, STEP_FIRST_CAPITAN);
-        }
-
-        case STEP_FIRST_CAPITAN:
-        {
-            int iFirstCapitan = GetVoteWinner();
-
-            SetClientTeam((g_iFirstCapitan = iFirstCapitan), TEAM_SURVIVOR);
-
-            CPrintToChatAll("%t", "NEW_FIRST_CAPITAN", iFirstCapitan, g_iVoteCount[iFirstCapitan]);
-
-            ResetVoteCount();
-
-            CreateTimer(11.0, NextStepTimer, STEP_SECOND_CAPITAN);
-
-            DisplayMenuAll(STEP_SECOND_CAPITAN, 10);
-        }
-
-        case STEP_SECOND_CAPITAN:
-        {
-            int iSecondCapitan = GetVoteWinner();
-
-            SetClientTeam((g_iSecondCapitan = iSecondCapitan), TEAM_INFECTED);
-
-            CPrintToChatAll("%t", "NEW_SECOND_CAPITAN", iSecondCapitan, g_iVoteCount[iSecondCapitan]);
-
-            Flow(STEP_PICK_PLAYER);
-        }
-
-        case STEP_PICK_PLAYER:
-        {
-            int iCapitan = (g_iOrderPickPlayer & 2) ? g_iSecondCapitan : g_iFirstCapitan;
-
-            Menu hMenu;
-
-            if (BuildMenu(hMenu, iCapitan, iStep) > 1)
-            {
-                CreateTimer(1.0, NextStepTimer, iStep);
-
-                DisplayMenu(hMenu, iCapitan, 1);
-            }
-
-            else
-            {
-                if (hMenu != null) {
-                    delete hMenu;
-                }
-
-                // auto-pick last player
-                for (int iClient = 1; iClient <= MaxClients; iClient++)
-                {
-                    if (!IsClientInGame(iClient) || !IsClientSpectator(iClient) || !IsMixMember(iClient)) {
-                        continue;
-                    }
-
-                    SetClientTeam(iClient, FindSurvivorBot() != -1 ? TEAM_SURVIVOR : TEAM_INFECTED);
-                    break;
-                }
-
-                Call_FinishMix();
-            }
-        }
-    }
-}
-
 /**
  * Timer.
  */
-public Action NextStepTimer(Handle hTimer, int iStep)
+Action Timer_NextStep(Handle hTimer, int iStep)
 {
-    if (GetMixState() != MixState_InProgress) {
-        return Plugin_Stop;
-    }
-
     Flow(iStep);
 
     return Plugin_Stop;
 }
 
-bool DisplayMenuAll(int iStep, int iTime)
+void ShowSelectionCaptainMenu(int iCaptain, int iTime)
 {
-    Menu hMenu;
+    Menu hMenu = null;
 
-    for (int iClient = 1; iClient <= MaxClients; iClient++)
+    int iSize = g_aPlayerPool.Length;
+
+    for (int i = 0; i < iSize; i++)
     {
-        if (!IsClientInGame(iClient) || !IsClientSpectator(iClient) || !IsMixMember(iClient)) {
-            continue;
-        }
+        int iClient = g_aPlayerPool.Get(i);
 
-        if (!BuildMenu(hMenu, iClient, iStep))
-        {
-            if (hMenu != null) {
-                CloseHandle(hMenu);
-            }
-
-            return false;
-        }
+        BuildSelectionCaptainMenu(hMenu, iClient, iCaptain);
 
         DisplayMenu(hMenu, iClient, iTime);
     }
-
-    return true;
 }
 
 /**
  * Resetting voting results.
  */
-void ResetVoteCount()
+void ResetVotesForCaptain()
 {
     for (int iClient = 1; iClient <= MaxClients; iClient++)
     {
-        g_iVoteCount[iClient] = 0;
+        g_iVotesForCaptain[iClient][CAPTAIN_SURVIVOR] = 0;
+        g_iVotesForCaptain[iClient][CAPTAIN_INFECTED] = 0;
     }
 }
 
@@ -316,21 +396,17 @@ void ResetVoteCount()
  *
  * @return            Winner index
  */
-int GetVoteWinner()
+int GetMostVotes(int iCaptain)
 {
-    int iWinner = -1;
+    int iWinner = g_aPlayerPool.Get(0);
 
-    for (int iClient = 1; iClient <= MaxClients; iClient++)
+    int iSize = g_aPlayerPool.Length;
+
+    for (int i = 1; i < iSize; i++)
     {
-        if (!IsClientInGame(iClient) || !IsClientSpectator(iClient) || !IsMixMember(iClient)) {
-            continue;
-        }
+        int iClient = g_aPlayerPool.Get(i);
 
-        if (iWinner == -1) {
-            iWinner = iClient;
-        }
-
-        else if (g_iVoteCount[iWinner] < g_iVoteCount[iClient]) {
+        if (g_iVotesForCaptain[iWinner][iCaptain] < g_iVotesForCaptain[iClient][iCaptain]) {
             iWinner = iClient;
         }
     }
@@ -338,11 +414,11 @@ int GetVoteWinner()
     return iWinner;
 }
 
-bool IsFirstCapitan(int iClient) {
+bool IsSurvivorCapitan(int iClient) {
     return g_iFirstCapitan == iClient;
 }
 
-bool IsSecondCapitan(int iClient) {
+bool IsInfectedCapitan(int iClient) {
     return g_iSecondCapitan == iClient;
 }
 
@@ -363,8 +439,4 @@ int FindSurvivorBot()
     }
 
     return -1;
-}
-
-bool IsClientSpectator(int iClient) {
-    return (GetClientTeam(iClient) == TEAM_SPECTATOR);
 }

@@ -15,7 +15,7 @@ public Plugin myinfo = {
     name        = "MixTeam",
     author      = "TouchMe",
     description = "Adds an API for mix in versus mode",
-    version     = "build_0010",
+    version     = "build_0011",
     url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -30,12 +30,17 @@ public Plugin myinfo = {
  */
 #define GAMEMODE_VERSUS         "versus"
 #define GAMEMODE_VERSUS_REALISM "mutation12"
-#define GAMEMODE_SCAVENGE "scavenge"
+#define GAMEMODE_SCAVENGE       "scavenge"
 
-// Other
+/**
+ * Phrases.
+ */
 #define TRANSLATIONS            "mix_team.phrases"
-#define VOTE_TIME               15
 
+/**
+ * Timers.
+ */
+#define VOTE_TIME               15
 
 /**
  * Teams.
@@ -473,12 +478,6 @@ Action Cmd_RunMix(int iClient, int iArgs)
         return Plugin_Handled;
     }
 
-    if (IsMixStateInProgress())
-    {
-        CPrintToChat(iClient, "%T%T", "TAG", iClient, "ALREADY_IN_PROGRESS", iClient);
-        return Plugin_Handled;
-    }
-
     if (!GetArraySize(g_hMixList))
     {
         CPrintToChat(iClient, "%T%T", "TAG", iClient, "NOT_FOUND", iClient);
@@ -498,7 +497,7 @@ void ShowMixMenu(int iClient, bool bForce)
 
     char szItemData[8], szItemName[64];
 
-    FormatEx(szItemData, sizeof(szItemData), "%d", bForce);
+    FormatEx(szItemData, sizeof(szItemData), "%d -1", bForce);
     FormatEx(szItemName, sizeof(szItemName), "%T", "MENU_ABORT", iClient);
     AddMenuItem(hMenu, szItemData, szItemName, IsMixStateInProgress() ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
 
@@ -525,17 +524,21 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
             char szItemData[8], szForce[1];
             GetMenuItem(hMenu, iItem, szItemData, sizeof(szItemData));
 
-            if (iItem == 0)
-            {
-                bool bForce = view_as<bool>(StringToInt(szForce));
+            char szMixIndex[3];
+            BreakString(szItemData[BreakString(szItemData, szForce, sizeof(szForce))], szMixIndex, sizeof(szMixIndex));
 
+            bool bForce = view_as<bool>(StringToInt(szForce));
+            int iMixIndex = StringToInt(szMixIndex);
+
+            if (iMixIndex == -1)
+            {
                 if (!IsMixStateInProgress())
                 {
                     ShowMixMenu(iClient, bForce);
                     return 0;
                 }
 
-                if (!g_bClientMixMember[iClient])
+                if (!g_bClientMixMember[iClient] && !bForce)
                 {
                     ShowMixMenu(iClient, bForce);
                     return 0;
@@ -558,11 +561,11 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
                 return 0;
             }
 
-            char szMixIndex[3];
-            BreakString(szItemData[BreakString(szItemData, szForce, sizeof(szForce))], szMixIndex, sizeof(szMixIndex));
-
-            bool bForce = view_as<bool>(StringToInt(szForce));
-            int iMixIndex = StringToInt(szMixIndex);
+            if (IsMixStateInProgress())
+            {
+                CPrintToChat(iClient, "%T%T", "TAG", iClient, "ALREADY_IN_PROGRESS", iClient);
+                return 0;
+            }
 
             if (!NativeVotes_IsNewVoteAllowed())
             {
@@ -638,12 +641,6 @@ Action Cmd_ForceMix(int iClient, int iArgs)
     if (IsRoundStarted())
     {
         CPrintToChat(iClient, "%T%T", "TAG", iClient, "ROUND_STARTED", iClient);
-        return Plugin_Handled;
-    }
-
-    if (IsMixStateInProgress())
-    {
-        CPrintToChat(iClient, "%T%T", "TAG", iClient, "ALREADY_IN_PROGRESS", iClient);
         return Plugin_Handled;
     }
 

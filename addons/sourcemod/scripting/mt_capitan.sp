@@ -133,7 +133,7 @@ void Flow(int iStep)
     {
         case STEP_SELECTION_SURVIVOR_CAPTAIN:
         {
-            ShowSelectionCaptainMenu(STEP_SELECTION_SURVIVOR_CAPTAIN, 10);
+            ShowSelectionCaptainMenu(CAPTAIN_SURVIVOR, 10);
             FlowWithDelay(STEP_SET_SURVIVOR_CAPTAIN, 11.0);
         }
 
@@ -152,7 +152,7 @@ void Flow(int iStep)
 
         case STEP_SELECTION_INFECTED_CAPTAIN:
         {
-            ShowSelectionCaptainMenu(STEP_SELECTION_INFECTED_CAPTAIN, 10);
+            ShowSelectionCaptainMenu(CAPTAIN_INFECTED, 10);
             FlowWithDelay(STEP_SET_INFECTED_CAPTAIN, 11.0);
         }
 

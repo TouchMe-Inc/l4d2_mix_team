@@ -15,7 +15,7 @@ public Plugin myinfo = {
     name        = "MixTeam",
     author      = "TouchMe",
     description = "Adds an API for mix in versus mode",
-    version     = "build_0011",
+    version     = "build_0012",
     url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -80,7 +80,7 @@ MixState g_eMixState = MixState_None;
 int
     g_iMixIndex = INVALID_INDEX,
     g_iAbortDelay = 0,
-    g_iClientTeamBeforePlayerMix[MAXPLAYERS + 1];
+    g_iClientTeamBeforeMix[MAXPLAYERS + 1];
 
 bool
     g_bDHookAvailable = false,
@@ -136,15 +136,15 @@ public void OnLibraryRemoved(const char[] sName)
  *
  * @param myself            Handle to the plugin.
  * @param late              Whether or not the plugin was loaded "late" (after map load).
- * @param error             Error message buffer in case load failed.
- * @param err_max           Maximum number of characters for error message buffer.
+ * @param szErr             Error message buffer in case load failed.
+ * @param iErrLength        Maximum number of characters for szErr message buffer.
  * @return                  APLRes_Success | APLRes_SilentFailure.
  */
-public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] szErr, int iErrLength)
 {
     if (GetEngineVersion() != Engine_Left4Dead2)
     {
-        strcopy(error, err_max, "Plugin only supports Left 4 Dead 2.");
+        strcopy(szErr, iErrLength, "Plugin only supports Left 4 Dead 2.");
         return APLRes_SilentFailure;
     }
 
@@ -155,6 +155,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("GetMixState", Native_GetMixState);
     CreateNative("GetMixIndex", Native_GetMixIndex);
     CreateNative("IsMixMember", Native_IsMixMember);
+    CreateNative("GetClientPrevTeam", Native_GetClientPrevTeam);
     CreateNative("SetClientTeam", Native_SetClientTeam);
 
     // Forwards.
@@ -240,7 +241,7 @@ int Native_FinishMix(Handle hPlugin, int iParams)
         ThrowNativeError(SP_ERROR_NATIVE, "Call native without mix");
     }
 
-    FinishPlayerMix();
+    SetMixState(MixState_None);
     return 0;
 }
 
@@ -259,7 +260,21 @@ int Native_IsMixMember(Handle hPlugin, int iParams)
 }
 
 /**
- * Sets a command to a player.
+ * Get prev player team.
+ *
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
+ * @return                  g_iClientTeamBeforeMix.
+ */
+int Native_GetClientPrevTeam(Handle hPlugin, int iParams)
+{
+    int iClient = GetNativeCell(1);
+
+    return g_iClientTeamBeforeMix[iClient];
+}
+
+/**
+ * Sets team to player.
  *
  * @param hPlugin           Handle to the plugin.
  * @param iParams           Number of parameters.
@@ -605,7 +620,7 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
                 if (IsValidTeam(iTeam))
                 {
                     g_bClientMixMember[iPlayer] = true;
-                    g_iClientTeamBeforePlayerMix[iPlayer] = iTeam;
+                    g_iClientTeamBeforeMix[iPlayer] = iTeam;
                 }
             }
 
@@ -713,7 +728,6 @@ public Action HandlerVoteMix(NativeVote hVote, VoteAction tAction, int iParam1, 
                 hVote.DisplayFail();
 
                 SetMixState(MixState_None);
-                g_iMixIndex = INVALID_INDEX;
 
                 return Plugin_Continue;
             }
@@ -736,17 +750,8 @@ void RunPlayerMix()
     SetAllClientSpectator();
 
     if (SetMixState(MixState_InProgress) == Plugin_Continue) {
-        FinishPlayerMix();
+        SetMixState(MixState_None, false);
     }
-}
-
-/**
- * Initiation of the end of the command mix.
- */
-void FinishPlayerMix()
-{
-    SetMixState(MixState_None, false);
-    g_iMixIndex = INVALID_INDEX;
 }
 
 /**
@@ -755,7 +760,6 @@ void FinishPlayerMix()
 void AbortPlayerMix()
 {
     SetMixState(MixState_None, true);
-    g_iMixIndex = INVALID_INDEX;
 
     SetAllClientSpectator();
 
@@ -769,7 +773,7 @@ void AbortPlayerMix()
             continue;
         }
 
-        SetupClientTeam(iClient, g_iClientTeamBeforePlayerMix[iClient]);
+        SetupClientTeam(iClient, g_iClientTeamBeforeMix[iClient]);
     }
 }
 
@@ -837,6 +841,10 @@ Action SetMixState(MixState eNewMixState, bool bIsFail = false)
     {
         aReturn = ExecuteForward_OnChangMixState(g_iMixIndex, g_eMixState, eNewMixState, bIsFail);
         g_eMixState = eNewMixState;
+    }
+
+    if (g_eMixState == MixState_None) {
+        g_iMixIndex = INVALID_INDEX;
     }
 
     return aReturn;

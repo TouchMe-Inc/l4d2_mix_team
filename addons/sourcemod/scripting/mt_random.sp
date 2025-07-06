@@ -9,7 +9,7 @@ public Plugin myinfo = {
     name        = "MixTeamRandom",
     author      = "TouchMe",
     description = "Adds random mix",
-    version     = "build_0006",
+    version     = "build_0007",
     url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -77,9 +77,9 @@ public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewS
             continue;
         }
 
-        switch (GetClientTeam(iClient))
+        switch (GetClientPrevTeam(iClient))
         {
-            case TEAM_SURVIVOR:  PushArrayCell(hSurvivorTeam, iClient);
+            case TEAM_SURVIVOR: PushArrayCell(hSurvivorTeam, iClient);
 
             case TEAM_INFECTED: PushArrayCell(hInfectedTeam, iClient);
         }
@@ -157,8 +157,8 @@ public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewS
  */
 void MergeArrays(Handle hDst, Handle hSrc)
 {
-    int count = GetArraySize(hSrc);
-    for (int iIdx = 0; iIdx < count; iIdx ++) {
+    int iSize = GetArraySize(hSrc);
+    for (int iIdx = 0; iIdx < iSize; iIdx ++) {
         PushArrayCell(hDst, GetArrayCell(hSrc, iIdx));
     }
 }

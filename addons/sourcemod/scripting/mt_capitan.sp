@@ -10,7 +10,7 @@ public Plugin myinfo = {
     name        = "MixTeamCapitan",
     author      = "TouchMe",
     description = "Adds capitan mix",
-    version     = "build_0004",
+    version     = "build_0005",
     url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -36,8 +36,8 @@ public Plugin myinfo = {
 
 #define MIN_PLAYERS             6
 
-#define CAPTAIN_SURVIVOR 0
-#define CAPTAIN_INFECTED 1
+#define CAPTAIN_SURVIVOR        0
+#define CAPTAIN_INFECTED        1
 
 int
     g_iFirstCapitan = 0,
@@ -215,7 +215,7 @@ void BuildSelectionCaptainMenu(Menu &hMenu, int iClient, int iCaptain)
     }
 
     int iSize = g_aPlayerPool.Length;
-    char szPlayerInfo[6], szPlayerName[32];
+    char szPlayerInfo[8], szPlayerName[32];
 
     for (int i = 0; i < iSize; i++)
     {
@@ -246,10 +246,10 @@ public int HandleSelectionCaptainMenu(Menu hMenu, MenuAction iAction, int iClien
 
         case MenuAction_Select:
         {
-            char szInfo[6];
+            char szInfo[8];
             hMenu.GetItem(iIndex, szInfo, sizeof(szInfo));
 
-            char szCaptain[2], szClient[3];
+            char szCaptain[3], szClient[3];
             BreakString(szInfo[BreakString(szInfo, szCaptain, sizeof(szCaptain))], szClient, sizeof(szClient));
 
             int iTarget = StringToInt(szClient);
@@ -303,10 +303,10 @@ public int HandleickPlayersMenu(Menu hMenu, MenuAction iAction, int iClient, int
 
         case MenuAction_Select:
         {
-            char szInfo[6];
+            char szInfo[8];
             hMenu.GetItem(iIndex, szInfo, sizeof(szInfo));
 
-            char szStep[2], szClient[3];
+            char szStep[3], szClient[3];
             BreakString(szInfo[BreakString(szInfo, szStep, sizeof(szStep))], szClient, sizeof(szClient));
 
             int iTarget = StringToInt(szClient);

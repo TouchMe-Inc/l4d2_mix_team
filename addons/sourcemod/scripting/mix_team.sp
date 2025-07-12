@@ -15,7 +15,7 @@ public Plugin myinfo = {
     name        = "MixTeam",
     author      = "TouchMe",
     description = "Adds an API for mix in versus mode",
-    version     = "build_0012",
+    version     = "build_0013",
     url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -511,7 +511,6 @@ void ShowMixMenu(int iClient, bool bForce)
     SetMenuTitle(hMenu, "%T", bForce ? "MENU_TITLE_FORCE" : "MENU_TITLE", iClient);
 
     char szItemData[8], szItemName[64];
-
     FormatEx(szItemData, sizeof(szItemData), "%d -1", bForce);
     FormatEx(szItemName, sizeof(szItemName), "%T", "MENU_ABORT", iClient);
     AddMenuItem(hMenu, szItemData, szItemName, IsMixStateInProgress() ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
@@ -536,7 +535,7 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
 
         case MenuAction_Select:
         {
-            char szItemData[8], szForce[1];
+            char szItemData[8], szForce[2];
             GetMenuItem(hMenu, iItem, szItemData, sizeof(szItemData));
 
             char szMixIndex[3];
@@ -586,7 +585,7 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
             {
                 CPrintToChat(iClient, "%T%T", "TAG", iClient, "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
 
-                ShowMixMenu(iClient, .bForce = bForce);
+                ShowMixMenu(iClient, bForce);
                 return 0;
             }
 
@@ -597,7 +596,7 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
             {
                 CPrintToChat(iClient, "%T%T", "TAG", iClient, "NOT_ENOUGH_PLAYERS", iClient, iMinPlayers);
 
-                ShowMixMenu(iClient, .bForce = bForce);
+                ShowMixMenu(iClient, bForce);
                 return 0;
             }
 
@@ -839,8 +838,9 @@ Action SetMixState(MixState eNewMixState, bool bIsFail = false)
 
     if (g_eMixState != eNewMixState)
     {
-        aReturn = ExecuteForward_OnChangMixState(g_iMixIndex, g_eMixState, eNewMixState, bIsFail);
+        MixState eOldMixState = g_eMixState;
         g_eMixState = eNewMixState;
+        aReturn = ExecuteForward_OnChangMixState(g_iMixIndex, eOldMixState, eNewMixState, bIsFail);
     }
 
     if (g_eMixState == MixState_None) {

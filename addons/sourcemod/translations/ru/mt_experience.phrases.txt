@@ -1,0 +1,30 @@
+"Phrases"
+{
+    "VOTE_TITLE"
+    {
+        "ru"            "Начать балансировку команд по рейтингу игроков"
+    }
+
+    "MENU_ITEM"
+    {
+        "ru"            "Умная балансировка команд (по рейтингу)"
+    }
+
+    "PLAYER_UNKNOWN_RATING"
+    {
+        "#format"       "{1:N}"
+        "ru"            "Невозможно продолжить: у игрока {olive}{1}{default} отсутствует корректный рейтинг"
+    }
+
+    "PLAYER_NOW_SURVIVOR"
+    {
+        "#format"       "{1:N},{2:.1f}"
+        "ru"            "Игрок {olive}{1}{default} ({green}{2}{default} pts) теперь {olive}выживший"
+    }
+
+    "PLAYER_NOW_INFECTED"
+    {
+        "#format"       "{1:N},{2:.1f}"
+        "ru"            "Игрок {olive}{1}{default} ({green}{2}{default} pts) теперь {olive}заражённый"
+    }
+}

@@ -1,51 +1,61 @@
 "Phrases"
 {
     "VOTE_TITLE"
-	{
-		"en"			"Start mixing teams with captains"
-	}
+    {
+        "en"			"Start shuffling teams with captains"
+    }
 
-	"MENU_ITEM"
-	{
-		"en"			"Mixing teams with captains"
-	}
+    "MENU_ITEM"
+    {
+        "en"			"Shuffle teams with captains"
+    }
 
-	"NEW_FIRST_CAPITAN"
-	{
-		"#format"		"{1:N},{2:d}"
-		"en"			"Team {blue}survivors {default}captain {green}{1} {default}(votes {2})"
-	}
+    "SELECTION_SURVIVOR_CAPTAIN"
+    {
+        "en"			"The selection of the captain of the {blue}survivor{default} team has begun"
+    }
 
-	"NEW_SECOND_CAPITAN"
-	{
-		"#format"		"{1:N},{2:d}"
-		"en"			"Team {red}infected {olive}captain {green}{1} {default}(votes {2})"
-	}
+    "SET_SURVIVOR_CAPTAIN"
+    {
+        "#format"		"{1:N},{2:d}"
+        "en"			"Team {blue}survivors{default} captain {olive}{1} {default}(votes {2})"
+    }
 
-	"PICK_SURVIVOR_TEAM"
-	{
-		"#format"		"{1:N},{2:N}"
-		"en"			"The captain {blue}{1} {default}chose the player {green}{2}"
-	}
+    "SELECTION_INFECTED_CAPTAIN"
+    {
+        "en"			"The selection of the captain of the {red}infected{default} team has begun"
+    }
 
-	"PICK_INFECTED_TEAM"
-	{
-		"#format"		"{1:N},{2:N}"
-		"en"			"The captain {red}{1} {default}chose the player {green}{2}"
-	}
+    "SET_INFECTED_CAPTAIN"
+    {
+        "#format"		"{1:N},{2:d}"
+        "en"			"Team {red}infected{default} captain {olive}{1} {default}(votes {2})"
+    }
 
-	"MENU_TITLE_FIRST_CAPITAN"
-	{
-		"en"			"Choose a first team captain"
-	}
+    "PICK_SURVIVOR_TEAM"
+    {
+        "#format"		"{1:N},{2:N}"
+        "en"			"The captain {blue}{1}{default} chose the player {green}{2}"
+    }
 
-	"MENU_TITLE_SECOND_CAPITAN"
-	{
-		"en"			"Choose a second team captain"
-	}
+    "PICK_INFECTED_TEAM"
+    {
+        "#format"		"{1:N},{2:N}"
+        "en"			"The captain {red}{1}{default} chose the player {green}{2}"
+    }
 
-	"MENU_TITLE_PICK_TEAMS"
-	{
-		"en"			"Choose an ally"
-	}
+    "MENU_SURVIVOR_CAPTAIN_TITLE"
+    {
+        "en"			"Choose a survivor team captain"
+    }
+
+    "MENU_INFECTED_CAPTAIN_TITLE"
+    {
+        "en"			"Choose an infected team captain"
+    }
+
+    "MENU_PICK_PLAYERS_TITLE"
+    {
+        "en"			"Choose an ally"
+    }
 }

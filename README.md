@@ -9,9 +9,9 @@ Plugin adds voting for mixing teams. The mix_team plugin itself does not impleme
 * `!fmix` - Show menu with mixtypes. Run without vote (Admin only with flag BAN).
 
 ## Available mix types:
-* `random` - plugin [mt_random](/addons/sourcemod/scripting/mt_random.sp) - Shuffle players with random order.
-* `capitan` - plugin [mt_capitan](/addons/sourcemod/scripting/mt_capitan.sp) - Mix with captains.
-* (not work) `exp` - plugin [mt_experience](/addons/sourcemod/scripting/mt_experience.sp) - Mix based on steam stats. 
+* [mt_random](/addons/sourcemod/scripting/mt_random.sp) - Shuffle players with random order.
+* [mt_capitan](/addons/sourcemod/scripting/mt_capitan.sp) - Mix with captains.
+* [mt_experience](/addons/sourcemod/scripting/mt_experience.sp) - Mix based on steam stats. 
 
 ## Require
 * Colors
@@ -20,3 +20,6 @@ Plugin adds voting for mixing teams. The mix_team plugin itself does not impleme
 
 ## Support
 * [Left4DHooks](https://github.com/SilvDev/Left4DHooks)
+
+## Credits
+- Monsgeek - Testing/Issue Reporting

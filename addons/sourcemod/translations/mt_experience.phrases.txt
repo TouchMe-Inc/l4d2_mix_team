@@ -1,0 +1,30 @@
+"Phrases"
+{
+    "VOTE_TITLE"
+    {
+        "en"            "Start balancing teams by player rating"
+    }
+
+    "MENU_ITEM"
+    {
+        "en"            "Smart team balancing (by rating)"
+    }
+
+    "PLAYER_UNKNOWN_RATING"
+    {
+        "#format"       "{1:N}"
+        "en"            "Cannot continue: player {olive}{1}{default} has no valid rating"
+    }
+
+    "PLAYER_NOW_SURVIVOR"
+    {
+        "#format"       "{1:N},{2:.1f}"
+        "en"            "Player {olive}{1}{default} ({green}{2}{default} pts) is now {olive}survivor"
+    }
+
+    "PLAYER_NOW_INFECTED"
+    {
+        "#format"       "{1:N},{2:.1f}"
+        "en"            "Player {olive}{1}{default} ({green}{2}{default} pts) is now {olive}infected"
+    }
+}

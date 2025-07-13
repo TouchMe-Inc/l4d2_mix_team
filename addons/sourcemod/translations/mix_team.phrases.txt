@@ -24,23 +24,23 @@
 
 	"SECOND_HALF_OF_ROUND"
 	{
-		"en"			"Impossible to mix: now the second half of the round"
+		"en"			"Mixing is impossible: now in the second half of the round"
 	}
 
 	"ROUND_STARTED"
 	{
-		"en"			"Impossible to mix: the round has already begun"
+		"en"			"Mixing is impossible: the round has already begun"
 	}
 
 	"PLAYER_DISCONNECTED"
 	{
-		"en"			"Mix rollback: mix member left"
+		"en"			"Mix rollback: a mix member has left"
 	}
 
 	"PLAYER_CHANGED_TEAM"
 	{
 		"#format"		"{1:N}"
-		"en"			"Mix rollback: mix member {olive}{1}{default} changed team"
+		"en"			"Mix rollback: mix member {olive}{1}{default} has changed team"
 	}
 
 	"ABORT_MIX_SUCCESS"
@@ -52,7 +52,7 @@
 	"ABORT_MIX_FAIL"
 	{
 		"#format"		"{1:d}"
-		"en"			"The mix cannot be interrupted at at this moment, try again in {1} seconds"
+		"en"			"The mix cannot be interrupted at this moment, try again in {1} seconds"
 	}
 
 	"ALREADY_IN_PROGRESS"

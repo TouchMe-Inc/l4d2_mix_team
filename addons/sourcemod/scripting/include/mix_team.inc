@@ -85,7 +85,7 @@ native bool IsMixMember(int iClient);
  *
  * @return              Returns the player's last command before mixing
  **/
-native int GetLastTeam(int iClient);
+native int GetClientPrevTeam(int iClient);
 
 /**
  * @brief Sets the player's team
@@ -134,7 +134,7 @@ public void __pl_mix_team_SetNTVOptional()
 	MarkNativeAsOptional("GetMixState");
 	MarkNativeAsOptional("GetMixIndex");
 	MarkNativeAsOptional("IsMixMember");
-	MarkNativeAsOptional("GetLastTeam");
+	MarkNativeAsOptional("GetClientPrevTeam");
 	MarkNativeAsOptional("SetClientTeam");
 }
 #endif

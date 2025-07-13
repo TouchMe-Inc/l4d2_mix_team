@@ -2,50 +2,60 @@
 {
     "VOTE_TITLE"
     {
-        "ru"			"Выбрать капитанов для смешивания команд?"
+        "ru"            "Начать перемешивание команд с капитанами"
     }
 
     "MENU_ITEM"
     {
-        "ru"			"Смешать команды выбором капитанов"
+        "ru"            "Перемешать команды с капитанами"
     }
 
-    "NEW_FIRST_CAPITAN"
+    "SELECTION_SURVIVOR_CAPTAIN"
     {
-        "#format"		"{1:N},{2:d}"
-        "ru"			"Капитаном команды {blue}выживших {default} выбран {green}{1} {default}(Голосов {2})"
+        "ru"            "Начался выбор капитана команды {blue}выживших{default}"
     }
 
-    "NEW_SECOND_CAPITAN"
+    "SET_SURVIVOR_CAPTAIN"
     {
-        "#format"		"{1:N},{2:d}"
-        "ru"			"Капитаном команды {red}заражённых{default} выбран {green}{1} {default}(Голосов {2})"
+        "#format"       "{1:N},{2:d}"
+        "ru"            "Капитан команды {blue}выживших{default} — {olive}{1} {default}(голосов: {2})"
+    }
+
+    "SELECTION_INFECTED_CAPTAIN"
+    {
+        "ru"            "Начался выбор капитана команды {red}заражённых{default}"
+    }
+
+    "SET_INFECTED_CAPTAIN"
+    {
+        "#format"       "{1:N},{2:d}"
+        "ru"            "Капитан команды {red}заражённых{default} — {olive}{1} {default}(голосов: {2})"
     }
 
     "PICK_SURVIVOR_TEAM"
     {
-        "#format"		"{1:N},{2:N}"
-        "ru"			"Капитан {blue}{1} {default}выбрал {green}{2}"
+        "#format"       "{1:N},{2:N}"
+        "ru"            "Капитан {blue}{1}{default} выбрал игрока {green}{2}"
     }
 
     "PICK_INFECTED_TEAM"
     {
-        "#format"		"{1:N},{2:N}"
-        "ru"			"Капитан {red}{1} {default}выбрал {green}{2}"
+        "#format"       "{1:N},{2:N}"
+        "ru"            "Капитан {red}{1}{default} выбрал игрока {green}{2}"
     }
 
-    "MENU_TITLE_FIRST_CAPITAN"
+    "MENU_SURVIVOR_CAPTAIN_TITLE"
     {
-        "ru"			"Выберите капитана первой команды:"
+        "ru"            "Выберите капитана команды выживших"
     }
 
-    "MENU_TITLE_SECOND_CAPITAN"
+    "MENU_INFECTED_CAPTAIN_TITLE"
     {
-        "ru"			"Выберите капитана второй команды:"
+        "ru"            "Выберите капитана команды заражённых"
     }
 
-    "MENU_TITLE_PICK_TEAMS"
+    "MENU_PICK_PLAYERS_TITLE"
     {
-        "ru"			"Выберите союзника:"
+        "ru"            "Выберите союзника"
     }
 }

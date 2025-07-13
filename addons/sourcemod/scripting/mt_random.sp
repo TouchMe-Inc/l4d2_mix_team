@@ -6,10 +6,10 @@
 
 
 public Plugin myinfo = {
-    name        = "MixTeamRandom",
+    name        = "[MixTeam] Random",
     author      = "TouchMe",
     description = "Adds random mix",
-    version     = "build_0005",
+    version     = "build_0007",
     url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -66,7 +66,10 @@ public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewS
         return Plugin_Continue;
     }
 
-    Handle hPlayers = CreateArray();
+    int iMaxTeamSize = FindConVar("survivor_limit").IntValue;
+
+    Handle hSurvivorTeam = CreateArray();
+    Handle hInfectedTeam = CreateArray();
 
     for (int iClient = 1; iClient <= MaxClients; iClient++)
     {
@@ -74,25 +77,88 @@ public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewS
             continue;
         }
 
-        PushArrayCell(hPlayers, iClient);
+        switch (GetClientPrevTeam(iClient))
+        {
+            case TEAM_SURVIVOR: PushArrayCell(hSurvivorTeam, iClient);
+
+            case TEAM_INFECTED: PushArrayCell(hInfectedTeam, iClient);
+        }
     }
 
-    for (int iPlayers, iIndex, iClient;;)
-    {
-        iPlayers = GetArraySize(hPlayers);
+    int iSurvivorTeamSize = GetArraySize(hSurvivorTeam);
+    int iInfectedTeamSize = GetArraySize(hInfectedTeam);
 
-        if (!iPlayers) {
-            break;
+    if (iSurvivorTeamSize < iMaxTeamSize / 2 || iInfectedTeamSize < iMaxTeamSize / 2)
+    {
+        Handle hAll = CreateArray();
+
+        MergeArrays(hAll, hSurvivorTeam);
+        MergeArrays(hAll, hInfectedTeam);
+
+        int iSize = 0;
+        while ((iSize = GetArraySize(hAll)) > 0)
+        {
+            int iRnd = GetRandomInt(0, iSize - 1);
+            int iClient = GetArrayCell(hAll, iRnd);
+            SetClientTeam(iClient, iSize % 2 == 0 ? TEAM_SURVIVOR : TEAM_INFECTED);
+            RemoveFromArray(hAll, iRnd);
         }
 
-        iIndex = GetRandomInt(0, iPlayers - 1);
-        iClient = GetArrayCell(hPlayers, iIndex);
+        delete hAll;
+    }
+    else
+    {
+        Handle hNewSurvivorTeam = CreateArray();
+        Handle hNewInfectedTeam = CreateArray();
 
-        SetClientTeam(iClient, iPlayers % 2 == 0 ? TEAM_INFECTED : TEAM_SURVIVOR);
-        RemoveFromArray(hPlayers, iIndex);
+        for (int iIdx = 0; iIdx < iSurvivorTeamSize / 2; iIdx++)
+        {
+            int iRnd = GetRandomInt(0, GetArraySize(hSurvivorTeam) - 1);
+            PushArrayCell(hNewSurvivorTeam, GetArrayCell(hSurvivorTeam, iRnd));
+            RemoveFromArray(hSurvivorTeam, iRnd);
+        }
+
+        for (int iIdx = 0; iIdx < iInfectedTeamSize / 2; iIdx++)
+        {
+            int iRnd = GetRandomInt(0, GetArraySize(hInfectedTeam) - 1);
+            PushArrayCell(hNewInfectedTeam, GetArrayCell(hInfectedTeam, iRnd));
+            RemoveFromArray(hInfectedTeam, iRnd);
+        }
+
+        MergeArrays(hNewInfectedTeam, hSurvivorTeam);
+        MergeArrays(hNewSurvivorTeam, hInfectedTeam);
+
+        for (int iIdx = 0; iIdx < GetArraySize(hNewSurvivorTeam); iIdx++) {
+            SetClientTeam(GetArrayCell(hNewSurvivorTeam, iIdx), TEAM_SURVIVOR);
+        }
+
+        for (int iIdx = 0; iIdx < GetArraySize(hNewInfectedTeam); iIdx++) {
+            SetClientTeam(GetArrayCell(hNewInfectedTeam, iIdx), TEAM_INFECTED);
+        }
+
+        delete hNewSurvivorTeam;
+        delete hNewInfectedTeam;
     }
 
-    CloseHandle(hPlayers);
+    delete hSurvivorTeam;
+    delete hInfectedTeam;
 
     return Plugin_Continue;
+}
+
+/**
+ * Appends all elements from a source array into a destination array.
+ *
+ * @param hDst  The destination array to which elements will be added.
+ * @param hSrc  The source array from which elements will be copied.
+ *
+ * Note: This function does not clear the destination array.
+ *       Elements from hSrc will be pushed to the end of hDst.
+ */
+void MergeArrays(Handle hDst, Handle hSrc)
+{
+    int iSize = GetArraySize(hSrc);
+    for (int iIdx = 0; iIdx < iSize; iIdx ++) {
+        PushArrayCell(hDst, GetArrayCell(hSrc, iIdx));
+    }
 }

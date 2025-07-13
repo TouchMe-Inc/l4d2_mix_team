@@ -15,7 +15,7 @@ public Plugin myinfo = {
     name        = "MixTeam",
     author      = "TouchMe",
     description = "Adds an API for mix in versus mode",
-    version     = "build_0010",
+    version     = "build_0013",
     url         = "https://github.com/TouchMe-Inc/l4d2_mix_team"
 };
 
@@ -30,12 +30,17 @@ public Plugin myinfo = {
  */
 #define GAMEMODE_VERSUS         "versus"
 #define GAMEMODE_VERSUS_REALISM "mutation12"
-#define GAMEMODE_SCAVENGE "scavenge"
+#define GAMEMODE_SCAVENGE       "scavenge"
 
-// Other
+/**
+ * Phrases.
+ */
 #define TRANSLATIONS            "mix_team.phrases"
-#define VOTE_TIME               15
 
+/**
+ * Timers.
+ */
+#define VOTE_TIME               15
 
 /**
  * Teams.
@@ -75,7 +80,7 @@ MixState g_eMixState = MixState_None;
 int
     g_iMixIndex = INVALID_INDEX,
     g_iAbortDelay = 0,
-    g_iClientTeamBeforePlayerMix[MAXPLAYERS + 1];
+    g_iClientTeamBeforeMix[MAXPLAYERS + 1];
 
 bool
     g_bDHookAvailable = false,
@@ -131,15 +136,15 @@ public void OnLibraryRemoved(const char[] sName)
  *
  * @param myself            Handle to the plugin.
  * @param late              Whether or not the plugin was loaded "late" (after map load).
- * @param error             Error message buffer in case load failed.
- * @param err_max           Maximum number of characters for error message buffer.
+ * @param szErr             Error message buffer in case load failed.
+ * @param iErrLength        Maximum number of characters for szErr message buffer.
  * @return                  APLRes_Success | APLRes_SilentFailure.
  */
-public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] szErr, int iErrLength)
 {
     if (GetEngineVersion() != Engine_Left4Dead2)
     {
-        strcopy(error, err_max, "Plugin only supports Left 4 Dead 2.");
+        strcopy(szErr, iErrLength, "Plugin only supports Left 4 Dead 2.");
         return APLRes_SilentFailure;
     }
 
@@ -150,6 +155,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("GetMixState", Native_GetMixState);
     CreateNative("GetMixIndex", Native_GetMixIndex);
     CreateNative("IsMixMember", Native_IsMixMember);
+    CreateNative("GetClientPrevTeam", Native_GetClientPrevTeam);
     CreateNative("SetClientTeam", Native_SetClientTeam);
 
     // Forwards.
@@ -235,7 +241,7 @@ int Native_FinishMix(Handle hPlugin, int iParams)
         ThrowNativeError(SP_ERROR_NATIVE, "Call native without mix");
     }
 
-    FinishPlayerMix();
+    SetMixState(MixState_None);
     return 0;
 }
 
@@ -254,7 +260,21 @@ int Native_IsMixMember(Handle hPlugin, int iParams)
 }
 
 /**
- * Sets a command to a player.
+ * Get prev player team.
+ *
+ * @param hPlugin           Handle to the plugin.
+ * @param iParams           Number of parameters.
+ * @return                  g_iClientTeamBeforeMix.
+ */
+int Native_GetClientPrevTeam(Handle hPlugin, int iParams)
+{
+    int iClient = GetNativeCell(1);
+
+    return g_iClientTeamBeforeMix[iClient];
+}
+
+/**
+ * Sets team to player.
  *
  * @param hPlugin           Handle to the plugin.
  * @param iParams           Number of parameters.
@@ -473,12 +493,6 @@ Action Cmd_RunMix(int iClient, int iArgs)
         return Plugin_Handled;
     }
 
-    if (IsMixStateInProgress())
-    {
-        CPrintToChat(iClient, "%T%T", "TAG", iClient, "ALREADY_IN_PROGRESS", iClient);
-        return Plugin_Handled;
-    }
-
     if (!GetArraySize(g_hMixList))
     {
         CPrintToChat(iClient, "%T%T", "TAG", iClient, "NOT_FOUND", iClient);
@@ -497,8 +511,7 @@ void ShowMixMenu(int iClient, bool bForce)
     SetMenuTitle(hMenu, "%T", bForce ? "MENU_TITLE_FORCE" : "MENU_TITLE", iClient);
 
     char szItemData[8], szItemName[64];
-
-    FormatEx(szItemData, sizeof(szItemData), "%d", bForce);
+    FormatEx(szItemData, sizeof(szItemData), "%d -1", bForce);
     FormatEx(szItemName, sizeof(szItemName), "%T", "MENU_ABORT", iClient);
     AddMenuItem(hMenu, szItemData, szItemName, IsMixStateInProgress() ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
 
@@ -522,20 +535,24 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
 
         case MenuAction_Select:
         {
-            char szItemData[8], szForce[1];
+            char szItemData[8], szForce[2];
             GetMenuItem(hMenu, iItem, szItemData, sizeof(szItemData));
 
-            if (iItem == 0)
-            {
-                bool bForce = view_as<bool>(StringToInt(szForce));
+            char szMixIndex[3];
+            BreakString(szItemData[BreakString(szItemData, szForce, sizeof(szForce))], szMixIndex, sizeof(szMixIndex));
 
+            bool bForce = view_as<bool>(StringToInt(szForce));
+            int iMixIndex = StringToInt(szMixIndex);
+
+            if (iMixIndex == -1)
+            {
                 if (!IsMixStateInProgress())
                 {
                     ShowMixMenu(iClient, bForce);
                     return 0;
                 }
 
-                if (!g_bClientMixMember[iClient])
+                if (!g_bClientMixMember[iClient] && !bForce)
                 {
                     ShowMixMenu(iClient, bForce);
                     return 0;
@@ -558,17 +575,17 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
                 return 0;
             }
 
-            char szMixIndex[3];
-            BreakString(szItemData[BreakString(szItemData, szForce, sizeof(szForce))], szMixIndex, sizeof(szMixIndex));
-
-            bool bForce = view_as<bool>(StringToInt(szForce));
-            int iMixIndex = StringToInt(szMixIndex);
+            if (IsMixStateInProgress())
+            {
+                CPrintToChat(iClient, "%T%T", "TAG", iClient, "ALREADY_IN_PROGRESS", iClient);
+                return 0;
+            }
 
             if (!NativeVotes_IsNewVoteAllowed())
             {
                 CPrintToChat(iClient, "%T%T", "TAG", iClient, "VOTE_COULDOWN", iClient, NativeVotes_CheckVoteDelay());
 
-                ShowMixMenu(iClient, .bForce = bForce);
+                ShowMixMenu(iClient, bForce);
                 return 0;
             }
 
@@ -579,7 +596,7 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
             {
                 CPrintToChat(iClient, "%T%T", "TAG", iClient, "NOT_ENOUGH_PLAYERS", iClient, iMinPlayers);
 
-                ShowMixMenu(iClient, .bForce = bForce);
+                ShowMixMenu(iClient, bForce);
                 return 0;
             }
 
@@ -602,7 +619,7 @@ int HandleMenu(Menu hMenu, MenuAction hAction, int iClient, int iItem)
                 if (IsValidTeam(iTeam))
                 {
                     g_bClientMixMember[iPlayer] = true;
-                    g_iClientTeamBeforePlayerMix[iPlayer] = iTeam;
+                    g_iClientTeamBeforeMix[iPlayer] = iTeam;
                 }
             }
 
@@ -638,12 +655,6 @@ Action Cmd_ForceMix(int iClient, int iArgs)
     if (IsRoundStarted())
     {
         CPrintToChat(iClient, "%T%T", "TAG", iClient, "ROUND_STARTED", iClient);
-        return Plugin_Handled;
-    }
-
-    if (IsMixStateInProgress())
-    {
-        CPrintToChat(iClient, "%T%T", "TAG", iClient, "ALREADY_IN_PROGRESS", iClient);
         return Plugin_Handled;
     }
 
@@ -716,7 +727,6 @@ public Action HandlerVoteMix(NativeVote hVote, VoteAction tAction, int iParam1, 
                 hVote.DisplayFail();
 
                 SetMixState(MixState_None);
-                g_iMixIndex = INVALID_INDEX;
 
                 return Plugin_Continue;
             }
@@ -739,17 +749,8 @@ void RunPlayerMix()
     SetAllClientSpectator();
 
     if (SetMixState(MixState_InProgress) == Plugin_Continue) {
-        FinishPlayerMix();
+        SetMixState(MixState_None, false);
     }
-}
-
-/**
- * Initiation of the end of the command mix.
- */
-void FinishPlayerMix()
-{
-    SetMixState(MixState_None, false);
-    g_iMixIndex = INVALID_INDEX;
 }
 
 /**
@@ -758,7 +759,6 @@ void FinishPlayerMix()
 void AbortPlayerMix()
 {
     SetMixState(MixState_None, true);
-    g_iMixIndex = INVALID_INDEX;
 
     SetAllClientSpectator();
 
@@ -772,7 +772,7 @@ void AbortPlayerMix()
             continue;
         }
 
-        SetupClientTeam(iClient, g_iClientTeamBeforePlayerMix[iClient]);
+        SetupClientTeam(iClient, g_iClientTeamBeforeMix[iClient]);
     }
 }
 
@@ -838,8 +838,13 @@ Action SetMixState(MixState eNewMixState, bool bIsFail = false)
 
     if (g_eMixState != eNewMixState)
     {
-        aReturn = ExecuteForward_OnChangMixState(g_iMixIndex, g_eMixState, eNewMixState, bIsFail);
+        MixState eOldMixState = g_eMixState;
         g_eMixState = eNewMixState;
+        aReturn = ExecuteForward_OnChangMixState(g_iMixIndex, eOldMixState, eNewMixState, bIsFail);
+    }
+
+    if (g_eMixState == MixState_None) {
+        g_iMixIndex = INVALID_INDEX;
     }
 
     return aReturn;

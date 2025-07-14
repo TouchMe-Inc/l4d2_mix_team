@@ -20,3 +20,6 @@ Plugin adds voting for mixing teams. The mix_team plugin itself does not impleme
 
 ## Support
 * [Left4DHooks](https://github.com/SilvDev/Left4DHooks)
+
+## Credits
+- Monsgeek - Testing/Issue Reporting

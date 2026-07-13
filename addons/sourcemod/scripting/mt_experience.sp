@@ -380,7 +380,7 @@ public Action OnChangeMixState(int iMixIndex, MixState eOldState, MixState eNewS
 /**
  *
  */
-public void OnClientConnected(int iClient)
+public void OnClientPutInServer(int iClient)
 {
     if (IsFakeClient(iClient)) {
         return;
